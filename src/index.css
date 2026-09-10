@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+/* Identity shared with the build plan: ledger neutrals biased toward an ink-blue
+   accent, with one hue for growth and one for dilution and fees. */
+@theme {
+  --color-ground: #f2f4f7;
+  --color-surface: #ffffff;
+  --color-sunk: #eaeef3;
+  --color-ink: #151922;
+  --color-ink-soft: #5a6376;
+  --color-ink-faint: #8b93a4;
+  --color-rule: #d8dee7;
+  --color-rule-strong: #b9c2d0;
+  --color-accent: #2e4a7d;
+  --color-accent-wash: #e5ebf5;
+  --color-gain: #2a6b4f;
+  --color-dilute: #9c4a2e;
+
+  --font-sans: "Public Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* Three theme states: explicit light, explicit dark, and the unstamped default
+   where only prefers-color-scheme separates them. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-ground: #101319;
+    --color-surface: #171b23;
+    --color-sunk: #1d222c;
+    --color-ink: #e4e8f0;
+    --color-ink-soft: #99a2b4;
+    --color-ink-faint: #6e7688;
+    --color-rule: #2a3040;
+    --color-rule-strong: #3b4356;
+    --color-accent: #8fb0e8;
+    --color-accent-wash: #1c2740;
+    --color-gain: #6ebf95;
+    --color-dilute: #d9885f;
+  }
+}
+:root[data-theme="dark"] {
+  --color-ground: #101319;
+  --color-surface: #171b23;
+  --color-sunk: #1d222c;
+  --color-ink: #e4e8f0;
+  --color-ink-soft: #99a2b4;
+  --color-ink-faint: #6e7688;
+  --color-rule: #2a3040;
+  --color-rule-strong: #3b4356;
+  --color-accent: #8fb0e8;
+  --color-accent-wash: #1c2740;
+  --color-gain: #6ebf95;
+  --color-dilute: #d9885f;
+}
+
+body {
+  background: var(--color-ground);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  margin: 0;
+}
