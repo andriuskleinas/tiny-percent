@@ -55,10 +55,22 @@ calculation core is plain TypeScript so it stays portable and testable on its ow
 | 02 | Instruments | done |
 | 03 | Exit and fees | done |
 | 04 | Interface | done |
-| 05 | Ship | next |
+| 05 | Ship | done |
 
-Golden cases green: 11 of 11. The engine and the interface are both built. What
-remains is sharing, saved scenarios and the final QA pass.
+Golden cases green: 11 of 11. All six phases are complete.
+
+## Sharing
+
+The address bar always holds the current scenario, base64url-encoded in the hash,
+so copying the link from anywhere shares that exact deal. A link is untrusted
+input from whoever sent it, so `src/state/url.ts` validates it structurally
+field by field and the app additionally checks it runs before opening it. A
+malformed, tampered or impossible link falls back to the worked example rather
+than opening onto an error.
+
+Saved scenarios live in this browser only, in localStorage. That store is
+editable by hand, so what comes back out is validated the same way a link is. A
+browser that refuses to store anything simply has no saved scenarios.
 
 ## The interface never lets an engine throw reach render
 

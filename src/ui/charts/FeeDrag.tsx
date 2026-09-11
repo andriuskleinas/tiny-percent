@@ -19,14 +19,15 @@ const BAR_H = 42
 
 export function FeeDrag({ grossCents, slices }: { grossCents: number; slices: DragSlice[] }) {
   const total = Math.max(grossCents, 1)
-  let cursor = X0
-
-  const placed = slices.map((slice) => {
-    const w = (Math.max(0, slice.cents) / total) * WIDTH
-    const at = cursor
-    cursor += w
-    return { ...slice, x: at, w }
-  })
+  const placed = slices.reduce<Array<DragSlice & { x: number; w: number }>>((acc, slice) => {
+    const previous = acc[acc.length - 1]
+    acc.push({
+      ...slice,
+      x: previous ? previous.x + previous.w : X0,
+      w: (Math.max(0, slice.cents) / total) * WIDTH,
+    })
+    return acc
+  }, [])
 
   // Only label a slice wide enough to carry one without colliding with its neighbours.
   const labelled = placed.filter((s) => s.w >= 34)

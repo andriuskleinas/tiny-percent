@@ -22,20 +22,3 @@ export function safeRun(scenario: Scenario): SafeRun {
     return { run: undefined, error: thrown as Error }
   }
 }
-
-/**
- * Keeps the last workable result on screen while the current one is broken, so
- * the figures stay visible and every field stays editable.
- */
-export function runWithFallback(
-  scenario: Scenario,
-  previous: { scenario: Scenario; run: ScenarioResult } | null,
-): { run: ScenarioResult | undefined; scenario: Scenario; error: Error | undefined } {
-  const attempt = safeRun(scenario)
-  if (attempt.run) return { run: attempt.run, scenario, error: undefined }
-  return {
-    run: previous?.run,
-    scenario: previous?.scenario ?? scenario,
-    error: attempt.error,
-  }
-}

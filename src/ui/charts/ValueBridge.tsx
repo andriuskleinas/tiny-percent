@@ -20,14 +20,13 @@ const X1 = 425
 
 export function ValueBridge({ steps }: { steps: BridgeStep[] }) {
   // Running totals give every floating bar its top and bottom.
-  let running = 0
-  const bars = steps.map((step) => {
+  const bars = steps.reduce<Array<BridgeStep & { from: number; to: number }>>((acc, step) => {
+    const running = acc[acc.length - 1]?.to ?? 0
     const from = step.kind === 'total' ? 0 : running
     const to = step.kind === 'total' ? step.deltaCents : running + step.deltaCents
-    if (step.kind !== 'total') running = to
-    else running = step.deltaCents
-    return { ...step, from, to }
-  })
+    acc.push({ ...step, from, to })
+    return acc
+  }, [])
 
   const peak = Math.max(...bars.flatMap((b) => [b.from, b.to]), 1)
   const scale = (BASE - TOP) / peak

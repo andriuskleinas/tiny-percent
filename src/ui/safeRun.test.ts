@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { WORKED_EXAMPLE } from '../state/presets'
+import { appReducer, initialAppState } from '../state/app'
 import { runScenario } from '../engine/scenario'
-import { runWithFallback, safeRun } from './safeRun'
+import { safeRun } from './safeRun'
 
 /**
  * Regression guard. Typing an impossible option pool used to blank the entire
@@ -31,24 +32,43 @@ describe('the interface never lets an engine throw reach render', () => {
   })
 
   it('keeps the last workable result on screen when the new one breaks', () => {
-    const good = runScenario(WORKED_EXAMPLE)
-    const fallback = runWithFallback(impossible, { scenario: WORKED_EXAMPLE, run: good })
-    expect(fallback.run).toBe(good)
-    expect(fallback.scenario).toBe(WORKED_EXAMPLE)
-    expect(fallback.error?.message).toMatch(/option pool/i)
+    const start = initialAppState(WORKED_EXAMPLE)
+    const broken = appReducer(start, {
+      type: 'round:set',
+      id: 'b',
+      patch: { newOptionPool: 0.9 },
+    })
+    expect(broken.run).toBe(start.run)
+    expect(broken.error?.message).toMatch(/option pool/i)
+  })
+
+  it('still keeps what the user typed, so the field can be corrected', () => {
+    const start = initialAppState(WORKED_EXAMPLE)
+    const broken = appReducer(start, {
+      type: 'round:set',
+      id: 'b',
+      patch: { newOptionPool: 0.9 },
+    })
+    expect(broken.scenario.rounds[1]?.newOptionPool).toBe(0.9)
   })
 
   it('hands the derived panels the last workable scenario, never the broken one', () => {
     // The follow-on panel re-runs the scenario with decisions swapped, so giving
     // it the broken one would throw again outside any guard.
-    const good = runScenario(WORKED_EXAMPLE)
-    const { scenario } = runWithFallback(impossible, { scenario: WORKED_EXAMPLE, run: good })
-    expect(() => runScenario(scenario)).not.toThrow()
+    const start = initialAppState(WORKED_EXAMPLE)
+    const broken = appReducer(start, {
+      type: 'round:set',
+      id: 'b',
+      patch: { newOptionPool: 0.9 },
+    })
+    expect(() => runScenario(broken.workable)).not.toThrow()
   })
 
-  it('has nothing to fall back to on the very first render', () => {
-    const { run, error } = runWithFallback(impossible, null)
-    expect(run).toBeUndefined()
-    expect(error).toBeDefined()
+  it('recovers the moment the figure is corrected', () => {
+    const start = initialAppState(WORKED_EXAMPLE)
+    const broken = appReducer(start, { type: 'round:set', id: 'b', patch: { newOptionPool: 0.9 } })
+    const fixed = appReducer(broken, { type: 'round:set', id: 'b', patch: { newOptionPool: 0.1 } })
+    expect(fixed.error).toBeUndefined()
+    expect(fixed.run.finalOwnership).toBeCloseTo(0.0028, 12)
   })
 })

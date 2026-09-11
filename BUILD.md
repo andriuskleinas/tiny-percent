@@ -162,7 +162,7 @@ or not it became shares. Both are covered by regression tests.
 
 ---
 
-## Phase 05 — Ship · 2d
+## Phase 05 — Ship · 2d · DONE
 
 | | Task | Touches |
 |---|---|---|
@@ -177,7 +177,35 @@ or not it became shares. Both are covered by regression tests.
 keyboard navigation reaches every control, and nothing scrolls horizontally at
 320 pixels wide.
 
+All met, verified in the browser rather than argued. A link built by editing two
+fields reopened in a clean tab with both fields and every derived figure intact,
+at 997 characters. At 320 pixels the document scroll width is exactly 320 with no
+element overflowing its container.
+
+A shared link is untrusted input from whoever sent it, so it is validated field
+by field rather than parsed and cast, including a reviver that drops `__proto__`
+so a crafted link cannot reach `Object.prototype`. Twenty-four tests cover the
+round trip and every malformed, tampered and hostile case. The app additionally
+checks a decoded link actually runs before opening it, because a structurally
+valid scenario can still be one the engine refuses.
+
+Lint found a real defect during this phase: the fallback that keeps the last
+workable result on screen was running as an effect, which both broke the rules
+of hooks on one path and caused a cascading render on every keystroke. It now
+lives in the reducer, where the engine runs once per change and there is no
+effect at all. Zero lint warnings remain.
+
 ---
+
+## Where it ended up
+
+| | |
+|---|---|
+| Tests | 186 across 12 files |
+| Golden cases | 11 of 11 |
+| Oracle assertions | 58 |
+| Runtime dependencies | React, and nothing else |
+| Lint warnings | 0 |
 
 ## Running check
 

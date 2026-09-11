@@ -16,7 +16,7 @@ const TYPES: ReadonlyArray<readonly [InstrumentType, string]> = [
 ]
 
 /** Which fields this instrument actually needs. Everything else stays hidden. */
-export function fieldsFor(type: InstrumentType) {
+function fieldsFor(type: InstrumentType) {
   const priced = instrumentPath(type) === 'priced'
   return {
     cap: !priced,
