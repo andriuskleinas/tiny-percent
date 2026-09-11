@@ -230,3 +230,47 @@ describe('rounds are read in date order regardless of how they arrive', () => {
     expect(shuffled.rounds.map((r) => r.round.id)).toEqual(['a', 'b', 'c'])
   })
 })
+
+describe('a loan the angel chooses not to convert', () => {
+  const result = runScenario(
+    deal({
+      entry: {
+        type: 'cla',
+        amountCents: toCents(50_000),
+        date: '2020-01-01',
+        capCents: toCents(5_000_000),
+        interestRate: 0.08,
+        interestMode: 'simple',
+      },
+      exit: {
+        date: '2026-01-01',
+        valueCents: toCents(60_000_000),
+        totalRaisedCents: toCents(20_000_000),
+        unconvertedLoan: 'repay',
+      },
+    }),
+  )
+
+  it('buys no equity at all', () => {
+    expect(result.finalOwnership).toBe(0)
+    expect(result.rounds.every((r) => r.conversion === undefined)).toBe(true)
+  })
+
+  it('still counts the cheque as capital deployed', () => {
+    // The money left the angel's account whether or not it became shares.
+    expect(result.totalInvestedCents).toBe(toCents(50_000))
+    expect(result.feesLow.deployedCents).toBe(toCents(50_000))
+  })
+
+  it('is repaid principal plus interest, ahead of every shareholder', () => {
+    // Six years at 8% simple, actual/365 across two leap days.
+    expect(result.exit.lowCents).toBeGreaterThan(toCents(74_000))
+    expect(result.exit.explanation).toMatch(/repaid ahead of every equity holder/i)
+  })
+
+  it('reports a real multiple rather than a meaningless zero', () => {
+    expect(result.feesLow.grossMultiple).toBeGreaterThan(1.4)
+    expect(result.feesLow.netMultiple).toBeGreaterThan(1.2)
+    expect(result.irrLow as number).toBeGreaterThan(0)
+  })
+})

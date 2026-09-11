@@ -124,7 +124,7 @@ which is exactly where a failed angel investment sits.
 
 ---
 
-## Phase 04 — Interface · 4.5d
+## Phase 04 — Interface · 4.5d · DONE
 
 | | Task | Touches |
 |---|---|---|
@@ -142,6 +142,23 @@ which is exactly where a failed angel investment sits.
 **Done when** a newcomer models a two-round deal with a follow-on without
 instructions, all four visuals redraw from the live scenario, and every ownership
 figure sits beside its value figure.
+
+All met. 152 tests. The page opens on the worked example rather than an empty
+form, all four visuals are computed from live state, and no ownership figure
+appears anywhere without its value beside it.
+
+Two bugs found by exercising the interface rather than by reasoning.
+
+Typing an impossible option pool blanked the entire page. The engine's throw is
+deliberate and correct, but it reached React's render. Every scenario run now
+goes through a guard that keeps the last workable result on screen and explains
+the problem, leaving every field editable. The follow-on panel re-runs the
+scenario with decisions swapped, so it had to be guarded too and is handed the
+last workable scenario rather than the broken one.
+
+A convertible loan the angel chooses not to convert recorded no capital
+deployed, so the multiple read zero. The money left the angel's account whether
+or not it became shares. Both are covered by regression tests.
 
 ---
 

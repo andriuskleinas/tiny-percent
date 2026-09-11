@@ -80,6 +80,17 @@ export function runScenario(scenario: Scenario): ScenarioResult {
   const flows: CashFlow[] = []
   let ownership = 0
 
+  // A loan that is never converted still cost the angel the money. It buys no
+  // equity, but it is capital deployed and it has to be in the return figures.
+  if (staysDebt) {
+    cheques.push(held.amountCents)
+    const onTop =
+      scenario.fees.entry.charged === 'on_top'
+        ? entryFeeFor(held.amountCents, scenario.fees.entry)
+        : 0
+    flows.push({ date: held.date, amountCents: -(held.amountCents + onTop) })
+  }
+
   for (const round of ordered) {
     const terms = termsOf(round)
     const before = ownership

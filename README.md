@@ -54,7 +54,17 @@ calculation core is plain TypeScript so it stays portable and testable on its ow
 | 01 | Ownership engine | done |
 | 02 | Instruments | done |
 | 03 | Exit and fees | done |
-| 04 | Interface | next |
-| 05 | Ship | |
+| 04 | Interface | done |
+| 05 | Ship | next |
 
-Golden cases green: 11 of 11. The engine is complete; what remains is the interface.
+Golden cases green: 11 of 11. The engine and the interface are both built. What
+remains is sharing, saved scenarios and the final QA pass.
+
+## The interface never lets an engine throw reach render
+
+The engine throws by design on inputs with no answer, such as an option pool at
+or above the pre-money share. A throw during React's render blanks the whole page
+and strands the user with no way to correct what they just typed. Every scenario
+run in the interface therefore goes through `src/ui/safeRun.ts`, which keeps the
+last workable result on screen and explains what is wrong. `safeRun.test.ts`
+guards it.
