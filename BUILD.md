@@ -92,7 +92,7 @@ and the engine asserts against that result.
 
 ---
 
-## Phase 03 — Exit and fees · 1.5d
+## Phase 03 — Exit and fees · 1.5d · DONE
 
 | | Task | Touches |
 |---|---|---|
@@ -106,6 +106,21 @@ and the engine asserts against that result.
 
 **Done when** I–K pass, no exit figure can be produced without a regime label, and
 IRR returns undefined rather than a number when the cash flows never change sign.
+
+All met, and the engine is complete: 142 tests across nine files, 11 of 11 golden
+cases green. The scenario runner reproduces the fee drag figure the plan
+illustrates, to the cent.
+
+Two decisions the plan left open, now settled and documented. The band between
+the regimes needed a threshold, and it is twice the capital raised: preferred
+convert once their as-converted share beats their preference, which holds at 2x
+unless preferred own less than half the company. It is a parameter, not a
+constant. And inside that band, fees and returns are computed twice, once
+against each bound, rather than against an invented midpoint.
+
+The rate of return uses bisection before a Newton polish. Newton alone is unsafe
+here because net present value is badly behaved near minus one hundred percent,
+which is exactly where a failed angel investment sits.
 
 ---
 

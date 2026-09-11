@@ -4,6 +4,8 @@ import { fileURLToPath } from 'node:url'
 import { entryOwnership, ownAfter, postMoney, proRata, stakeValue } from './ownership'
 import type { RoundTerms } from './ownership'
 import { convert } from './instrument'
+import { exitProceeds } from './exit'
+import { applyFees } from './fees'
 
 /**
  * The engine is checked against `tools/oracle.py`, which implements the same
@@ -52,6 +54,39 @@ interface Fixture {
   }
   G: { ownership: number; accrualUplift: number }
   H: { exitCents: number; proceedsCents: number }
+  I: {
+    ownership: number
+    exitCents: number
+    totalRaisedCents: number
+    proceedsCents: number
+  }
+  J: {
+    chequeCents: number
+    grossCents: number
+    entryPercent: number
+    carryPercent: number
+    outlayCents: number
+    carryCents: number
+    netCents: number
+    dragCents: number
+    grossMultiple: number
+    netMultiple: number
+  }
+  K: {
+    exitCents: number
+    totalRaisedCents: number
+    investedCents: number
+    proceedsCents: number
+    naiveCents: number
+  }
+  feeDrag: {
+    grossCents: number
+    carryCents: number
+    netCents: number
+    outlayCents: number
+    grossMultiple: number
+    netMultiple: number
+  }
 }
 
 const fixture = JSON.parse(
@@ -155,5 +190,53 @@ describe('the engine agrees with the Python oracle', () => {
     const result = convert(loan, convertRound)
     expect(stakeValue(result.ownership, fixture.H.exitCents)).toBe(fixture.H.proceedsCents)
     expect(result.investedCents).toBe(fixture.F.investedCents)
+  })
+
+  it('I — a clean exit pays the ownership share', () => {
+    const result = exitProceeds({
+      valueCents: fixture.I.exitCents,
+      totalRaisedCents: fixture.I.totalRaisedCents,
+      ownership: fixture.I.ownership,
+      investedCents: fixture.K.investedCents,
+    })
+    expect(result.regime).toBe('clean')
+    expect(result.lowCents).toBe(fixture.I.proceedsCents)
+  })
+
+  it('J — fees turn a 10x gross into an 8.04x net', () => {
+    const result = applyFees(fixture.J.chequeCents, fixture.J.grossCents, {
+      entry: { rule: 'percent', percent: fixture.J.entryPercent, charged: 'on_top' },
+      carry: { percent: fixture.J.carryPercent, basis: 'per_deal' },
+    })
+    expect(result.outlayCents).toBe(fixture.J.outlayCents)
+    expect(result.carryCents).toBe(fixture.J.carryCents)
+    expect(result.netCents).toBe(fixture.J.netCents)
+    expect(result.dragCents).toBe(fixture.J.dragCents)
+    expect(result.grossMultiple).toBeCloseTo(fixture.J.grossMultiple, 9)
+    expect(result.netMultiple).toBeCloseTo(fixture.J.netMultiple, 9)
+  })
+
+  it('K — a downside exit pays your share of the preference stack', () => {
+    const result = exitProceeds({
+      valueCents: fixture.K.exitCents,
+      totalRaisedCents: fixture.K.totalRaisedCents,
+      ownership: fixture.I.ownership,
+      investedCents: fixture.K.investedCents,
+    })
+    expect(result.regime).toBe('downside')
+    expect(result.lowCents).toBe(fixture.K.proceedsCents)
+    expect(stakeValue(fixture.I.ownership, fixture.K.exitCents)).toBe(fixture.K.naiveCents)
+  })
+
+  it('reproduces the fee drag figure the plan illustrates', () => {
+    const result = applyFees(fixture.K.investedCents, fixture.feeDrag.grossCents, {
+      entry: { rule: 'percent', percent: fixture.J.entryPercent, charged: 'on_top' },
+      carry: { percent: fixture.J.carryPercent, basis: 'per_deal' },
+    })
+    expect(result.carryCents).toBe(fixture.feeDrag.carryCents)
+    expect(result.netCents).toBe(fixture.feeDrag.netCents)
+    expect(result.outlayCents).toBe(fixture.feeDrag.outlayCents)
+    expect(result.grossMultiple).toBeCloseTo(fixture.feeDrag.grossMultiple, 9)
+    expect(result.netMultiple).toBeCloseTo(fixture.feeDrag.netMultiple, 9)
   })
 })

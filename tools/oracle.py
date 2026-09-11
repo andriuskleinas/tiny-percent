@@ -280,6 +280,19 @@ def emit_fixture(path):
               "investedCents": cents(50_000)},
         "G": {"ownership": g, "accrualUplift": f / g - 1},
         "H": {"exitCents": cents(60e6), "proceedsCents": cents(f * 60e6)},
+        "I": {"ownership": c_own, "exitCents": cents(60e6),
+              "totalRaisedCents": cents(20e6), "proceedsCents": cents(i_gross)},
+        "J": {"chequeCents": cents(50_000), "grossCents": cents(500_000),
+              "entryPercent": 0.02, "carryPercent": 0.20,
+              "outlayCents": cents(j["outlay"]), "carryCents": cents(j["carry"]),
+              "netCents": cents(j["net"]), "dragCents": cents(j["drag"]),
+              "grossMultiple": j["gross_x"], "netMultiple": j["net_x"]},
+        "K": {"exitCents": cents(15e6), "totalRaisedCents": cents(20e6),
+              "investedCents": cents(50_000), "proceedsCents": cents(k),
+              "naiveCents": cents(naive)},
+        "feeDrag": {"grossCents": cents(192_000), "carryCents": cents(v4["carry"]),
+                    "netCents": cents(v4["net"]), "outlayCents": cents(v4["outlay"]),
+                    "grossMultiple": v4["gross_x"], "netMultiple": v4["net_x"]},
     }
     with open(path, "w") as fh:
         json.dump(fixture, fh, indent=2)

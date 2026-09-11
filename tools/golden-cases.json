@@ -64,5 +64,38 @@
   "H": {
     "exitCents": 6000000000,
     "proceedsCents": 55680000
+  },
+  "I": {
+    "ownership": 0.0032,
+    "exitCents": 6000000000,
+    "totalRaisedCents": 2000000000,
+    "proceedsCents": 19200000
+  },
+  "J": {
+    "chequeCents": 5000000,
+    "grossCents": 50000000,
+    "entryPercent": 0.02,
+    "carryPercent": 0.2,
+    "outlayCents": 5100000,
+    "carryCents": 9000000,
+    "netCents": 41000000,
+    "dragCents": 9100000,
+    "grossMultiple": 10.0,
+    "netMultiple": 8.03921568627451
+  },
+  "K": {
+    "exitCents": 1500000000,
+    "totalRaisedCents": 2000000000,
+    "investedCents": 5000000,
+    "proceedsCents": 3750000,
+    "naiveCents": 4800000
+  },
+  "feeDrag": {
+    "grossCents": 19200000,
+    "carryCents": 2840000,
+    "netCents": 16360000,
+    "outlayCents": 5100000,
+    "grossMultiple": 3.84,
+    "netMultiple": 3.207843137254902
   }
 }

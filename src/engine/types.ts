@@ -54,22 +54,12 @@ export interface Round {
   angelAction: AngelAction
 }
 
-export interface Fees {
-  entry: {
-    percent?: number | undefined
-    fixedCents?: number | undefined
-    rule: 'percent' | 'fixed' | 'greater_of'
-    charged: 'on_top' | 'deducted'
-  }
-  management?:
-    | { annualPercent: number; years: number; source: 'capital' | 'invoiced' }
-    | undefined
-  carry: {
-    percent: number
-    hurdlePercent?: number | undefined
-    basis: 'per_deal'
-  }
-}
+/**
+ * Fee terms are defined in `fees.ts` and re-exported here so the serialised
+ * shape and the engine's shape cannot drift apart.
+ */
+import type { FeeTerms } from './fees'
+export type { FeeTerms as Fees }
 
 export interface ExitEvent {
   /** ISO 8601 date. */
@@ -86,6 +76,6 @@ export interface Scenario {
   currency: Currency
   entry: Instrument
   rounds: Round[]
-  fees: Fees
+  fees: FeeTerms
   exit: ExitEvent
 }

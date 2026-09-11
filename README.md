@@ -53,8 +53,8 @@ calculation core is plain TypeScript so it stays portable and testable on its ow
 | 00 | Scaffold | done |
 | 01 | Ownership engine | done |
 | 02 | Instruments | done |
-| 03 | Exit and fees | next |
-| 04 | Interface | |
+| 03 | Exit and fees | done |
+| 04 | Interface | next |
 | 05 | Ship | |
 
-Golden cases green: 8 of 11 (A through H).
+Golden cases green: 11 of 11. The engine is complete; what remains is the interface.
