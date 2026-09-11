@@ -1,86 +1,108 @@
-import { ownAfter, postMoney, proRata, stakeValue } from './engine/ownership'
+import { convert } from './engine/instrument'
+import type { ConvertibleInput } from './engine/instrument'
 import type { RoundTerms } from './engine/ownership'
 import { toCents } from './engine/money'
 import { money, percent } from './ui/format'
 
 /**
- * Placeholder shell. The five real screens land in phase 04. This runs the
- * worked example from the plan through the actual engine, so the scaffold shows
- * something true rather than a hardcoded table.
+ * Placeholder shell. The five real screens land in phase 04. This runs the same
+ * cheque through every instrument, using the actual engine, so the scaffold
+ * shows something true rather than a hardcoded table.
  */
 
-const seed: RoundTerms = { preMoney: toCents(8_000_000), raised: toCents(2_000_000) }
-const seriesB: RoundTerms = { preMoney: toCents(24_000_000), raised: toCents(6_000_000) }
-const seriesBPooled: RoundTerms = { ...seriesB, newOptionPool: 0.1 }
+const round: RoundTerms = { preMoney: toCents(8_000_000), raised: toCents(2_000_000) }
+const cheque = toCents(50_000)
+const cap = toCents(5_000_000)
 
-const entry = toCents(50_000) / postMoney(seed)
-const sittingOut = ownAfter(entry, seriesB)
-const pooled = ownAfter(entry, seriesBPooled)
+const instruments: Array<[string, ConvertibleInput]> = [
+  ['Priced equity', { type: 'equity', amountCents: cheque }],
+  ['SAFE, post-money cap', { type: 'safe_post', amountCents: cheque, capCents: cap }],
+  ['SAFE, pre-money cap', { type: 'safe_pre', amountCents: cheque, capCents: cap }],
+  [
+    'Convertible loan, 8% over 2y',
+    {
+      type: 'cla',
+      amountCents: cheque,
+      capCents: cap,
+      discount: 0.2,
+      interestRate: 0.08,
+      interestMode: 'simple',
+      years: 2,
+    },
+  ],
+]
 
-const rows = [
-  ['Entry', entry, stakeValue(entry, postMoney(seed)), null],
-  ['Series B, sitting out', sittingOut, stakeValue(sittingOut, postMoney(seriesB)), proRata(entry, seriesB)],
-  ['Series B with a 10% pool', pooled, stakeValue(pooled, postMoney(seriesBPooled)), proRata(entry, seriesBPooled)],
-] as const
+const results = instruments.map(([label, input]) => [label, convert(input, round)] as const)
 
 export default function App() {
   return (
-    <main className="mx-auto max-w-2xl px-6 py-16">
+    <main className="mx-auto max-w-3xl px-6 py-16">
       <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-accent">
-        Phase 01 · ownership engine
+        Phase 02 · instruments
       </p>
       <h1 className="mt-5 text-4xl font-medium tracking-tight text-ink">
         Angel Dilution Calculator
       </h1>
       <p className="mt-4 max-w-prose text-ink-soft">
-        A $50,000 cheque into a $2M round at $8M pre-money, then a $6M Series B at $24M
-        pre-money. Computed live by the engine, not typed in.
+        The same $50,000 cheque into the same $2M round at $8M pre-money, written on four
+        different instruments. What you sign matters as much as what you pay.
       </p>
 
-      <table className="mt-10 w-full border-collapse text-sm">
-        <thead>
-          <tr className="border-b border-rule-strong text-left">
-            <th className="py-2 pr-4 font-mono text-[10px] uppercase tracking-wider text-ink-faint">
-              Round
-            </th>
-            <th className="py-2 pr-4 text-right font-mono text-[10px] uppercase tracking-wider text-ink-faint">
-              Stake
-            </th>
-            <th className="py-2 pr-4 text-right font-mono text-[10px] uppercase tracking-wider text-ink-faint">
-              Worth
-            </th>
-            <th className="py-2 text-right font-mono text-[10px] uppercase tracking-wider text-ink-faint">
-              To hold it
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map(([label, own, worth, cheque]) => (
-            <tr key={label} className="border-b border-rule">
-              <td className="py-3 pr-4 text-ink">{label}</td>
-              <td className="py-3 pr-4 text-right font-mono tabular-nums text-dilute">
-                {percent(own)}
-              </td>
-              <td className="py-3 pr-4 text-right font-mono tabular-nums text-gain">
-                {money(worth)}
-              </td>
-              <td className="py-3 text-right font-mono tabular-nums text-ink-soft">
-                {cheque === null ? '—' : money(cheque)}
-              </td>
+      <div className="mt-10 overflow-x-auto">
+        <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr className="border-b border-rule-strong text-left">
+              {['Instrument', 'Converts', 'Priced at', 'Stake', 'Route'].map((h, i) => (
+                <th
+                  key={h}
+                  className={`py-2 font-mono text-[10px] uppercase tracking-wider text-ink-faint ${i === 0 ? 'pr-4' : 'px-4 text-right'}`}
+                >
+                  {h}
+                </th>
+              ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {results.map(([label, r]) => (
+              <tr key={label} className="border-b border-rule">
+                <td className="py-3 pr-4 text-ink">
+                  {label}
+                  {r.estimate ? ' ' : null}
+                  {r.estimate ? (
+                    <span className="ml-2 font-mono text-[10px] uppercase tracking-wider text-dilute">
+                      estimate
+                    </span>
+                  ) : null}
+                </td>
+                <td className="px-4 py-3 text-right font-mono tabular-nums text-ink-soft">
+                  {money(r.convertingCents)}
+                </td>
+                <td className="px-4 py-3 text-right font-mono tabular-nums text-ink-soft">
+                  {money(r.effectiveValuationCents)}
+                </td>
+                <td className="px-4 py-3 text-right font-mono tabular-nums text-gain">
+                  {percent(r.ownership, 3)}
+                </td>
+                <td className="px-4 py-3 text-right font-mono text-[11px] uppercase tracking-wider text-ink-faint">
+                  {r.route.replace('_', ' ')}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
-      <p className="mt-6 text-sm text-ink-soft">
-        Your slice falls while the stake grows. The option pool costs you half as much
-        again to hold the same position.
+      <p className="mt-6 max-w-prose text-sm text-ink-soft">
+        Every row cost the same $50,000. The loan converts more than was paid because
+        interest accrued, but the return is still measured against the $50,000. A pre-money
+        cap is worse than the same number as a post-money cap, and worse again once other
+        instruments convert beside it.
       </p>
 
       <dl className="mt-10 border-t border-rule">
         {[
-          ['Golden cases green', '4 of 11'],
-          ['Next phase', '02 — instruments'],
+          ['Golden cases green', '8 of 11'],
+          ['Next phase', '03 — exit and fees'],
         ].map(([label, value]) => (
           <div key={label} className="flex justify-between border-b border-rule py-3">
             <dt className="text-sm text-ink-faint">{label}</dt>

@@ -27,5 +27,42 @@
   "D": {
     "ownership": 0.0035000000000000005,
     "proRataCents": 4500000
+  },
+  "convertRound": {
+    "preMoneyCents": 800000000,
+    "raisedCents": 200000000
+  },
+  "E": {
+    "amountCents": 10000000,
+    "capCents": 500000000,
+    "ownershipAtConversion": 0.02,
+    "ownership": 0.016,
+    "effectiveValuationCents": 625000000
+  },
+  "E2": {
+    "amountCents": 10000000,
+    "capCents": 500000000,
+    "otherConvertingCents": 40000000,
+    "ownershipAtConversion": 0.01818181818181818,
+    "ownership": 0.014545454545454545
+  },
+  "F": {
+    "amountCents": 5000000,
+    "capCents": 500000000,
+    "discount": 0.2,
+    "rate": 0.08,
+    "years": 2,
+    "convertingCents": 5800000,
+    "effectiveValuationCents": 625000000,
+    "ownership": 0.009279999999999998,
+    "investedCents": 5000000
+  },
+  "G": {
+    "ownership": 0.008,
+    "accrualUplift": 0.1599999999999997
+  },
+  "H": {
+    "exitCents": 6000000000,
+    "proceedsCents": 55680000
   }
 }

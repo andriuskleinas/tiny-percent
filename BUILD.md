@@ -63,7 +63,7 @@ checks it against the subtraction.
 
 ---
 
-## Phase 02 — Instruments · 1.5d
+## Phase 02 — Instruments · 1.5d · DONE
 
 | | Task | Touches |
 |---|---|---|
@@ -76,6 +76,19 @@ checks it against the subtraction.
 
 **Done when** E–H pass, every type resolves to a path, and no case ever applies
 both the cap and the discount.
+
+All met. 75 tests across five files. A test enumerates every type and asserts it
+resolves to a path, a cap basis and an accrual rule, so adding a type without
+wiring it up fails the suite.
+
+One derivation worth recording. A pre-money cap converts against the pre-money
+capitalisation, so everything converting alongside dilutes everything else.
+Working that through the share ledger, the holder ends up with
+`amount / (cap + amount + others)`, which is identical to a post-money cap of
+`cap + amount + others`. That lets both kinds of cap run through the single
+formula rather than needing a second code path. Because this is a derivation
+rather than a given, the oracle checks it against an independent share ledger,
+and the engine asserts against that result.
 
 ---
 

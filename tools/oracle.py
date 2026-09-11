@@ -31,6 +31,11 @@ def convert(amount, cap, discount, pre, raised):
     if not routes: routes.append(V)          # priced equity
     return amount / min(routes)
 
+def convert_pre_cap(amount, cap, others, discount, pre, raised):
+    """A pre-money cap behaves exactly like a post-money cap of cap+amount+others,
+       because everything converting at that price dilutes everything else."""
+    return convert(amount, cap + amount + others, discount, pre, raised)
+
 def accrue(principal, rate, years, mode="simple"):
     return principal * (1 + rate * years) if mode == "simple" else principal * (1 + rate) ** years
 
@@ -49,6 +54,13 @@ class Ledger:
         self.unallocated_pool = pool * self.total
         self.angel += angel_invests / p
         return p, new_pool
+    def convert_at_pre_cap(self, amount, cap, others):
+        # Conversion price is the cap divided by the pre-conversion share count,
+        # so simultaneous converters dilute one another.
+        price = cap / self.total
+        mine, theirs = amount / price, others / price
+        self.total += mine + theirs
+        self.angel += mine
     def convert_at_post_cap(self, amount, cap_fraction):
         # holder ends up owning cap_fraction of the company pre-new-money
         s = self.total * cap_fraction / (1 - cap_fraction)
@@ -103,6 +115,21 @@ eq("E ledger at conversion", L6.own(), 0.02)
 L6.priced_round(8e6, 2e6)
 eq("E ledger after round", L6.own(), e)
 print(f"E  $100k SAFE @ $5M cap ....... {e_conv:.4%} -> {e:.4%}      [ledger {L6.own():.4%}]")
+
+# E2: pre-money cap, the one formula the angel-side model cannot see all of
+pre_amt, pre_cap, pre_other = 100_000, 5e6, 400_000
+e2 = convert_pre_cap(pre_amt, pre_cap, pre_other, 0, 8e6, 2e6)
+e2_at_conv = pre_amt / (pre_cap + pre_amt + pre_other)
+eq("E2 at conversion", e2_at_conv, 100_000 / 5_500_000)
+eq("E2 after round", e2, e2_at_conv * 0.8)
+L8 = Ledger(); L8.convert_at_pre_cap(pre_amt, pre_cap, pre_other)
+eq("E2 ledger at conversion", L8.own(), e2_at_conv)
+L8.priced_round(8e6, 2e6)
+eq("E2 ledger after round", L8.own(), e2)
+e2_solo = convert_pre_cap(pre_amt, pre_cap, 0, 0, 8e6, 2e6)
+assert e2_solo > e2, "other converters must dilute you"
+assert e2_solo < e, "a pre-money cap must be worse than the same post-money cap"
+print(f"E2 $100k pre-money cap @ $5M ... {e2_at_conv:.4%} -> {e2:.4%}      [ledger {L8.own():.4%}]")
 
 # F: CLA with interest
 f_amt = accrue(50_000, 0.08, 2, "simple")
@@ -240,6 +267,19 @@ def emit_fixture(path):
         "B": {"ownership": b, "valueCents": cents(b * 30e6), "postMoneyCents": cents(30e6)},
         "C": {"proRataCents": cents(c_cheque), "ownership": c, "valueCents": cents(c * 30e6)},
         "D": {"ownership": d, "proRataCents": cents(d_cheque)},
+        "convertRound": {"preMoneyCents": cents(8e6), "raisedCents": cents(2e6)},
+        "E": {"amountCents": cents(100_000), "capCents": cents(5e6),
+              "ownershipAtConversion": e_conv, "ownership": e,
+              "effectiveValuationCents": cents(6.25e6)},
+        "E2": {"amountCents": cents(pre_amt), "capCents": cents(pre_cap),
+               "otherConvertingCents": cents(pre_other),
+               "ownershipAtConversion": e2_at_conv, "ownership": e2},
+        "F": {"amountCents": cents(50_000), "capCents": cents(5e6), "discount": 0.20,
+              "rate": 0.08, "years": 2, "convertingCents": cents(f_amt),
+              "effectiveValuationCents": cents(f_eff), "ownership": f,
+              "investedCents": cents(50_000)},
+        "G": {"ownership": g, "accrualUplift": f / g - 1},
+        "H": {"exitCents": cents(60e6), "proceedsCents": cents(f * 60e6)},
     }
     with open(path, "w") as fh:
         json.dump(fixture, fh, indent=2)

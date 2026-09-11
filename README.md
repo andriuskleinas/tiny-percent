@@ -52,9 +52,9 @@ calculation core is plain TypeScript so it stays portable and testable on its ow
 |---|---|---|
 | 00 | Scaffold | done |
 | 01 | Ownership engine | done |
-| 02 | Instruments | next |
-| 03 | Exit and fees | |
+| 02 | Instruments | done |
+| 03 | Exit and fees | next |
 | 04 | Interface | |
 | 05 | Ship | |
 
-Golden cases green: 4 of 11 (A, B, C, D).
+Golden cases green: 8 of 11 (A through H).
