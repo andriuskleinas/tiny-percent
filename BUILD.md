@@ -32,7 +32,7 @@ Task 0.6 is the one step left and it needs your hosting account.
 
 ---
 
-## Phase 01 — Ownership engine · 1.5d
+## Phase 01 — Ownership engine · 1.5d · DONE
 
 | | Task | Touches |
 |---|---|---|
@@ -46,6 +46,18 @@ Task 0.6 is the one step left and it needs your hosting account.
 
 **Done when** A–D pass, the pool constraint produces a readable error rather than
 a NaN, and the property tests hold over ten thousand random scenarios.
+
+All met. 32 tests across four files. The engine's tests assert against a fixture
+the oracle emits, and CI fails if regenerating it changes anything, so the Python
+and TypeScript models cannot drift apart. Both guards were proved to fire by
+planting a failure.
+
+One change to the plan: `followOnBreakEven` dropped its `ownBefore` parameter.
+The break-even is exactly the post-money paid and genuinely does not depend on
+your existing stake, so the signature now says so. Deriving it by subtracting the
+two ownerships lost precision on small cheques — a one-cent cheque into a $500M
+round came out about $40 low — so the identity is computed directly and a test
+checks it against the subtraction.
 
 **Ship gate.** This is already an honest, useful calculator. Deploy here.
 

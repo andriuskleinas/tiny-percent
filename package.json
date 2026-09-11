@@ -12,7 +12,8 @@
     "test": "vitest",
     "test:run": "vitest run",
     "oracle": "python3 tools/oracle.py",
-    "check": "npm run typecheck && npm run lint && npm run test:run"
+    "check": "npm run typecheck && npm run lint && npm run test:run",
+    "oracle:emit": "python3 tools/oracle.py --emit"
   },
   "dependencies": {
     "react": "^19.2.8",

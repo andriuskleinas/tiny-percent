@@ -19,10 +19,11 @@ npm run check    # typecheck, lint, tests — the same gate CI runs
 npm run oracle   # verifies the plan's own numbers
 ```
 
-> **Use `npm ci`, not `npm install`.** npm 10's peer resolver crashes building
-> vitest 4's dependency tree from scratch. Installing from the committed lockfile
-> avoids it. If you must add a dependency, install it on its own with
-> `--legacy-peer-deps`.
+> **Adding a dependency needs `--legacy-peer-deps`.** npm 10's peer resolver
+> crashes while building vitest 4's dependency tree from scratch. Installing from
+> the committed lockfile is unaffected, so `npm install` and `npm ci` both work on
+> a normal clone. It only bites when resolving a new package, so add one with
+> `npm install -D <pkg> --legacy-peer-deps`.
 
 ## The oracle
 
@@ -31,8 +32,13 @@ plan, and an independent share-count cap table that knows nothing about it. It
 asserts the two agree across all 11 golden cases and every figure in the four
 visuals — 54 assertions.
 
-It runs in CI. If a TypeScript test and the oracle ever disagree, the oracle is
-right until proven otherwise, because it is two models agreeing rather than one.
+`npm run oracle:emit` writes `tools/golden-cases.json`, and the engine's tests
+assert against that file. CI regenerates it and fails if it differs from what is
+committed, so the Python and TypeScript implementations cannot drift apart
+quietly.
+
+If a TypeScript test and the oracle ever disagree, the oracle is right until
+proven otherwise, because it is two models agreeing rather than one.
 
 ## The engine boundary
 
@@ -45,10 +51,10 @@ calculation core is plain TypeScript so it stays portable and testable on its ow
 | Phase | | |
 |---|---|---|
 | 00 | Scaffold | done |
-| 01 | Ownership engine | next |
-| 02 | Instruments | |
+| 01 | Ownership engine | done |
+| 02 | Instruments | next |
 | 03 | Exit and fees | |
 | 04 | Interface | |
 | 05 | Ship | |
 
-Golden cases green: 0 of 11.
+Golden cases green: 4 of 11 (A, B, C, D).

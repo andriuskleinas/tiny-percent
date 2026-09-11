@@ -9,8 +9,8 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -25,10 +25,14 @@ jobs:
   oracle:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
       # Two independent models of the same maths. If they ever disagree, the
       # golden cases in the plan are wrong and the build stops.
       - run: python3 tools/oracle.py
+      # The engine's tests assert against a fixture the oracle emits. If
+      # regenerating it changes anything, the two implementations have drifted.
+      - run: python3 tools/oracle.py --emit
+      - run: git diff --exit-code tools/golden-cases.json
