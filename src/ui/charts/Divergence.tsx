@@ -1,4 +1,4 @@
-import { compactMoney, money } from '../format'
+import { useMoney } from '../currency'
 
 /**
  * The same deal down two paths: following on at every round, and never
@@ -27,6 +27,7 @@ export function Divergence({
   labels: string[]
   series: DivergenceSeries[]
 }) {
+  const { money, compactMoney } = useMoney()
   const peak = Math.max(...series.flatMap((s) => s.valuesCents), 1)
   const scale = (BASE - TOP) / peak
   const step = labels.length > 1 ? (X1 - X0) / (labels.length - 1) : 0

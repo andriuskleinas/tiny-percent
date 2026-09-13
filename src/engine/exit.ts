@@ -1,4 +1,5 @@
 import { roundCents } from './money'
+import type { Currency } from './types'
 
 /**
  * Liquidation preferences depend on the full cap table, which this calculator
@@ -29,6 +30,8 @@ export interface ExitInput {
    * half the company, which is unusual by the time a company exits.
    */
   cleanMultiple?: number | undefined
+  /** Used only to word the explanation. Defaults to US dollars. */
+  currency?: Currency | undefined
 }
 
 export interface ExitProceeds {
@@ -42,8 +45,13 @@ export interface ExitProceeds {
 
 export const DEFAULT_CLEAN_MULTIPLE = 2
 
-function currency(cents: number): string {
-  return `$${Math.round(cents / 100).toLocaleString('en-US')}`
+function formatter(code: Currency): (cents: number) => string {
+  const format = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: code,
+    maximumFractionDigits: 0,
+  })
+  return (cents) => format.format(Math.round(cents / 100))
 }
 
 /** Your share of a 1x non-participating preference stack, capped at your money back. */
@@ -58,6 +66,7 @@ function asConverted(input: ExitInput): number {
 }
 
 export function exitProceeds(input: ExitInput): ExitProceeds {
+  const currency = formatter(input.currency ?? 'USD')
   const clean = input.cleanMultiple ?? DEFAULT_CLEAN_MULTIPLE
   const regime: ExitRegime =
     input.valueCents <= input.totalRaisedCents

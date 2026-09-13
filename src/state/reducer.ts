@@ -1,5 +1,5 @@
 import type { CarryTerms, EntryFeeTerms, ManagementFeeTerms } from '../engine/fees'
-import type { ExitEvent, Instrument, Round, Scenario } from '../engine/types'
+import type { Currency, ExitEvent, Instrument, Round, Scenario } from '../engine/types'
 
 /**
  * One scenario object behind one reducer. No state library: there is exactly one
@@ -15,6 +15,7 @@ export type Action =
   | { type: 'fees:entry'; patch: Partial<EntryFeeTerms> }
   | { type: 'fees:carry'; patch: Partial<CarryTerms> }
   | { type: 'fees:management'; value: ManagementFeeTerms | undefined }
+  | { type: 'currency:set'; currency: Currency }
   | { type: 'scenario:replace'; scenario: Scenario }
 
 const ORDINALS = ['Seed', 'Series A', 'Series B', 'Series C', 'Series D', 'Series E', 'Series F']
@@ -77,6 +78,9 @@ export function reducer(state: Scenario, action: Action): Scenario {
 
     case 'fees:management':
       return { ...state, fees: { ...state.fees, management: action.value } }
+
+    case 'currency:set':
+      return { ...state, currency: action.currency }
 
     case 'scenario:replace':
       return action.scenario

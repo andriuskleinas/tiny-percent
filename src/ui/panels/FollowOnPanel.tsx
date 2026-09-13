@@ -1,3 +1,4 @@
+import { useMoney } from '../currency'
 import { useMemo, useState } from 'react'
 import type { ScenarioResult } from '../../engine/scenario'
 import { safeRun } from '../safeRun'
@@ -7,7 +8,7 @@ import { Divergence } from '../charts/Divergence'
 import { ValueBridge } from '../charts/ValueBridge'
 import type { BridgeStep } from '../charts/ValueBridge'
 import { Panel, SelectField } from '../controls'
-import { money, percent } from '../format'
+import { percent } from '../format'
 
 /** Run the same deal with one round's decision swapped out. */
 function withAction(
@@ -34,6 +35,7 @@ function allRounds(
 }
 
 export function FollowOnPanel({ scenario, run }: { scenario: Scenario; run: ScenarioResult }) {
+  const { money } = useMoney()
   const entryId = run.rounds.find((s) => s.conversion)?.round.id ?? run.rounds[0]?.round.id ?? ''
   const choosable = run.rounds.filter((s) => s.round.id !== entryId)
   const [selected, setSelected] = useState(choosable[0]?.round.id ?? '')
@@ -92,7 +94,7 @@ export function FollowOnPanel({ scenario, run }: { scenario: Scenario; run: Scen
   return (
     <Panel
       title="Following on"
-      lede="Writing the cheque and not writing it, side by side. The two answers usually disagree: one wins on dollars, the other on multiple."
+      lede="Writing the cheque and not writing it, side by side. The two answers usually disagree: one returns more money, the other a better multiple."
       aside={
         choosable.length > 1 ? (
           <div className="w-48">

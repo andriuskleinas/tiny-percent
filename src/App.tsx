@@ -4,6 +4,7 @@ import { appReducer, initialAppState } from './state/app'
 import { WORKED_EXAMPLE } from './state/presets'
 import { encodeScenario, scenarioFromLocation } from './state/url'
 import { ErrorBoundary, ErrorNotice } from './ui/ErrorNotice'
+import { CurrencyContext } from './ui/currency'
 import { safeRun } from './ui/safeRun'
 import { EntryPanel } from './ui/panels/EntryPanel'
 import { ExitPanel } from './ui/panels/ExitPanel'
@@ -39,6 +40,7 @@ export default function App() {
 
   return (
     <ErrorBoundary>
+      <CurrencyContext.Provider value={scenario.currency}>
       <SummaryStrip run={run} />
       <main className="mx-auto max-w-5xl px-5 pb-24 pt-10 sm:px-6">
         <header className="mb-8">
@@ -60,6 +62,7 @@ export default function App() {
           {error ? <ErrorNotice message={error.message} /> : null}
           <EntryPanel
             entry={scenario.entry}
+            currency={scenario.currency}
             conversion={entryRound?.conversion}
             stakeValueCents={entryRound?.stakeValueCents ?? 0}
             dispatch={dispatch}
@@ -79,6 +82,7 @@ export default function App() {
           </p>
         </footer>
       </main>
+      </CurrencyContext.Provider>
     </ErrorBoundary>
   )
 }

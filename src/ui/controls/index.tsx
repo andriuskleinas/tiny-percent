@@ -1,6 +1,7 @@
 import { useId } from 'react'
 import type { ReactNode } from 'react'
 import { toCents, toMajor } from '../../engine/money'
+import { useMoney } from '../currency'
 
 /**
  * Form controls. Every input is labelled, focusable and keyboard-reachable.
@@ -39,20 +40,21 @@ export function MoneyField({
   hint,
   valueCents,
   onChange,
-  symbol = '$',
+  symbol,
 }: {
   label: string
   hint?: string | undefined
   valueCents: number
   onChange: (cents: number) => void
-  symbol?: string
+  symbol?: string | undefined
 }) {
+  const { symbol: fallback } = useMoney()
   return (
     <Field label={label} hint={hint}>
       {(id) => (
         <div className="flex items-stretch">
           <span className="flex items-center border border-r-0 border-rule bg-sunk px-2.5 font-mono text-sm text-ink-faint">
-            {symbol}
+            {symbol ?? fallback}
           </span>
           <input
             id={id}
@@ -102,6 +104,40 @@ export function PercentField({
             %
           </span>
         </div>
+      )}
+    </Field>
+  )
+}
+
+export function NumberField({
+  label,
+  hint,
+  value,
+  onChange,
+  min = 0,
+  max,
+}: {
+  label: string
+  hint?: string | undefined
+  value: number
+  onChange: (value: number) => void
+  min?: number
+  max?: number | undefined
+}) {
+  return (
+    <Field label={label} hint={hint}>
+      {(id) => (
+        <input
+          id={id}
+          type="number"
+          inputMode="decimal"
+          min={min}
+          max={max}
+          step="any"
+          className={inputClass}
+          value={value}
+          onChange={(e) => onChange(Math.max(min, Number(e.target.value) || 0))}
+        />
       )}
     </Field>
   )

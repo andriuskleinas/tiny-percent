@@ -1,4 +1,4 @@
-import { compactMoney, money } from '../format'
+import { useMoney } from '../currency'
 
 /**
  * One round split into the forces acting on it: the company's valuation moving,
@@ -19,6 +19,7 @@ const X0 = 55
 const X1 = 425
 
 export function ValueBridge({ steps }: { steps: BridgeStep[] }) {
+  const { money, compactMoney } = useMoney()
   // Running totals give every floating bar its top and bottom.
   const bars = steps.reduce<Array<BridgeStep & { from: number; to: number }>>((acc, step) => {
     const running = acc[acc.length - 1]?.to ?? 0

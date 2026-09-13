@@ -1,10 +1,11 @@
+import { useMoney } from '../currency'
 import { matures } from '../../engine/instrument'
 import type { ScenarioResult } from '../../engine/scenario'
 import type { Scenario } from '../../engine/types'
 import type { Action } from '../../state/reducer'
 import { FeeDrag } from '../charts/FeeDrag'
-import { MoneyField, Panel, PercentField, SelectField, Stat, TextField } from '../controls'
-import { money, percent } from '../format'
+import { MoneyField, NumberField, Panel, PercentField, SelectField, Stat, TextField } from '../controls'
+import { percent } from '../format'
 
 const REGIME_TONE: Record<string, string> = {
   clean: 'text-gain',
@@ -21,7 +22,9 @@ export function ExitPanel({
   run: ScenarioResult
   dispatch: (action: Action) => void
 }) {
+  const { money } = useMoney()
   const { exit, fees } = scenario
+  const management = fees.management
   const low = run.feesLow
   const high = run.feesHigh
   const band = run.exit.uncertain
@@ -69,7 +72,33 @@ export function ExitPanel({
         Syndicate terms
       </h3>
       <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <PercentField label="Entry fee" value={fees.entry.percent ?? 0} onChange={(percent) => dispatch({ type: 'fees:entry', patch: { percent, rule: 'percent' } })} />
+        <SelectField
+          label="Entry fee basis"
+          value={fees.entry.rule}
+          options={[
+            ['percent', 'Percentage of the cheque'],
+            ['fixed', 'Fixed amount'],
+            ['greater_of', 'Greater of the two'],
+          ] as const}
+          onChange={(rule) => dispatch({ type: 'fees:entry', patch: { rule } })}
+        />
+        {/* Each field patches only its own term. Sending the rule along with the
+            percentage once silently deleted a fixed minimum fee. */}
+        {fees.entry.rule !== 'fixed' ? (
+          <PercentField
+            label="Entry fee percentage"
+            value={fees.entry.percent ?? 0}
+            onChange={(percent) => dispatch({ type: 'fees:entry', patch: { percent } })}
+          />
+        ) : null}
+        {fees.entry.rule !== 'percent' ? (
+          <MoneyField
+            label="Fixed entry fee"
+            valueCents={fees.entry.fixedCents ?? 0}
+            onChange={(fixedCents) => dispatch({ type: 'fees:entry', patch: { fixedCents } })}
+            hint={fees.entry.rule === 'greater_of' ? 'Charged instead when it is larger.' : undefined}
+          />
+        ) : null}
         <SelectField
           label="Entry fee is"
           value={fees.entry.charged}
@@ -86,16 +115,52 @@ export function ExitPanel({
           onChange={(hurdlePercent) => dispatch({ type: 'fees:carry', patch: { hurdlePercent: hurdlePercent || undefined } })}
           hint="Carry waits until you are this far ahead."
         />
+        <SelectField
+          label="Management fee"
+          value={management?.source ?? 'none'}
+          options={[
+            ['none', 'None'],
+            ['capital', 'Drawn from capital'],
+            ['invoiced', 'Invoiced separately'],
+          ] as const}
+          onChange={(source) =>
+            dispatch({
+              type: 'fees:management',
+              value:
+                source === 'none'
+                  ? undefined
+                  : {
+                      annualPercent: management?.annualPercent ?? 0.02,
+                      years: management?.years ?? 10,
+                      source,
+                    },
+            })
+          }
+          hint="Charged on the cheque each year, for the life of the fund."
+        />
+        {management ? (
+          <>
+            <PercentField
+              label="Management fee per year"
+              value={management.annualPercent}
+              onChange={(annualPercent) => dispatch({ type: 'fees:management', value: { ...management, annualPercent } })}
+            />
+            <NumberField
+              label="Charged for how many years"
+              value={management.years}
+              max={30}
+              onChange={(years) => dispatch({ type: 'fees:management', value: { ...management, years } })}
+            />
+          </>
+        ) : null}
       </div>
 
       <div className="mt-8 border-t border-rule pt-6">
         <FeeDrag
           grossCents={run.exit.lowCents}
-          slices={[
-            { label: 'Net to you', cents: low.netCents, tone: 'net' },
-            { label: 'Carry', cents: low.carryCents, tone: 'fee' },
-            { label: 'Fees', cents: low.entryFeeCents + low.managementFeeCents, tone: 'fee' },
-          ]}
+          netCents={low.netCents}
+          carryCents={low.carryCents}
+          feesPaidCents={low.entryFeeCents + low.managementFeeCents}
         />
       </div>
 

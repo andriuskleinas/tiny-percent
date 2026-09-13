@@ -1,4 +1,5 @@
-import { compactMoney, money, percent } from '../format'
+import { useMoney } from '../currency'
+import { percent } from '../format'
 
 /**
  * Width is ownership, height is the company's valuation, so the area of each
@@ -19,6 +20,7 @@ const BASE = 225
 const MAX_H = 180
 
 export function AreaWealth({ points }: { points: AreaPoint[] }) {
+  const { money, compactMoney } = useMoney()
   const maxOwn = Math.max(...points.map((p) => p.ownership), 0)
   const maxVal = Math.max(...points.map((p) => p.valuationCents), 1)
 

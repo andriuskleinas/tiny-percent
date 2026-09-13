@@ -201,11 +201,32 @@ effect at all. Zero lint warnings remain.
 
 | | |
 |---|---|
-| Tests | 186 across 12 files |
+| Tests | 213 across 16 files |
 | Golden cases | 11 of 11 |
 | Oracle assertions | 58 |
 | Runtime dependencies | React, and nothing else |
+| Rendered UI tests | Testing Library and jsdom, dev-only |
 | Lint warnings | 0 |
+
+## After v1: making every figure trustworthy
+
+Four defects found by reading the shipped code and driving the page, each now
+guarded by a test that renders the real component.
+
+- **Editing the entry fee deleted a fixed minimum.** The percentage field sent
+  the fee rule along with the value, so touching it switched a greater-of fee to
+  percentage-only and changed the result silently. Each field now patches only
+  its own term.
+- **Currency was ignored.** Scenarios carried a currency but every figure,
+  chart label, input prefix and the engine's own exit explanation printed
+  dollars. The currency is now chosen on screen and reaches all of them.
+- **Two fee terms had no inputs.** The engine supported a management fee and a
+  fixed-minimum entry fee, and links could carry them, but nobody could edit
+  them. Both are now on screen, showing only the fields each basis uses.
+- **The fee bar drew past its own total.** Entry and management fees were drawn
+  as a segment of the gross proceeds bar, but they are paid on the way in, never
+  out of the proceeds. The bar now divides only net and carry, which sum to the
+  gross exactly, and states the fees underneath.
 
 ## Running check
 

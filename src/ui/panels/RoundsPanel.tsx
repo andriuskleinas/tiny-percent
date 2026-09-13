@@ -1,9 +1,10 @@
+import { useMoney } from '../currency'
 import type { RoundState } from '../../engine/scenario'
 import type { Round } from '../../engine/types'
 import type { Action } from '../../state/reducer'
 import { AreaWealth } from '../charts/AreaWealth'
 import { Button, MoneyField, Panel, PercentField, SelectField, TextField } from '../controls'
-import { money, percent } from '../format'
+import { percent } from '../format'
 
 const ACTIONS = [
   ['sit_out', 'Sit out'],
@@ -20,6 +21,7 @@ export function RoundsPanel({
   states: RoundState[]
   dispatch: (action: Action) => void
 }) {
+  const { money } = useMoney()
   return (
     <Panel
       title="The rounds"

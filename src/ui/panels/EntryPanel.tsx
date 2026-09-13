@@ -1,9 +1,17 @@
+import { useMoney } from '../currency'
 import { accruesInterest, defaultCapBasis, instrumentPath } from '../../engine/instrument'
 import type { Conversion } from '../../engine/instrument'
-import type { Instrument, InstrumentType } from '../../engine/types'
+import type { Currency, Instrument, InstrumentType } from '../../engine/types'
 import type { Action } from '../../state/reducer'
 import { MoneyField, Panel, PercentField, SelectField, Stat, TextField } from '../controls'
-import { money, percent } from '../format'
+import { percent } from '../format'
+
+// Plain names, no symbols: the option text is part of the page.
+const CURRENCIES: ReadonlyArray<readonly [Currency, string]> = [
+  ['USD', 'US dollar'],
+  ['EUR', 'Euro'],
+  ['GBP', 'Pound sterling'],
+]
 
 const TYPES: ReadonlyArray<readonly [InstrumentType, string]> = [
   ['equity', 'Priced equity'],
@@ -28,16 +36,19 @@ function fieldsFor(type: InstrumentType) {
 
 export function EntryPanel({
   entry,
+  currency,
   conversion,
   stakeValueCents,
   dispatch,
 }: {
   entry: Instrument
+  currency: Currency
   conversion: Conversion | undefined
   /** What the stake was worth the moment it was bought. */
   stakeValueCents: number
   dispatch: (action: Action) => void
 }) {
+  const { money } = useMoney()
   const show = fieldsFor(entry.type)
   const set = (patch: Partial<Instrument>) => dispatch({ type: 'entry:set', patch })
 
@@ -54,6 +65,12 @@ export function EntryPanel({
           onChange={(type) => set({ type })}
         />
         <MoneyField label="Amount" valueCents={entry.amountCents} onChange={(amountCents) => set({ amountCents })} />
+        <SelectField
+          label="Currency"
+          value={currency}
+          options={CURRENCIES}
+          onChange={(next) => dispatch({ type: 'currency:set', currency: next })}
+        />
         <TextField label="Date" type="date" value={entry.date} onChange={(date) => set({ date })} />
 
         {show.cap ? (

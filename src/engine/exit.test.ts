@@ -121,3 +121,31 @@ describe('a loan that never converted is repaid first', () => {
     expect(wipeout.lowCents).toBe(toCents(40_000))
   })
 })
+
+describe('explanations are written in the deal’s currency', () => {
+  it('uses dollars by default', () => {
+    expect(exitProceeds(base).explanation).toContain('$20,000,000')
+  })
+
+  it('uses euros for a euro deal and never a dollar sign', () => {
+    for (const millions of [15, 30, 60]) {
+      const { explanation } = exitProceeds({
+        ...base,
+        currency: 'EUR',
+        valueCents: toCents(millions * 1_000_000),
+      })
+      expect(explanation).toContain('€')
+      expect(explanation).not.toContain('$')
+    }
+  })
+
+  it('uses pounds for a repaid loan too', () => {
+    const { explanation } = exitProceeds({
+      ...base,
+      currency: 'GBP',
+      ownership: 0,
+      unconvertedLoanOwedCents: toCents(62_000),
+    })
+    expect(explanation).toContain('£62,000')
+  })
+})

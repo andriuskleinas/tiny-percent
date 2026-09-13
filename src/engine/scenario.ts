@@ -165,6 +165,7 @@ export function runScenario(scenario: Scenario): ScenarioResult {
     ownership,
     investedCents: totalInvested,
     unconvertedLoanOwedCents: owed,
+    currency: scenario.currency,
   })
 
   const feesLow = applyFees(cheques, exit.lowCents, scenario.fees)

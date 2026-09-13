@@ -274,3 +274,11 @@ describe('a loan the angel chooses not to convert', () => {
     expect(result.irrLow as number).toBeGreaterThan(0)
   })
 })
+
+describe('the scenario’s currency reaches the engine’s own wording', () => {
+  it('explains a euro exit in euros', () => {
+    const { explanation } = runScenario(deal({ currency: 'EUR' })).exit
+    expect(explanation).toContain('€20,000,000')
+    expect(explanation).not.toContain('$')
+  })
+})

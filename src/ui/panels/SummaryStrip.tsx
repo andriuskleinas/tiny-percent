@@ -1,5 +1,6 @@
+import { useMoney } from '../currency'
 import type { ScenarioResult } from '../../engine/scenario'
-import { money, percent } from '../format'
+import { percent } from '../format'
 
 /**
  * Always visible. Ownership never appears without the value beside it, here or
@@ -7,6 +8,7 @@ import { money, percent } from '../format'
  * lesson.
  */
 export function SummaryStrip({ run }: { run: ScenarioResult }) {
+  const { money } = useMoney()
   const last = run.rounds[run.rounds.length - 1]
   const net = run.feesLow.netMultiple
   const netHigh = run.feesHigh.netMultiple
