@@ -36,7 +36,7 @@ function mount(initial: Scenario, panel: Panel = 'exit') {
       <CurrencyContext.Provider value={scenario.currency}>
         {panel === 'entry' && entry ? <EntryPanel round={entry} currency={scenario.currency} state={run.rounds[0]} dispatch={dispatch} /> : null}
         {panel === 'rounds' ? <RoundsPanel rounds={scenario.rounds.slice(1)} states={run.rounds} dispatch={dispatch} /> : null}
-        {panel === 'exit' ? <ExitPanel scenario={scenario} run={run} dispatch={dispatch} /> : null}
+        {panel === 'exit' ? <ExitPanel scenario={scenario} workable={scenario} run={run} dispatch={dispatch} /> : null}
       </CurrencyContext.Provider>
     )
   }

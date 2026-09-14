@@ -1,28 +1,29 @@
 import { useMoney } from '../currency'
-import { ownAfter, postMoney, proRata, stakeValue } from '../../engine/ownership'
+import { ownAfter, postMoney, stakeValue } from '../../engine/ownership'
 import { roundTerms } from '../../engine/scenario'
 import type { RoundState } from '../../engine/scenario'
-import type { Instrument, Round, RoundLabel } from '../../engine/types'
+import { ROUND_LABELS } from '../../engine/types'
+import type { Instrument, InstrumentType, Round } from '../../engine/types'
 import type { Action } from '../../state/reducer'
 import { AreaWealth } from '../charts/AreaWealth'
-import type { AreaPoint } from '../charts/AreaWealth'
-import { Button, MoneyField, Panel, PercentField, SelectField, SwitchField, TextField } from '../controls'
-import { INSTRUMENT_NOTE, percent } from '../format'
+import { Button, Disclosure, InfoTip, MoneyField, Panel, PercentField, SelectField, SwitchField, TextField } from '../controls'
+import { INSTRUMENT_NOTE, ownership, roundName } from '../format'
+import { DilutionTable } from './DilutionTable'
+import { hasEntryFee } from '../facts'
+import { EntryFeeFields } from './EntryFeeFields'
 
-const LABELS: ReadonlyArray<readonly [RoundLabel, string]> = [
-  ['Pre-seed', 'Pre-seed'],
-  ['Seed', 'Seed'],
-  ['Series A', 'Series A'],
-  ['Series B', 'Series B'],
-  ['Series C', 'Series C'],
-  ['Series D+', 'Series D+'],
+const CUSTOM = 'custom'
+
+const LABEL_OPTIONS: ReadonlyArray<readonly [string, string]> = [
+  ...ROUND_LABELS.map((label) => [label, label] as const),
+  [CUSTOM, 'Custom name…'],
 ]
 
-const TYPES = [
+const TYPES: ReadonlyArray<readonly [InstrumentType, string]> = [
   ['equity', 'Priced equity'],
   ['safe', 'SAFE'],
   ['cla', 'Convertible loan (CLA)'],
-] as const
+]
 
 const VALUATION_BASIS = [
   ['pre', 'Pre-money'],
@@ -34,25 +35,39 @@ const PARTICIPATE = [
   ['yes', 'Yes'],
 ] as const
 
-const DEFAULT_ENTRY_FEE = { rule: 'percent' as const, percent: 0 }
+const NO_FEE = { rule: 'percent' as const, percent: 0 }
 
-function defaultInstrument(): Instrument {
-  return { type: 'equity', amountCents: 0, entryFee: DEFAULT_ENTRY_FEE }
+function isPreset(label: string): boolean {
+  return (ROUND_LABELS as readonly string[]).includes(label)
 }
 
-/** What ownership and stake would be if this round were sat out entirely. */
-function sitOutView(round: Round, state: RoundState) {
-  const terms = roundTerms(round)
-  const ownership = ownAfter(state.ownershipBefore, terms, 0)
-  return { ownership, stakeValueCents: stakeValue(ownership, postMoney(terms)) }
+interface Strategy {
+  title: string
+  chequeCents: number
+  ownership: number
+  valueCents: number
 }
 
-/** A pro-rata cheque holds ownership exactly level — that is what "pro-rata" means. */
-function proRataView(round: Round, state: RoundState) {
-  const terms = roundTerms(round)
-  const chequeCents = proRata(state.ownershipBefore, terms)
-  const stakeValueCents = stakeValue(state.ownershipBefore, postMoney(terms))
-  return { ownership: state.ownershipBefore, stakeValueCents, chequeCents }
+/**
+ * The three answers to "should I follow on?" for one round. Priced from the
+ * round as it last ran (`state.round`), never from what is mid-edit, because
+ * the engine throws on inputs with no answer and a throw here would blank the
+ * page.
+ */
+function strategies(state: RoundState): [Strategy, Strategy, Strategy] {
+  const terms = roundTerms(state.round)
+  const post = postMoney(terms)
+  const sitOut = ownAfter(state.ownershipBefore, terms, 0)
+  return [
+    { title: 'No follow-on', chequeCents: 0, ownership: sitOut, valueCents: stakeValue(sitOut, post) },
+    { title: 'Your follow-on', chequeCents: state.investedCents, ownership: state.ownershipAfter, valueCents: state.stakeValueCents },
+    {
+      title: 'Maintain pro-rata',
+      chequeCents: state.proRataCents,
+      ownership: state.ownershipBefore,
+      valueCents: stakeValue(state.ownershipBefore, post),
+    },
+  ]
 }
 
 export function RoundsPanel({
@@ -62,159 +77,173 @@ export function RoundsPanel({
 }: {
   /** Follow-on rounds only — the entry (`rounds[0]`) has its own panel. */
   rounds: Round[]
-  /** Every round's computed state, entry included, for the chart at the top. */
+  /** Every round's computed state, entry included, in date order. */
   states: RoundState[]
   dispatch: (action: Action) => void
 }) {
   const { money } = useMoney()
+  const addRound = (
+    <Button tone="primary" onClick={() => dispatch({ type: 'round:add' })}>
+      + Add funding round
+    </Button>
+  )
+
   return (
     <Panel
-      title="The rounds"
-      lede="Each round the company raises dilutes you unless you write a cheque. Your slice falls; watch what happens to what it is worth."
-      aside={<Button onClick={() => dispatch({ type: 'round:add' })}>Add follow-on round</Button>}
+      id="future-rounds"
+      title="Future funding rounds"
+      lede="Each time the company raises money it issues new shares, so your percentage falls unless you invest again. What that percentage is worth can still grow."
+      aside={addRound}
     >
-      <AreaWealth
-        points={states
-          .filter((s) => s.ownershipAfter > 0)
-          .map((s) => ({
-            label: s.round.label,
-            ownership: s.ownershipAfter,
-            valuationCents: s.postMoneyCents,
-            valueCents: s.stakeValueCents,
-          }))}
-      />
-      <p className="mx-auto mt-2 max-w-prose text-center text-xs text-ink-faint">
-        Width is your ownership, height is the company&rsquo;s valuation. The area of each
-        rectangle is what your stake is worth.
-      </p>
+      {rounds.length === 0 ? (
+        <div className="border border-dashed border-rule-strong px-5 py-8 text-center">
+          <p className="text-sm text-ink-soft">
+            No later rounds yet. Add a Series A to see how new money{' '}
+            <span className="inline-flex items-center gap-1">
+              dilutes you <InfoTip term="dilution" />
+            </span>{' '}
+            and what it would cost to keep your share.
+          </p>
+          <div className="mt-4 flex justify-center">{addRound}</div>
+        </div>
+      ) : (
+        <>
+          <AreaWealth
+            points={states
+              .filter((s) => s.ownershipAfter > 0)
+              .map((s) => ({
+                label: roundName(s.round),
+                ownership: s.ownershipAfter,
+                valuationCents: s.postMoneyCents,
+                valueCents: s.stakeValueCents,
+              }))}
+          />
+          <p className="mx-auto mt-2 max-w-prose text-center text-xs text-ink-faint">
+            Width is your ownership, height is the company&rsquo;s valuation, so each area is the paper value of
+            your stake.
+          </p>
+          <div className="mt-6">
+            <DilutionTable states={states} />
+          </div>
+        </>
+      )}
 
       <div className="mt-8 flex flex-col gap-6">
         {rounds.map((round) => {
           const state = states.find((s) => s.round.id === round.id)
           const set = (patch: Partial<Round>) => dispatch({ type: 'round:set', id: round.id, patch })
-          const participate = (patch: Partial<Instrument>) =>
-            dispatch({ type: 'round:participate', id: round.id, patch })
-          const participating = round.participation !== undefined
-
-          const sitOut = state ? sitOutView(round, state) : undefined
-          const proRataInfo = state ? proRataView(round, state) : undefined
-
-          const points: AreaPoint[] =
-            state && sitOut && proRataInfo
-              ? [
-                  { label: 'No follow-on', ownership: sitOut.ownership, valuationCents: state.postMoneyCents, valueCents: sitOut.stakeValueCents },
-                  { label: 'Your amount', ownership: state.ownershipAfter, valuationCents: state.postMoneyCents, valueCents: state.stakeValueCents },
-                  { label: 'Pro-rata', ownership: proRataInfo.ownership, valuationCents: state.postMoneyCents, valueCents: proRataInfo.stakeValueCents },
-                ]
-              : []
+          const participate = (patch: Partial<Instrument>) => dispatch({ type: 'round:participate', id: round.id, patch })
+          const cheque = round.participation
+          const name = roundName(round)
+          const held = state !== undefined && state.ownershipBefore > 0
 
           return (
-            <div key={round.id} className="border border-rule bg-ground/40 p-4">
-              <div className="mb-4 flex items-center justify-between gap-3">
-                <h3 className="font-semibold text-ink">{round.label}</h3>
+            <article key={round.id} aria-label={name} className="border border-rule bg-ground/40 p-4 sm:p-5">
+              <header className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <h3 className="font-semibold text-ink">{name}</h3>
                 <div className="flex items-center gap-3">
                   {state ? (
                     <p className="font-mono text-xs tabular-nums text-ink-faint">
-                      <span className="text-dilute">{percent(state.ownershipAfter)}</span>
+                      you own <span className="text-ink">{ownership(state.ownershipAfter)}</span>
                       {' · '}
-                      <span className="text-gain">{money(state.stakeValueCents)}</span>
+                      <span className="text-gain">{money(state.stakeValueCents)}</span> paper value
                     </p>
                   ) : null}
-                  <Button tone="quiet" onClick={() => dispatch({ type: 'round:remove', id: round.id })}>
+                  <Button tone="quiet" onClick={() => dispatch({ type: 'round:remove', id: round.id })} title={`Remove ${name}`}>
                     Remove
                   </Button>
                 </div>
-              </div>
+              </header>
 
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <SelectField label="Round" value={round.label} options={LABELS} onChange={(label) => set({ label })} />
+                <SelectField
+                  label="Round"
+                  value={isPreset(round.label) ? round.label : CUSTOM}
+                  options={LABEL_OPTIONS}
+                  onChange={(label) => set({ label: label === CUSTOM ? 'Custom round' : label })}
+                />
+                {isPreset(round.label) ? null : (
+                  <TextField label="Round name" value={round.label} onChange={(label) => set({ label: label.slice(0, 40) })} />
+                )}
                 <TextField label="Date" type="date" value={round.date} onChange={(date) => set({ date })} />
-                <MoneyField label="Raising" valueCents={round.raisedCents} onChange={(raisedCents) => set({ raisedCents })} />
-                <MoneyField label="Valuation" valueCents={round.valuationCents} onChange={(valuationCents) => set({ valuationCents })} />
-                <SwitchField label="Valuation basis" value={round.valuationBasis} options={VALUATION_BASIS} onChange={(valuationBasis) => set({ valuationBasis })} />
+                <MoneyField label="New capital raised" valueCents={round.raisedCents} onChange={(raisedCents) => set({ raisedCents })} />
+                <MoneyField
+                  label="Company valuation"
+                  info={round.valuationBasis === 'pre' ? 'preMoney' : 'postMoney'}
+                  valueCents={round.valuationCents}
+                  onChange={(valuationCents) => set({ valuationCents })}
+                />
+                <SwitchField label="Valuation basis" info="valuationBasis" value={round.valuationBasis} options={VALUATION_BASIS} onChange={(valuationBasis) => set({ valuationBasis })} />
                 <PercentField
                   label="New option pool"
+                  info="optionPool"
                   value={round.newOptionPool ?? 0}
                   onChange={(newOptionPool) => set({ newOptionPool: newOptionPool || undefined })}
-                  hint="Carved out of the pre-money, so you pay for it."
+                  hint="Carved out of the pre-money, so you share the dilution."
                 />
+              </div>
+
+              {held && state ? (
+                <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border border-accent/30 bg-accent-wash/50 px-4 py-3">
+                  <p className="flex flex-wrap items-center gap-1.5 text-sm text-ink-soft">
+                    <span>
+                      Amount required to keep your {ownership(state.ownershipBefore)}:{' '}
+                      <strong className="font-mono tabular-nums text-ink">{money(state.proRataCents)}</strong>
+                    </span>
+                    <InfoTip term="proRata" />
+                  </p>
+                  {cheque?.amountCents === state.proRataCents ? (
+                    <span className="font-mono text-[11px] uppercase tracking-wider text-gain">Pro-rata selected</span>
+                  ) : (
+                    <Button
+                      onClick={() =>
+                        participate({
+                          ...(cheque ?? { type: 'equity' as const, entryFee: NO_FEE }),
+                          amountCents: state.proRataCents,
+                        })
+                      }
+                    >
+                      Invest pro-rata
+                    </Button>
+                  )}
+                </div>
+              ) : null}
+
+              <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <SwitchField
-                  label="Do you participate in this round?"
-                  value={participating ? 'yes' : 'no'}
+                  label="Do you invest in this round?"
+                  value={cheque ? 'yes' : 'no'}
                   options={PARTICIPATE}
                   onChange={(choice) =>
                     choice === 'no'
                       ? dispatch({ type: 'round:sitOut', id: round.id })
-                      : dispatch({ type: 'round:participate', id: round.id, patch: round.participation ?? defaultInstrument() })
+                      : participate(cheque ?? { type: 'equity', amountCents: 0, entryFee: NO_FEE })
                   }
                 />
+                {cheque ? (
+                  <MoneyField
+                    label="Your follow-on investment"
+                    valueCents={cheque.amountCents}
+                    onChange={(amountCents) => participate({ amountCents })}
+                  />
+                ) : null}
               </div>
 
-              {participating && round.participation ? (
-                <div className="mt-4 grid gap-4 border-t border-rule pt-4 sm:grid-cols-2 lg:grid-cols-3">
-                  <SelectField label="Instrument" value={round.participation.type} options={TYPES} onChange={(type) => participate({ type })} hint={INSTRUMENT_NOTE} />
-                  <MoneyField label="Your cheque" valueCents={round.participation.amountCents} onChange={(amountCents) => participate({ amountCents })}
-                    hint={state ? `Pro-rata here is ${money(state.proRataCents)}.` : undefined} />
-                  <SelectField
-                    label="Entry fee basis"
-                    value={round.participation.entryFee.rule}
-                    options={[
-                      ['percent', 'Percentage of the cheque'],
-                      ['fixed', 'Fixed amount'],
-                      ['greater_of', 'Greater of the two'],
-                    ] as const}
-                    onChange={(rule) => participate({ entryFee: { ...round.participation?.entryFee, rule } })}
-                  />
-                  {round.participation.entryFee.rule !== 'fixed' ? (
-                    <PercentField
-                      label="Entry fee percentage"
-                      value={round.participation.entryFee.percent ?? 0}
-                      onChange={(value) => participate({ entryFee: { ...round.participation?.entryFee, rule: round.participation?.entryFee.rule ?? 'percent', percent: value } })}
-                    />
-                  ) : null}
-                  {round.participation.entryFee.rule !== 'percent' ? (
-                    <MoneyField
-                      label="Fixed entry fee"
-                      valueCents={round.participation.entryFee.fixedCents ?? 0}
-                      onChange={(fixedCents) => participate({ entryFee: { ...round.participation?.entryFee, rule: round.participation?.entryFee.rule ?? 'fixed', fixedCents } })}
-                    />
-                  ) : null}
+              {cheque ? (
+                <div className="mt-4">
+                  <Disclosure summary="Instrument and fees for this cheque" defaultOpen={hasEntryFee(cheque)}>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <SelectField label="Instrument" value={cheque.type} options={TYPES} onChange={(type) => participate({ type })} hint={INSTRUMENT_NOTE} />
+                    </div>
+                    <div className="mt-4">
+                      <EntryFeeFields fee={cheque.entryFee} onChange={(entryFee) => participate({ entryFee })} />
+                    </div>
+                  </Disclosure>
                 </div>
               ) : null}
 
-              {state && points.length > 0 ? (
-                <div className="mt-6 border-t border-rule pt-6">
-                  <AreaWealth points={points} />
-                  <div className="mt-4 grid gap-4 sm:grid-cols-3">
-                    {[
-                      { title: 'No follow-on', ownership: sitOut?.ownership ?? 0, stakeValueCents: sitOut?.stakeValueCents ?? 0, chequeCents: 0 },
-                      { title: 'Your amount', ownership: state.ownershipAfter, stakeValueCents: state.stakeValueCents, chequeCents: state.investedCents },
-                      { title: 'Pro-rata', ownership: proRataInfo?.ownership ?? 0, stakeValueCents: proRataInfo?.stakeValueCents ?? 0, chequeCents: proRataInfo?.chequeCents ?? 0 },
-                    ].map(({ title, ownership, stakeValueCents, chequeCents }) => (
-                      <div key={title} className="border border-rule p-3">
-                        <h4 className="font-mono text-[11px] uppercase tracking-wider text-ink-faint">{title}</h4>
-                        <dl className="mt-2 flex flex-col gap-1.5 text-sm">
-                          {[
-                            ['Cheque here', money(chequeCents)],
-                            ['Stake after', percent(ownership, 3)],
-                            ['Worth after', money(stakeValueCents)],
-                          ].map(([label, value]) => (
-                            <div key={label} className="flex justify-between gap-4">
-                              <dt className="text-ink-faint">{label}</dt>
-                              <dd className="font-mono tabular-nums text-ink">{value}</dd>
-                            </div>
-                          ))}
-                        </dl>
-                      </div>
-                    ))}
-                  </div>
-                  <p className="mx-auto mt-3 max-w-prose text-center text-xs text-ink-faint">
-                    No follow-on, your typed cheque, and the pro-rata cheque that would keep your
-                    stake exactly level — side by side.
-                  </p>
-                </div>
-              ) : null}
-            </div>
+              {held && state ? <FollowOnComparison round={round} state={state} /> : null}
+            </article>
           )
         })}
       </div>
@@ -222,3 +251,44 @@ export function RoundsPanel({
   )
 }
 
+function FollowOnComparison({ round, state }: { round: Round; state: RoundState }) {
+  const { money } = useMoney()
+  const options = strategies(state)
+  const widest = Math.max(...options.map((o) => o.ownership), Number.EPSILON)
+
+  return (
+    <div className="mt-6 border-t border-rule pt-5">
+      <h4 className="font-mono text-[10px] uppercase tracking-wider text-ink-faint">
+        Compare your options in {roundName(round)}
+      </h4>
+      <ul className="mt-3 grid gap-3 sm:grid-cols-3">
+        {options.map((option) => {
+          const chosen = option.title === 'Your follow-on'
+          return (
+            <li key={option.title} className={`border p-3 ${chosen ? 'border-accent' : 'border-rule'}`}>
+              <p className="flex items-center justify-between gap-2 text-sm font-medium text-ink">
+                {option.title}
+                {chosen ? <span className="font-mono text-[10px] uppercase tracking-wider text-accent">current</span> : null}
+              </p>
+              <div className="mt-3 h-1.5 bg-sunk" aria-hidden="true">
+                <div className="h-full bg-accent" style={{ width: `${(option.ownership / widest) * 100}%` }} />
+              </div>
+              <dl className="mt-3 flex flex-col gap-1.5 text-sm">
+                {[
+                  [option.title === 'Maintain pro-rata' ? 'Required investment' : 'Additional investment', money(option.chequeCents)],
+                  ['Ownership after round', ownership(option.ownership)],
+                  ['Paper value after round', money(option.valueCents)],
+                ].map(([label, value]) => (
+                  <div key={label} className="flex justify-between gap-4">
+                    <dt className="text-ink-faint">{label}</dt>
+                    <dd className="font-mono tabular-nums text-ink">{value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </li>
+          )
+        })}
+      </ul>
+    </div>
+  )
+}

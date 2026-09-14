@@ -270,3 +270,57 @@ and for a follow-on round.
 | Tests | 149 across 15 files |
 | Oracle assertions | 43 |
 | Lint warnings | 0 |
+
+---
+
+## Landing page PRD — Phase 1: the calculator · DONE, awaiting review
+
+The calculator reshaped to PRD §11–26. The landing sections around it are
+Phase 2.
+
+| | Done |
+|---|---|
+| Your initial investment | Ownership is the headline result, with investment amount, total paid, post-money and paper value. Instrument, option pool and entry fee sit under "More terms". |
+| Money inputs | Thousands separators on blur; "5k", "4m", "1bn" accepted while typing. |
+| Start from scratch / Load example | Scratch empties every amount and the engine runs a blank form to zeros; the example is the €5,000 deal. |
+| Future funding rounds | "+ Add funding round", custom round names, a round-by-round table (cards on a phone), pro-rata quoted on every round with "Invest pro-rata", and no follow-on / your follow-on / maintain pro-rata side by side. |
+| Exit | €10M–€1B presets plus a custom value, potential gross proceeds, MOIC, IRR, a comparison table, and the PRD's short disclaimer. |
+| Summary | Beside the calculator on wide screens; a one-line bar pinned to the bottom on narrow ones. |
+| Explanations | Thirteen terms in `ui/glossary.ts`, behind keyboard-operable info buttons that close on Escape and stay inside a 320px screen. |
+| Sharing | System share sheet on touch devices, clipboard elsewhere, and the link to copy by hand if both are refused. |
+
+**Numbers.** Every figure the page shows about the example is computed, and
+golden case L in `tools/oracle.py` checks it against the share ledger:
+0.10% → 0.08% → 0.064% → 0.0512%, €128,000 and 25.6× at €250M, and each row of
+the exit table including its preference regime. At €10M and €25M the preference
+stack decides the answer, at €50M it is a range, and the table marks all three.
+
+**Fees are now paid on top of the cheque.** The simplification had the entry
+fee "come out of the cheque" for carry while the whole cheque still bought
+shares, which counted the same money twice. PRD §12 separates "investment
+amount" from "total amount paid", so both fees are now charged on top: the
+cheque buys shares, carry is charged on profit above the cheque, and outlay is
+cheque plus fees. This restores golden case J to the figures the oracle
+originally verified ($51,000 outlay, $90,000 carry). Fees default to none.
+
+**Defects found and fixed while building it.**
+
+- Typing an amount before a valuation blanked the page. The exit table and the
+  follow-on comparison ran the engine on the typed scenario instead of the last
+  workable one. Both now use the workable one, with a regression test.
+- A post-money valuation below the amount raised produced a negative pre-money
+  and a nonsense ownership. It is now refused with a message asking whether it
+  was meant as pre-money.
+- The next-round guess read a post-money valuation as if it were pre-money.
+- Faint text failed WCAG AA in both themes (3.1:1 light). The ink tokens are
+  now at least 4.5:1 on every surface they sit on, and text on the accent
+  colour has its own token so dark mode no longer puts white on light blue.
+- Two regions were both named "Your investment"; the first is now "Your
+  initial investment".
+
+| | |
+|---|---|
+| Tests | 204 across 17 files |
+| Oracle assertions | 53 across 8 golden cases |
+| Lint warnings | 0 |
+| Checked in the browser | 1440px light and dark, 320px with no horizontal scroll, every info popup in bounds |

@@ -1,4 +1,5 @@
 import type { CarryTerms, ManagementFeeTerms } from '../engine/fees'
+import { ROUND_LABELS } from '../engine/types'
 import type { Currency, ExitEvent, Instrument, Round, Scenario } from '../engine/types'
 
 /**
@@ -20,26 +21,30 @@ export type Action =
   | { type: 'exit:set'; patch: Partial<ExitEvent> }
   /** The whole scenario's currency. Amounts are relabelled, never converted. */
   | { type: 'currency:set'; currency: Currency }
+  /** Replaces everything: "Load example", "Start from scratch". */
+  | { type: 'scenario:load'; scenario: Scenario }
   | { type: 'fees:carry'; patch: Partial<CarryTerms> }
   | { type: 'fees:management'; value: ManagementFeeTerms | undefined }
 
-const LABELS: Round['label'][] = ['Pre-seed', 'Seed', 'Series A', 'Series B', 'Series C', 'Series D+']
 
 const NO_FEE = { rule: 'percent' as const, percent: 0 }
 
 function nextRound(rounds: Round[]): Round {
   const last = rounds[rounds.length - 1]
   const year = last ? Number(last.date.slice(0, 4)) + 2 : new Date().getFullYear()
-  const lastIndex = last ? LABELS.indexOf(last.label) : -1
-  const nextLabel = LABELS[Math.min(lastIndex + 1, LABELS.length - 1)] as Round['label']
+  // After a custom name, "Series A" is as good a guess as any.
+  const lastIndex = last ? ROUND_LABELS.indexOf(last.label as (typeof ROUND_LABELS)[number]) : -1
+  const nextLabel = last && lastIndex === -1 ? 'Series A' : ROUND_LABELS[Math.min(lastIndex + 1, ROUND_LABELS.length - 1)] ?? 'Series A'
+  const lastPost = last ? (last.valuationBasis === 'pre' ? last.valuationCents + last.raisedCents : last.valuationCents) : 0
   return {
-    id: `r${Date.now().toString(36)}`,
+    id: `r${Date.now().toString(36)}${rounds.length}`,
     label: nextLabel,
     date: `${year}-01-01`,
-    // A sensible next round: three times the last post-money, raising a fifth of it.
-    valuationCents: last ? (last.valuationCents + last.raisedCents) * 2 : 800_000_000,
+    // A sensible next round: two and a half times the last post-money, with the
+    // raise a fifth of the new post-money.
+    valuationCents: last ? lastPost * 2 : 800_000_000,
     valuationBasis: 'pre',
-    raisedCents: last ? Math.round((last.valuationCents + last.raisedCents) / 2) : 200_000_000,
+    raisedCents: last ? Math.round(lastPost / 2) : 200_000_000,
   }
 }
 
@@ -90,6 +95,9 @@ export function reducer(state: Scenario, action: Action): Scenario {
 
     case 'exit:set':
       return { ...state, exit: { ...state.exit, ...action.patch } }
+
+    case 'scenario:load':
+      return action.scenario
 
     case 'currency:set':
       return { ...state, currency: action.currency }

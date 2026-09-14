@@ -62,6 +62,12 @@ function dilutionFactor(terms: RoundTerms): number {
  * out. Everything the calculator knows about dilution lives in this one line.
  */
 export function ownAfter(ownBefore: number, terms: RoundTerms, invested = 0): number {
+  // A round with no valuation yet is what a blank form looks like. It has an
+  // answer only while there is nothing to price: no stake and no cheque.
+  if (postMoney(terms) <= 0) {
+    if (ownBefore === 0 && invested === 0) return 0
+    throw new RangeError('Enter the company’s valuation to price this round.')
+  }
   return ownBefore * dilutionFactor(terms) + invested / postMoney(terms)
 }
 

@@ -12,13 +12,14 @@ const twentyPercentCarry: FeeTerms = {
 describe('golden case J — $50k in, $1,000 entry fee, 20% carry, $500k gross', () => {
   const result = applyFees([cheque(toCents(50_000), toCents(1_000))], toCents(500_000), twentyPercentCarry)
 
-  it('deploys $49,000 after the entry fee', () => {
-    expect(result.deployedCents).toBe(toCents(49_000))
-    expect(result.outlayCents).toBe(toCents(50_000))
+  it('charges the fee on top, so the whole $50,000 buys shares and $51,000 leaves your account', () => {
+    expect(result.deployedCents).toBe(toCents(50_000))
+    expect(result.outlayCents).toBe(toCents(51_000))
   })
 
-  it('takes carry on the profit above what was deployed', () => {
-    expect(result.carryCents).toBe(Math.round(0.2 * (toCents(500_000) - toCents(49_000))))
+  it('takes carry on the profit above the cheque, never on the fee', () => {
+    expect(result.carryCents).toBe(toCents(90_000))
+    expect(result.netCents).toBe(toCents(410_000))
   })
 
   it('accounts for every dollar of drag', () => {
@@ -61,11 +62,11 @@ describe('management fee', () => {
     carry: { percent: 0, basis: 'per_deal' },
   }
 
-  it('is drawn from capital, reducing what was deployed', () => {
+  it('is paid on top, like the entry fee, so the cheque still buys the same shares', () => {
     const r = applyFees([cheque(toCents(50_000))], toCents(500_000), withManagement)
     expect(r.managementFeeCents).toBe(toCents(10_000))
-    expect(r.deployedCents).toBe(toCents(40_000))
-    expect(r.outlayCents).toBe(toCents(50_000))
+    expect(r.deployedCents).toBe(toCents(50_000))
+    expect(r.outlayCents).toBe(toCents(60_000))
   })
 })
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { toCents } from './money'
-import { runScenario } from './scenario'
+import { outcomesAt, runScenario } from './scenario'
 import type { Round, Scenario } from './types'
 
 /**
@@ -190,5 +190,47 @@ describe('the scenario’s currency reaches the engine’s own wording', () => {
     const { explanation } = runScenario(deal({ currency: 'EUR' })).exit
     expect(explanation).toContain('€20,000,000')
     expect(explanation).not.toContain('$')
+  })
+})
+
+describe('a blank scenario, before anything is typed', () => {
+  const blank = deal({
+    rounds: [{ ...(deal().rounds[0] as Round), valuationCents: 0, raisedCents: 0, participation: { type: 'equity', amountCents: 0, entryFee: NO_FEE } }],
+    exit: { ...deal().exit, totalRaisedCents: 0 },
+  })
+
+  it('runs to zeros rather than dividing by zero', () => {
+    const result = runScenario(blank)
+    expect(result.finalOwnership).toBe(0)
+    expect(result.totalInvestedCents).toBe(0)
+    expect(result.rounds[0]?.stakeValueCents).toBe(0)
+    expect(result.exit.lowCents).toBe(0)
+    expect(result.irrLow).toBeUndefined()
+  })
+
+  it('still refuses a cheque into a company with no valuation', () => {
+    const cheque = { ...blank, rounds: [{ ...(blank.rounds[0] as Round), participation: { type: 'equity' as const, amountCents: toCents(5_000), entryFee: NO_FEE } }] }
+    expect(() => runScenario(cheque)).toThrow(/valuation/)
+  })
+})
+
+describe('a post-money valuation smaller than the raise', () => {
+  it('is refused, because it would mean a negative pre-money', () => {
+    const round = { ...(deal().rounds[0] as Round), valuationBasis: 'post' as const, valuationCents: toCents(1_000_000) }
+    expect(() => runScenario(deal({ rounds: [round] }))).toThrow(/smaller than the .* raised/)
+  })
+})
+
+describe('outcomes at several exit values at once', () => {
+  it('matches running the scenario at each value on its own', () => {
+    const values = [toCents(15_000_000), toCents(30_000_000), toCents(60_000_000)]
+    const rows = outcomesAt(deal(), values)
+    rows.forEach((row, i) => {
+      const alone = runScenario(deal({ exit: { ...deal().exit, valueCents: values[i] as number } }))
+      expect(row.valueCents).toBe(values[i])
+      expect(row.exit).toEqual(alone.exit)
+      expect(row.feesLow).toEqual(alone.feesLow)
+      expect(row.feesHigh).toEqual(alone.feesHigh)
+    })
   })
 })

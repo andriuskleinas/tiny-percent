@@ -9,7 +9,13 @@ import type { Currency, ExitEvent, Instrument, InstrumentType, Round, Scenario }
 
 const CURRENCIES: readonly string[] = ['USD', 'EUR']
 const INSTRUMENTS: readonly string[] = ['equity', 'safe', 'cla']
-const LABELS: readonly string[] = ['Pre-seed', 'Seed', 'Series A', 'Series B', 'Series C', 'Series D+']
+/** Round names are free text — "Seed", "Series A" or whatever the user calls it. */
+export const MAX_LABEL_LENGTH = 40
+
+function isLabel(value: unknown): value is string {
+  // Empty is allowed: it is what a custom name looks like mid-edit.
+  return typeof value === 'string' && value.length <= MAX_LABEL_LENGTH
+}
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -58,12 +64,12 @@ function isRound(value: unknown): value is Round {
   if (!isObject(value)) return false
   return (
     isText(value['id']) &&
-    LABELS.includes(value['label'] as string) &&
+    isLabel(value['label']) &&
     isDate(value['date']) &&
     isAmount(value['raisedCents']) &&
-    // A valuation of zero would divide by zero in the very first calculation.
+    // A zero valuation is a blank form. The engine refuses to price a cheque
+    // against it, and the app falls back when a link cannot run.
     isAmount(value['valuationCents']) &&
-    (value['valuationCents'] as number) > 0 &&
     (value['valuationBasis'] === 'pre' || value['valuationBasis'] === 'post') &&
     optional(value['newOptionPool'], isFraction) &&
     optional(value['participation'], isInstrument)

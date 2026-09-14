@@ -3,7 +3,12 @@ import { roundCents } from './money'
 /**
  * Syndicate economics, kept deliberately simple: an entry fee charged on each
  * cheque, a management fee charged once against total capital, and carry on
- * the profit above what was deployed.
+ * the profit above what was invested.
+ *
+ * Both fees are paid on top of the cheque. The whole cheque buys shares, which
+ * is what the ownership maths assumes, and "total amount paid" is the cheque
+ * plus its fees. Deducting a fee from the cheque while still pricing shares on
+ * the full cheque would count the same money twice.
  */
 
 export interface EntryFeeTerms {
@@ -38,7 +43,7 @@ export interface FeeResult {
   carryCents: number
   /** Every dollar that did not reach you. */
   dragCents: number
-  /** What actually bought equity. */
+  /** What actually bought equity: the cheques themselves. */
   deployedCents: number
   /** What left your bank account. */
   outlayCents: number
@@ -64,9 +69,7 @@ export interface ChequeCost {
 /**
  * Entry fee is charged per cheque and already carried on each `ChequeCost`, so
  * a follow-on pays it again; the management fee and carry are charged once
- * across the total. The entry fee always comes out of the cheque, and the
- * management fee always reduces deployed capital — a syndicate's other choices
- * here are not modelled.
+ * across the total.
  */
 export function applyFees(
   cheques: ChequeCost[],
@@ -79,8 +82,8 @@ export function applyFees(
     ? roundCents(chequeCents * terms.management.annualPercent * terms.management.years)
     : 0
 
-  const deployed = chequeCents - entry - management
-  const outlay = chequeCents
+  const deployed = chequeCents
+  const outlay = chequeCents + entry + management
 
   const carry = roundCents(Math.max(0, grossProceedsCents - deployed) * terms.carry.percent)
   const net = grossProceedsCents - carry

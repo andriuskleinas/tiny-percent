@@ -28,6 +28,8 @@ export interface RoundState {
   ownershipAfter: number
   /** What the angel actually put in at this round. */
   investedCents: number
+  /** The entry fee on that cheque, paid on top of it. */
+  entryFeeCents: number
   /** What holding the prior position through this round would have cost. */
   proRataCents: number
   stakeValueCents: number
@@ -45,8 +47,17 @@ export interface ScenarioResult {
   irrHigh: number | undefined
 }
 
+const whole = (cents: number): string => Math.round(cents / 100).toLocaleString('en-US')
+
 function preMoneyOf(round: Round): number {
-  return round.valuationBasis === 'pre' ? round.valuationCents : round.valuationCents - round.raisedCents
+  if (round.valuationBasis === 'pre') return round.valuationCents
+  if (round.valuationCents < round.raisedCents) {
+    throw new RangeError(
+      `${round.label}: a post-money valuation of ${whole(round.valuationCents)} is smaller than the ` +
+        `${whole(round.raisedCents)} raised, so it cannot include the raise. Is it a pre-money valuation?`,
+    )
+  }
+  return round.valuationCents - round.raisedCents
 }
 
 /** A round's terms. Exported so the UI can preview a counterfactual (sit out,
@@ -78,8 +89,9 @@ export function runScenario(scenario: Scenario): ScenarioResult {
     const invested = cheque?.amountCents ?? 0
     ownership = ownAfter(before, terms, invested)
 
+    const entryFee = cheque !== undefined && invested > 0 ? entryFeeFor(invested, cheque.entryFee) : 0
     if (cheque !== undefined && invested > 0) {
-      cheques.push({ chequeCents: invested, entryFeeCents: entryFeeFor(invested, cheque.entryFee) })
+      cheques.push({ chequeCents: invested, entryFeeCents: entryFee })
       flows.push({ date: round.date, amountCents: -invested })
     }
 
@@ -89,6 +101,7 @@ export function runScenario(scenario: Scenario): ScenarioResult {
       ownershipBefore: before,
       ownershipAfter: ownership,
       investedCents: invested,
+      entryFeeCents: entryFee,
       proRataCents: before > 0 ? proRata(before, terms) : 0,
       stakeValueCents: stakeValue(ownership, postMoney(terms)),
     })
@@ -121,4 +134,23 @@ export function runScenario(scenario: Scenario): ScenarioResult {
     irrLow: returnAt(feesLow.netCents),
     irrHigh: returnAt(feesHigh.netCents),
   }
+}
+
+export interface ExitOutcome {
+  valueCents: number
+  exit: ExitProceeds
+  feesLow: FeeResult
+  feesHigh: FeeResult
+}
+
+/**
+ * The same deal sold at several prices, for a table of hypothetical exits. Each
+ * row is a full run at that price, so a row can never disagree with what the
+ * page shows when that price is the one selected.
+ */
+export function outcomesAt(scenario: Scenario, valuesCents: readonly number[]): ExitOutcome[] {
+  return valuesCents.map((valueCents) => {
+    const run = runScenario({ ...scenario, exit: { ...scenario.exit, valueCents } })
+    return { valueCents, exit: run.exit, feesLow: run.feesLow, feesHigh: run.feesHigh }
+  })
 }

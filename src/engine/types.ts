@@ -19,11 +19,14 @@ export interface Instrument {
   entryFee: EntryFeeTerms
 }
 
-export type RoundLabel = 'Pre-seed' | 'Seed' | 'Series A' | 'Series B' | 'Series C' | 'Series D+'
+/** The names offered in the round picker. Any other non-empty name is a custom round. */
+export const ROUND_LABELS = ['Pre-seed', 'Seed', 'Series A', 'Series B', 'Series C', 'Series D'] as const
+export type RoundLabel = (typeof ROUND_LABELS)[number]
 
 export interface Round {
   id: string
-  label: RoundLabel
+  /** One of `ROUND_LABELS`, or a custom name. */
+  label: string
   /** ISO 8601 date. */
   date: string
   raisedCents: number

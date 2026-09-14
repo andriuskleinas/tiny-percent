@@ -39,12 +39,12 @@
     "grossCents": 50000000,
     "entryPercent": 0.02,
     "carryPercent": 0.2,
-    "outlayCents": 5000000,
-    "carryCents": 9020000,
-    "netCents": 40980000,
-    "dragCents": 9120000,
-    "grossMultiple": 10.204081632653061,
-    "netMultiple": 8.196
+    "outlayCents": 5100000,
+    "carryCents": 9000000,
+    "netCents": 41000000,
+    "dragCents": 9100000,
+    "grossMultiple": 10.0,
+    "netMultiple": 8.03921568627451
   },
   "K": {
     "exitCents": 1500000000,
@@ -55,10 +55,65 @@
   },
   "feeDrag": {
     "grossCents": 19200000,
-    "carryCents": 2860000,
-    "netCents": 16340000,
-    "outlayCents": 5000000,
-    "grossMultiple": 3.9183673469387754,
-    "netMultiple": 3.268
+    "carryCents": 2840000,
+    "netCents": 16360000,
+    "outlayCents": 5100000,
+    "grossMultiple": 3.84,
+    "netMultiple": 3.207843137254902
+  },
+  "L": {
+    "path": [
+      0.001,
+      0.0008,
+      0.00064,
+      0.0005120000000000001
+    ],
+    "finalOwnership": 0.0005120000000000001,
+    "proRataSeriesACents": 300000,
+    "totalRaisedCents": 3200000000,
+    "ladder": [
+      {
+        "valueCents": 1000000000,
+        "regime": "downside",
+        "lowCents": 156250,
+        "highCents": 156250
+      },
+      {
+        "valueCents": 2500000000,
+        "regime": "downside",
+        "lowCents": 390625,
+        "highCents": 390625
+      },
+      {
+        "valueCents": 5000000000,
+        "regime": "uncertain",
+        "lowCents": 500000,
+        "highCents": 2560000
+      },
+      {
+        "valueCents": 10000000000,
+        "regime": "clean",
+        "lowCents": 5120000,
+        "highCents": 5120000
+      },
+      {
+        "valueCents": 25000000000,
+        "regime": "clean",
+        "lowCents": 12800000,
+        "highCents": 12800000
+      },
+      {
+        "valueCents": 50000000000,
+        "regime": "clean",
+        "lowCents": 25600000,
+        "highCents": 25600000
+      },
+      {
+        "valueCents": 100000000000,
+        "regime": "clean",
+        "lowCents": 51200000,
+        "highCents": 51200000
+      }
+    ]
   }
 }

@@ -85,21 +85,20 @@ i_gross = c_own * 60e6
 eq("I gross proceeds", i_gross, 192_000)
 print(f"I  0.32% of $60M .............. ${i_gross:,.0f}")
 
-# J: fees. The entry fee always comes out of the cheque (never on top), and the
-# management fee always reduces deployed capital — the syndicate's other
-# choices here are not modelled.
+# J: fees. Fees are paid on top of the cheque, so the whole cheque buys shares
+# and carry is charged on the profit above the cheque, never on the fees.
 def fees(gross, cheque, entry_pct, carry_pct):
     entry = cheque * entry_pct
-    deployed = cheque - entry
-    outlay = cheque
+    deployed = cheque
+    outlay = cheque + entry
     carry = max(0.0, gross - deployed) * carry_pct
     net = gross - carry
     return dict(entry=entry, outlay=outlay, carry=carry, net=net,
                 gross_x=gross / deployed, net_x=net / outlay, drag=carry + entry)
 j = fees(500_000, 50_000, 0.02, 0.20)
-eq("J outlay", j["outlay"], 50_000); eq("J carry", j["carry"], 90_200)
-eq("J net", j["net"], 409_800)
-eq("J drag", j["drag"], 91_200)
+eq("J outlay", j["outlay"], 51_000); eq("J carry", j["carry"], 90_000)
+eq("J net", j["net"], 410_000);      eq("J net multiple", j["net_x"], 8.0392156862745, 1e-9)
+eq("J drag", j["drag"], 91_000)
 print(f"J  fees on $500k gross ........ outlay ${j['outlay']:,.0f}  carry ${j['carry']:,.0f}  "
       f"net ${j['net']:,.0f}  {j['gross_x']:.2f}x -> {j['net_x']:.2f}x  drag ${j['drag']:,.0f}")
 
@@ -111,6 +110,43 @@ k, regime = exit_proceeds(c_own, 50_000, 15e6, 20e6)
 eq("K proceeds", k, 37_500)
 naive = c_own * 15e6
 print(f"K  $15M exit, $20M raised ..... ${k:,.0f} [{regime}]   naive would say ${naive:,.0f}")
+
+# L: the EUR 5,000 example the landing page and "Load example" use. Every
+# number the page prints about it comes from the engine, and the engine is held
+# to this: EUR 4M pre raising 1M, then Series A, B and C at EUR 15M, 40M and
+# 100M post-money, each raising a fifth of its post-money, then an exit table.
+def exit_band(own, invested, exit_value, total_raised, clean_multiple=2):
+    pref = min(invested, invested / total_raised * exit_value) if total_raised > 0 else 0.0
+    conv = own * exit_value
+    if exit_value <= total_raised: return pref, pref, "downside"
+    if exit_value > total_raised * clean_multiple: return conv, conv, "clean"
+    return min(pref, conv), max(pref, conv), "uncertain"
+
+l_rounds = [(12e6, 3e6), (32e6, 8e6), (80e6, 20e6)]
+l_entry = own_after(0.0, 4e6, 1e6, invested=5_000)
+eq("L entry ownership", l_entry, 0.001)
+l_own, l_path = l_entry, [l_entry]
+L9 = Ledger(); L9.priced_round(4e6, 1e6, angel_invests=5_000)
+for pre, raised in l_rounds:
+    l_own = own_after(l_own, pre, raised)
+    l_path.append(l_own)
+    L9.priced_round(pre, raised)
+eq("L final ownership", l_own, 0.000512)
+eq("L ledger agrees", L9.own(), l_own)
+l_pro_rata_a = pro_rata(l_entry, 3e6, 12e6)
+eq("L pro-rata at Series A", l_pro_rata_a, 3_000)
+l_raised = 1e6 + sum(r for _, r in l_rounds)
+l_ladder = []
+for value in [10e6, 25e6, 50e6, 100e6, 250e6, 500e6, 1e9]:
+    lo, hi, regime = exit_band(l_own, 5_000, value, l_raised)
+    l_ladder.append(dict(value=value, low=lo, high=hi, regime=regime))
+eq("L at EUR 250M", l_ladder[4]["high"], 128_000); eq("L MOIC at EUR 250M", l_ladder[4]["high"] / 5_000, 25.6)
+eq("L at EUR 10M, downside", l_ladder[0]["low"], 1_562.5)
+eq("L at EUR 50M, uncertain low", l_ladder[2]["low"], 5_000); eq("L at EUR 50M, uncertain high", l_ladder[2]["high"], 25_600)
+print(f"L  EUR 5k example ............. {l_entry:.4%} -> {l_own:.4%}  [ledger {L9.own():.4%}]  "
+      f"EUR {l_ladder[4]['high']:,.0f} at EUR 250M")
+print("   exit table ................. " + "  ".join(
+    f"{r['value']/1e6:g}M:{r['regime'][0]}" for r in l_ladder))
 
 print()
 print("=" * 72)
@@ -159,8 +195,8 @@ print("   the two answers disagree ... CONFIRMED (more dollars, worse multiple)"
 
 # viz 4: fee drag on the running deal
 v4 = fees(192_000, 50_000, 0.02, 0.20)
-eq("viz4 carry", v4["carry"], 28_600); eq("viz4 net", v4["net"], 163_400)
-eq("viz4 gross x", v4["gross_x"], 192_000 / 49_000); eq("viz4 net x", v4["net_x"], 163_400 / 50_000)
+eq("viz4 carry", v4["carry"], 28_400); eq("viz4 net", v4["net"], 163_600)
+eq("viz4 gross x", v4["gross_x"], 3.84); eq("viz4 net x", v4["net_x"], 163_600 / 51_000)
 print(f"4  fee drag .................. ${192_000:,} gross -> ${v4['net']:,.0f} net   "
       f"{v4['gross_x']:.2f}x -> {v4['net_x']:.2f}x")
 seg = 323.7 + 56.2 + 4.0
@@ -211,6 +247,12 @@ def emit_fixture(path):
         "feeDrag": {"grossCents": cents(192_000), "carryCents": cents(v4["carry"]),
                     "netCents": cents(v4["net"]), "outlayCents": cents(v4["outlay"]),
                     "grossMultiple": v4["gross_x"], "netMultiple": v4["net_x"]},
+        "L": {"path": l_path, "finalOwnership": l_own,
+              "proRataSeriesACents": cents(l_pro_rata_a),
+              "totalRaisedCents": cents(l_raised),
+              "ladder": [{"valueCents": cents(r["value"]), "regime": r["regime"],
+                          "lowCents": cents(r["low"]), "highCents": cents(r["high"])}
+                         for r in l_ladder]},
     }
     with open(path, "w") as fh:
         json.dump(fixture, fh, indent=2)
@@ -224,7 +266,7 @@ if "--emit" in sys.argv:
 
 print()
 print("=" * 72)
-print(f"{checks} assertions across 7 golden cases and 4 visuals")
+print(f"{checks} assertions across 8 golden cases and 4 visuals")
 print("RESULT:", "ALL PASS — two independent models agree" if not fails else f"{len(fails)} FAILURES")
 for f_ in fails: print("  FAIL", f_)
 print("=" * 72)

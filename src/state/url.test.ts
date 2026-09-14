@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { toCents } from '../engine/money'
 import { runScenario } from '../engine/scenario'
-import { WORKED_EXAMPLE } from './presets'
+import { WORKED_EXAMPLE, blankScenario } from './presets'
 import { decodeScenario, encodeScenario } from './url'
 
 describe('a shared link carries the exact scenario', () => {
@@ -33,6 +33,16 @@ describe('a shared link carries the exact scenario', () => {
       exit: { ...WORKED_EXAMPLE.exit, date: '2030-06-30' },
     }
     expect(decodeScenario(encodeScenario(loaded))).toEqual(loaded)
+  })
+
+  it('round-trips a blank form, zero valuation and all', () => {
+    const blank = blankScenario('EUR', new Date('2026-09-14T12:00:00Z'))
+    expect(decodeScenario(encodeScenario(blank))).toEqual(blank)
+  })
+
+  it('round-trips a custom round name', () => {
+    const custom = { ...WORKED_EXAMPLE, rounds: WORKED_EXAMPLE.rounds.map((r, i) => (i === 1 ? { ...r, label: 'Bridge round' } : r)) }
+    expect(decodeScenario(encodeScenario(custom))?.rounds[1]?.label).toBe('Bridge round')
   })
 
   it('survives labels that are not plain ASCII', () => {
@@ -88,8 +98,12 @@ describe('a link that is malformed or hostile is refused, never trusted', () => 
       { ...WORKED_EXAMPLE, rounds: [{ ...WORKED_EXAMPLE.rounds[0], participation: undefined }, ...WORKED_EXAMPLE.rounds.slice(1)] },
     ],
     [
-      'a zero valuation, which would divide by zero',
-      { ...WORKED_EXAMPLE, rounds: [{ ...WORKED_EXAMPLE.rounds[0], valuationCents: 0 }] },
+      'a negative valuation',
+      { ...WORKED_EXAMPLE, rounds: [{ ...WORKED_EXAMPLE.rounds[0], valuationCents: -1 }] },
+    ],
+    [
+      'a round name longer than anyone would type',
+      { ...WORKED_EXAMPLE, rounds: [{ ...WORKED_EXAMPLE.rounds[0], label: 'x'.repeat(41) }] },
     ],
     [
       'a negative cheque',
