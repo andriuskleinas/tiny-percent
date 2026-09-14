@@ -17,6 +17,8 @@ import { safeRun } from './ui/safeRun'
  * falls back rather than opening onto an error.
  */
 function initialScenario(): Scenario {
+  // At build time there is no address: the page is prerendered with the default.
+  if (typeof window === 'undefined') return STARTING_POINT
   const shared = scenarioFromLocation(window.location.hash)
   return shared && safeRun(shared).run ? shared : STARTING_POINT
 }
@@ -30,7 +32,7 @@ function sectionFromLocation(hash: string): string | undefined {
 export default function App() {
   const [state, dispatch] = useReducer(appReducer, undefined, () => initialAppState(initialScenario()))
   // Read before the effect below replaces the fragment with the scenario.
-  const [arrivedAt] = useState(() => sectionFromLocation(window.location.hash))
+  const [arrivedAt] = useState(() => (typeof window === 'undefined' ? undefined : sectionFromLocation(window.location.hash)))
 
   useEffect(() => {
     if (arrivedAt) scrollToSection(arrivedAt)

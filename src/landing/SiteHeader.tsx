@@ -20,14 +20,14 @@ export function SiteHeader() {
       >
         Skip to calculator
       </a>
-      <nav aria-label="Main" className="mx-auto flex h-14 max-w-6xl items-center gap-6 px-4 sm:px-6">
+      <nav aria-label="Main" className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4 sm:gap-6 sm:px-6">
         <a
           href="/"
           onClick={(e) => {
             e.preventDefault()
             scrollToSection('hero')
           }}
-          className="flex items-center gap-2 font-semibold tracking-tight text-ink outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+          className="flex items-center gap-2 whitespace-nowrap text-sm font-semibold tracking-tight text-ink outline-none focus-visible:ring-2 focus-visible:ring-accent/40 sm:text-base"
         >
           <Mark />
           Angel Investment Calculator
@@ -52,7 +52,8 @@ export function SiteHeader() {
         <button
           type="button"
           onClick={() => scrollToSection('calculator', document.getElementById(INVESTMENT_INPUT_ID))}
-          className="shrink-0 border border-accent bg-accent px-3 py-1.5 text-sm font-medium text-on-accent outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-accent/40"
+          // Below 360px there is no room beside the name; the hero's own button is on screen there.
+          className="hidden shrink-0 border border-accent bg-accent px-3 py-1.5 text-sm font-medium text-on-accent outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-accent/40 min-[360px]:inline-flex"
         >
           Use calculator
         </button>

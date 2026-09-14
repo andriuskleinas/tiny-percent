@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 import { useMoney } from '../currency'
 import type { ScenarioResult } from '../../engine/scenario'
 import type { Scenario } from '../../engine/types'
@@ -72,20 +72,25 @@ export function SummaryPanel({ scenario, run }: { scenario: Scenario; run: Scena
   )
 }
 
+const noObserver = () => typeof IntersectionObserver === 'undefined'
+const subscribeNever = () => () => {}
+
 /**
- * Whether the calculator section is on screen. Without IntersectionObserver
- * (old browsers, the test DOM) it counts as visible, so the bar still shows.
+ * Whether the calculator section is on screen. The prerendered HTML and the
+ * first client render both say "not visible", so hydration matches. Without
+ * IntersectionObserver (old browsers, the test DOM) it counts as visible.
  */
 function useOnScreen(id: string): boolean {
-  const [visible, setVisible] = useState(() => typeof IntersectionObserver === 'undefined')
+  const unsupported = useSyncExternalStore(subscribeNever, noObserver, () => false)
+  const [intersecting, setIntersecting] = useState(false)
   useEffect(() => {
     const target = document.getElementById(id)
-    if (!target || typeof IntersectionObserver === 'undefined') return undefined
-    const observer = new IntersectionObserver(([entry]) => setVisible(entry?.isIntersecting ?? false))
+    if (!target || noObserver()) return undefined
+    const observer = new IntersectionObserver(([entry]) => setIntersecting(entry?.isIntersecting ?? false))
     observer.observe(target)
     return () => observer.disconnect()
   }, [id])
-  return visible
+  return unsupported || intersecting
 }
 
 /** The phone version: one line, in reach while you work in the calculator and out of the way elsewhere. */

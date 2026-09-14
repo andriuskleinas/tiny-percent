@@ -367,3 +367,53 @@ governing law.
 |---|---|
 | Tests | 225 across 19 files |
 | Checked in the browser | 1440px screenshots of every section, 320px with no horizontal scroll, nav and "See an example" live |
+
+---
+
+## Landing page PRD — Phase 3: search and speed · DONE, awaiting review
+
+Lighthouse already scored 100 in all four categories before this phase, on
+mobile, because it does not check whether a page has any content without
+JavaScript. This one did not: the live HTML was an empty `<div id="root">`.
+
+- **Prerendered HTML.** `npm run build` now also builds `src/entry-server.tsx`
+  for Node and `tools/prerender.mjs` writes the rendered home, Privacy and Terms
+  pages into `dist/`. The browser hydrates that HTML. A shared link carries
+  different numbers from the prerendered default, so it renders fresh instead of
+  hydrating a mismatch. The render test runs in plain Node, so any component that
+  touches `window` while rendering fails there first.
+- **Head tags** per page: canonical, Open Graph and Twitter cards with a
+  1200×630 image (`public/og.png`, source `tools/og-image.html`), theme colour.
+- **Structured data** on the home page: `WebApplication` (free) and `FAQPage`
+  generated from the same `FAQ` constant the page renders, so they cannot drift.
+  `<` is escaped inside it, so no answer text can close the script tag.
+- **Crawl files**: `sitemap.xml` and `robots.txt`, generated from `SITE.url`.
+  A custom domain later is a one-line change in `src/site.ts`.
+- **Headers** in `vercel.json`: a Content Security Policy allowing only the
+  site's own scripts, styles, images and connections; `nosniff`; referrer,
+  permissions and opener policies; year-long immutable caching for hashed
+  assets. Checked against the built site with the same headers applied: no
+  policy violations, no console errors, hydration clean.
+
+| Lighthouse | Performance | Accessibility | Best practices | SEO |
+|---|---|---|---|---|
+| Live, before (mobile) | 100 | 100 | 100 | 100 |
+| Built, after (mobile) | 100 | 100 | 100 | 100 |
+| Built, after (desktop) | 100 | 100 | 100 | 100 |
+
+Tests: 233 across 20 files. Lint warnings: 0.
+
+**Found while checking it on a phone** (headless Chrome driven by a script,
+since the hidden in-app browser runs no IntersectionObserver or smooth scroll):
+
+- The header brand wrapped onto two lines at 375px. It now stays on one line
+  from 320px up; below 360px the "Use calculator" button hides, because the
+  hero's own button is on screen there.
+- Calculator panels scrolled under the sticky header; their scroll margin now
+  matches the landing sections.
+- The phone summary bar's visibility hook set state inside an effect (a lint
+  warning, and a hydration risk). It now starts hidden on server and client
+  alike and was confirmed to show in the calculator and hide in the hero and FAQ.
+
+Production address used: `https://startup-investment-calculator.vercel.app`,
+found from Vercel's GitHub deployment records and confirmed serving this app.

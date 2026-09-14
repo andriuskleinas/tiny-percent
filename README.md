@@ -15,6 +15,7 @@ npm run dev
 ```
 
 ```bash
+npm run build    # client bundle, then prerendered HTML, sitemap and robots.txt in dist/
 npm run check    # typecheck, lint, tests — the same gate CI runs
 npm run oracle   # verifies the plan's own numbers
 ```

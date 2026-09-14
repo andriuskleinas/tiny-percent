@@ -1,0 +1,43 @@
+<!doctype html>
+<!-- Source for public/og.png, the link-preview image. Regenerate with:
+     "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --hide-scrollbars \
+       --window-size=1200,630 --screenshot=public/og.png tools/og-image.html -->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<style>
+  html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; }
+  body { background: #f2f4f7; color: #151922; font-family: -apple-system, "SF Pro Display", "Helvetica Neue", Arial, sans-serif; }
+  .frame { position: absolute; inset: 0; padding: 72px 80px; display: grid; grid-template-columns: 1fr 360px; gap: 64px; align-items: center; }
+  .brand { display: flex; align-items: center; gap: 14px; font-size: 26px; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 44px; }
+  h1 { margin: 0; font-size: 68px; line-height: 1.04; letter-spacing: -0.035em; font-weight: 700; }
+  p { margin: 32px 0 0; font-size: 27px; color: #485063; line-height: 1.35; }
+  .card { background: #fff; border: 1px solid #d8dee7; padding: 36px 34px; box-shadow: 0 30px 60px -30px rgba(21,25,34,.25); }
+  .bars { display: flex; align-items: flex-end; gap: 22px; height: 250px; border-bottom: 2px solid #b9c2d0; }
+  .bars div { background: #2e4a7d; }
+  .label { margin-top: 18px; font: 500 17px ui-monospace, "SF Mono", Menlo, monospace; color: #606879; letter-spacing: .06em; text-transform: uppercase; }
+</style>
+</head>
+<body>
+  <div class="frame">
+    <div>
+      <div class="brand">
+        <svg width="34" height="34" viewBox="0 0 20 20"><rect x="1" y="13" width="7" height="6" fill="#2e4a7d" opacity=".45"/><rect x="9.5" y="8" width="5" height="11" fill="#2e4a7d" opacity=".7"/><rect x="16" y="2" width="3" height="17" fill="#2e4a7d"/></svg>
+        Angel Investment Calculator
+      </div>
+      <h1>See what your angel investment could become.</h1>
+      <p>Equity, dilution, pro-rata and exit outcomes.<br />Free. No account required.</p>
+    </div>
+    <div class="card" aria-hidden="true">
+      <!-- Width is ownership, height is valuation: narrower, taller, larger. -->
+      <div class="bars">
+        <div style="width:96px;height:36px;opacity:.45"></div>
+        <div style="width:77px;height:86px;opacity:.6"></div>
+        <div style="width:61px;height:160px;opacity:.78"></div>
+        <div style="width:49px;height:240px"></div>
+      </div>
+      <div class="label">Your stake by round</div>
+    </div>
+  </div>
+</body>
+</html>

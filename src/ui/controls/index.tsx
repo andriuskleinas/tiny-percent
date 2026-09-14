@@ -451,7 +451,7 @@ export function Panel({
   id?: string | undefined
 }) {
   return (
-    <section id={id} aria-labelledby={id ? `${id}-title` : undefined} className="scroll-mt-6 border border-rule bg-surface">
+    <section id={id} aria-labelledby={id ? `${id}-title` : undefined} className="scroll-mt-20 border border-rule bg-surface">
       <header className="flex flex-wrap items-baseline justify-between gap-3 border-b border-rule px-5 py-4 sm:px-6">
         <div>
           <h2 id={id ? `${id}-title` : undefined} className="text-lg font-semibold tracking-tight text-ink">{title}</h2>

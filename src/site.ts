@@ -5,6 +5,11 @@
  */
 export const SITE = {
   name: 'Angel Investment Calculator',
+  /** Production origin, no trailing slash. Change here when a custom domain is added. */
+  url: 'https://startup-investment-calculator.vercel.app',
+  title: 'Angel Investment Calculator — Equity, Dilution & Exit Returns',
+  description:
+    'Free angel investment calculator. Calculate startup equity, model dilution and follow-on rounds, estimate pro-rata requirements and explore potential exit outcomes.',
   /** Legal name of the person or company operating the site. */
   operator: undefined as string | undefined,
   contactEmail: undefined as string | undefined,
