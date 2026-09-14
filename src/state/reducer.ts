@@ -1,36 +1,45 @@
-import type { CarryTerms, EntryFeeTerms, ManagementFeeTerms } from '../engine/fees'
+import type { CarryTerms, ManagementFeeTerms } from '../engine/fees'
 import type { Currency, ExitEvent, Instrument, Round, Scenario } from '../engine/types'
 
 /**
  * One scenario object behind one reducer. No state library: there is exactly one
  * thing to hold, and it is the same object that travels in the shared link.
+ *
+ * `rounds[0]` is the entry, so there is no separate action for it — editing your
+ * own investment and editing a follow-on go through the same `round:*` actions.
  */
 
 export type Action =
-  | { type: 'entry:set'; patch: Partial<Instrument> }
   | { type: 'round:add' }
   | { type: 'round:remove'; id: string }
-  | { type: 'round:set'; id: string; patch: Partial<Round> }
+  | { type: 'round:set'; id: string; patch: Partial<Omit<Round, 'participation'>> }
+  /** Creates the participation if it is absent, merges into it otherwise. */
+  | { type: 'round:participate'; id: string; patch: Partial<Instrument> }
+  /** Blocked for `rounds[0]` — you cannot skip your own entry. */
+  | { type: 'round:sitOut'; id: string }
   | { type: 'exit:set'; patch: Partial<ExitEvent> }
-  | { type: 'fees:entry'; patch: Partial<EntryFeeTerms> }
+  /** The whole scenario's currency. Amounts are relabelled, never converted. */
+  | { type: 'currency:set'; currency: Currency }
   | { type: 'fees:carry'; patch: Partial<CarryTerms> }
   | { type: 'fees:management'; value: ManagementFeeTerms | undefined }
-  | { type: 'currency:set'; currency: Currency }
-  | { type: 'scenario:replace'; scenario: Scenario }
 
-const ORDINALS = ['Seed', 'Series A', 'Series B', 'Series C', 'Series D', 'Series E', 'Series F']
+const LABELS: Round['label'][] = ['Pre-seed', 'Seed', 'Series A', 'Series B', 'Series C', 'Series D+']
+
+const NO_FEE = { rule: 'percent' as const, percent: 0 }
 
 function nextRound(rounds: Round[]): Round {
   const last = rounds[rounds.length - 1]
   const year = last ? Number(last.date.slice(0, 4)) + 2 : new Date().getFullYear()
+  const lastIndex = last ? LABELS.indexOf(last.label) : -1
+  const nextLabel = LABELS[Math.min(lastIndex + 1, LABELS.length - 1)] as Round['label']
   return {
     id: `r${Date.now().toString(36)}`,
-    label: ORDINALS[rounds.length] ?? `Round ${rounds.length + 1}`,
+    label: nextLabel,
     date: `${year}-01-01`,
     // A sensible next round: three times the last post-money, raising a fifth of it.
-    preMoneyCents: last ? (last.preMoneyCents + last.raisedCents) * 2 : 800_000_000,
-    raisedCents: last ? Math.round((last.preMoneyCents + last.raisedCents) / 2) : 200_000_000,
-    angelAction: { kind: 'sit_out' },
+    valuationCents: last ? (last.valuationCents + last.raisedCents) * 2 : 800_000_000,
+    valuationBasis: 'pre',
+    raisedCents: last ? Math.round((last.valuationCents + last.raisedCents) / 2) : 200_000_000,
   }
 }
 
@@ -41,9 +50,6 @@ export function impliedTotalRaised(rounds: Round[]): number {
 
 export function reducer(state: Scenario, action: Action): Scenario {
   switch (action.type) {
-    case 'entry:set':
-      return { ...state, entry: { ...state.entry, ...action.patch } }
-
     case 'round:add': {
       const rounds = [...state.rounds, nextRound(state.rounds)]
       return { ...state, rounds, exit: { ...state.exit, totalRaisedCents: impliedTotalRaised(rounds) } }
@@ -67,22 +73,31 @@ export function reducer(state: Scenario, action: Action): Scenario {
       }
     }
 
+    case 'round:participate': {
+      const rounds = state.rounds.map((r) => {
+        if (r.id !== action.id) return r
+        const participation = { ...(r.participation ?? { type: 'equity' as const, amountCents: 0, entryFee: NO_FEE }), ...action.patch }
+        return { ...r, participation }
+      })
+      return { ...state, rounds }
+    }
+
+    case 'round:sitOut': {
+      if (state.rounds[0]?.id === action.id) return state
+      const rounds = state.rounds.map((r) => (r.id === action.id ? { ...r, participation: undefined } : r))
+      return { ...state, rounds }
+    }
+
     case 'exit:set':
       return { ...state, exit: { ...state.exit, ...action.patch } }
 
-    case 'fees:entry':
-      return { ...state, fees: { ...state.fees, entry: { ...state.fees.entry, ...action.patch } } }
+    case 'currency:set':
+      return { ...state, currency: action.currency }
 
     case 'fees:carry':
       return { ...state, fees: { ...state.fees, carry: { ...state.fees.carry, ...action.patch } } }
 
     case 'fees:management':
       return { ...state, fees: { ...state.fees, management: action.value } }
-
-    case 'currency:set':
-      return { ...state, currency: action.currency }
-
-    case 'scenario:replace':
-      return action.scenario
   }
 }

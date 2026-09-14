@@ -1,5 +1,3 @@
-import { yearsBetween } from './instrument'
-
 /**
  * Internal rate of return from dated cash flows. Negative amounts are money
  * leaving you, positive amounts money coming back.
@@ -14,6 +12,26 @@ export interface CashFlow {
   /** ISO 8601 date. */
   date: string
   amountCents: number
+}
+
+const MS_PER_DAY = 86_400_000
+const DAYS_PER_YEAR = 365
+
+/**
+ * Actual/365, the convention most convertible loan agreements use. A span
+ * containing a leap day therefore runs a little over the nominal term, which is
+ * the lender's favour and what the paperwork actually says.
+ */
+export function yearsBetween(startIso: string, endIso: string): number {
+  const start = Date.parse(startIso)
+  const end = Date.parse(endIso)
+  if (Number.isNaN(start) || Number.isNaN(end)) {
+    throw new RangeError(`Cannot read "${startIso}" or "${endIso}" as a date.`)
+  }
+  if (end < start) {
+    throw new RangeError(`Conversion date ${endIso} falls before the investment date ${startIso}.`)
+  }
+  return (end - start) / MS_PER_DAY / DAYS_PER_YEAR
 }
 
 const LOWER = -0.999999

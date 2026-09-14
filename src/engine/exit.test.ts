@@ -96,32 +96,6 @@ describe('every result carries a regime', () => {
   })
 })
 
-describe('a loan that never converted is repaid first', () => {
-  const loan: ExitInput = {
-    ...base,
-    ownership: 0,
-    unconvertedLoanOwedCents: toCents(62_000),
-  }
-
-  it('pays principal plus interest ahead of every equity holder', () => {
-    const result = exitProceeds({ ...loan, valueCents: toCents(15_000_000) })
-    expect(result.lowCents).toBe(toCents(62_000))
-    expect(result.regime).toBe('downside')
-    expect(result.explanation).toMatch(/loan/i)
-  })
-
-  it('beats the equity treatment of the same money in a bad exit', () => {
-    const asEquity = exitProceeds({ ...base, valueCents: toCents(15_000_000) })
-    const asLoan = exitProceeds({ ...loan, valueCents: toCents(15_000_000) })
-    expect(asLoan.lowCents).toBeGreaterThan(asEquity.lowCents)
-  })
-
-  it('cannot recover more than the company sold for', () => {
-    const wipeout = exitProceeds({ ...loan, valueCents: toCents(40_000) })
-    expect(wipeout.lowCents).toBe(toCents(40_000))
-  })
-})
-
 describe('explanations are written in the deal’s currency', () => {
   it('uses dollars by default', () => {
     expect(exitProceeds(base).explanation).toContain('$20,000,000')
@@ -137,15 +111,5 @@ describe('explanations are written in the deal’s currency', () => {
       expect(explanation).toContain('€')
       expect(explanation).not.toContain('$')
     }
-  })
-
-  it('uses pounds for a repaid loan too', () => {
-    const { explanation } = exitProceeds({
-      ...base,
-      currency: 'GBP',
-      ownership: 0,
-      unconvertedLoanOwedCents: toCents(62_000),
-    })
-    expect(explanation).toContain('£62,000')
   })
 })

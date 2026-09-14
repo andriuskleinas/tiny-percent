@@ -233,3 +233,40 @@ guarded by a test that renders the real component.
 `python3 tools/oracle.py` must stay green for the life of the project. If a
 TypeScript test and the oracle ever disagree, the oracle is right until proven
 otherwise, because it is two independent models agreeing rather than one.
+
+## Simplification: one cheque per round, one currency
+
+The form was cut back to what an angel types in most deals.
+
+- **Your entry is the first round.** There is no separate entry object; every
+  round has an optional cheque, and `rounds[0]` must have one. Each follow-on
+  round compares sitting out, the cheque you typed, and the pro-rata cheque.
+- **Instruments are labels.** SAFE, convertible loan and priced equity all buy
+  `amount / post-money` at the round they are written into. Caps, discounts,
+  interest, pre-money SAFEs, ASA, KISS and the unconverted-loan exit are gone,
+  and `instrument.ts` with them. The selector stays, and every instance of it says in
+  place that it is a label and that caps, discounts and interest are not
+  modelled, so picking one does not imply a difference that is not there.
+- **Fees are simpler.** The entry fee sits on each cheque and always comes out
+  of it; the management fee always comes out of capital; there is no carry
+  hurdle. The oracle's fee case was updated with the TypeScript, so the two
+  agreeing does not independently confirm this rule.
+- **One currency per scenario.** Rounds briefly had their own currency switch,
+  but nothing supplied an exchange rate, so a euro entry and a dollar follow-on
+  were added one for one. The scenario now has exactly one currency, set in the
+  entry panel; switching it relabels every amount and converts nothing. A test
+  asserts there is only one currency switch on the page.
+- **Removed:** saved scenarios, the summary strip, the value bridge and the
+  follow-on divergence charts. GBP is no longer offered.
+- **Links are version 2.** Version 1 links from before this change are refused,
+  not migrated.
+
+The entry-fee editing guards from the fix pass were deleted with the old fee
+shape and have been restored against the per-cheque fee, for the entry panel
+and for a follow-on round.
+
+| | |
+|---|---|
+| Tests | 149 across 15 files |
+| Oracle assertions | 43 |
+| Lint warnings | 0 |

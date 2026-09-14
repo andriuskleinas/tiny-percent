@@ -1,13 +1,5 @@
 import type { CarryTerms, EntryFeeTerms, ManagementFeeTerms } from '../engine/fees'
-import type {
-  AngelAction,
-  Currency,
-  ExitEvent,
-  Instrument,
-  InstrumentType,
-  Round,
-  Scenario,
-} from '../engine/types'
+import type { Currency, ExitEvent, Instrument, InstrumentType, Round, Scenario } from '../engine/types'
 
 /**
  * A scenario travels in the link, which means it arrives as untrusted input from
@@ -15,16 +7,9 @@ import type {
  * malformed or hostile link is refused, never half-applied.
  */
 
-const CURRENCIES: readonly string[] = ['USD', 'EUR', 'GBP']
-const INSTRUMENTS: readonly string[] = [
-  'equity',
-  'safe_post',
-  'safe_pre',
-  'cla',
-  'asa',
-  'kiss_equity',
-  'kiss_debt',
-]
+const CURRENCIES: readonly string[] = ['USD', 'EUR']
+const INSTRUMENTS: readonly string[] = ['equity', 'safe', 'cla']
+const LABELS: readonly string[] = ['Pre-seed', 'Seed', 'Series A', 'Series B', 'Series C', 'Series D+']
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -51,10 +36,13 @@ function optional<T>(value: unknown, check: (v: unknown) => v is T): boolean {
   return value === undefined || check(value)
 }
 
-function isAngelAction(value: unknown): value is AngelAction {
+function isEntryFee(value: unknown): value is EntryFeeTerms {
   if (!isObject(value)) return false
-  if (value['kind'] === 'sit_out' || value['kind'] === 'pro_rata') return true
-  return value['kind'] === 'custom' && isAmount(value['amountCents'])
+  return (
+    ['percent', 'fixed', 'greater_of'].includes(value['rule'] as string) &&
+    optional(value['percent'], isFraction) &&
+    optional(value['fixedCents'], isAmount)
+  )
 }
 
 function isInstrument(value: unknown): value is Instrument {
@@ -62,15 +50,7 @@ function isInstrument(value: unknown): value is Instrument {
   return (
     INSTRUMENTS.includes(value['type'] as InstrumentType) &&
     isAmount(value['amountCents']) &&
-    isDate(value['date']) &&
-    optional(value['capCents'], isAmount) &&
-    optional(value['discount'], isFraction) &&
-    optional(value['interestRate'], isFraction) &&
-    (value['interestMode'] === undefined ||
-      value['interestMode'] === 'simple' ||
-      value['interestMode'] === 'compound') &&
-    optional(value['maturityDate'], isDate) &&
-    optional(value['otherConvertingCents'], isAmount)
+    isEntryFee(value['entryFee'])
   )
 }
 
@@ -78,25 +58,15 @@ function isRound(value: unknown): value is Round {
   if (!isObject(value)) return false
   return (
     isText(value['id']) &&
-    isText(value['label']) &&
+    LABELS.includes(value['label'] as string) &&
     isDate(value['date']) &&
     isAmount(value['raisedCents']) &&
-    // A pre-money of zero would divide by zero in the very first calculation.
-    isAmount(value['preMoneyCents']) &&
-    (value['preMoneyCents'] as number) > 0 &&
+    // A valuation of zero would divide by zero in the very first calculation.
+    isAmount(value['valuationCents']) &&
+    (value['valuationCents'] as number) > 0 &&
+    (value['valuationBasis'] === 'pre' || value['valuationBasis'] === 'post') &&
     optional(value['newOptionPool'], isFraction) &&
-    (value['convertsHere'] === undefined || typeof value['convertsHere'] === 'boolean') &&
-    isAngelAction(value['angelAction'])
-  )
-}
-
-function isEntryFee(value: unknown): value is EntryFeeTerms {
-  if (!isObject(value)) return false
-  return (
-    ['percent', 'fixed', 'greater_of'].includes(value['rule'] as string) &&
-    ['on_top', 'deducted'].includes(value['charged'] as string) &&
-    optional(value['percent'], isFraction) &&
-    optional(value['fixedCents'], isAmount)
+    optional(value['participation'], isInstrument)
   )
 }
 
@@ -106,21 +76,13 @@ function isManagementFee(value: unknown): value is ManagementFeeTerms {
     isFraction(value['annualPercent']) &&
     typeof value['years'] === 'number' &&
     Number.isFinite(value['years']) &&
-    value['years'] >= 0 &&
-    ['capital', 'invoiced'].includes(value['source'] as string)
+    value['years'] >= 0
   )
 }
 
 function isCarry(value: unknown): value is CarryTerms {
   if (!isObject(value)) return false
-  return (
-    isFraction(value['percent']) &&
-    value['basis'] === 'per_deal' &&
-    (value['hurdlePercent'] === undefined ||
-      (typeof value['hurdlePercent'] === 'number' &&
-        Number.isFinite(value['hurdlePercent']) &&
-        value['hurdlePercent'] >= 0))
-  )
+  return isFraction(value['percent']) && value['basis'] === 'per_deal'
 }
 
 function isExit(value: unknown): value is ExitEvent {
@@ -128,23 +90,21 @@ function isExit(value: unknown): value is ExitEvent {
   return (
     isDate(value['date']) &&
     isAmount(value['valueCents']) &&
-    isAmount(value['totalRaisedCents']) &&
-    (value['unconvertedLoan'] === undefined ||
-      ['convert', 'repay', 'extend'].includes(value['unconvertedLoan'] as string))
+    isAmount(value['totalRaisedCents'])
   )
 }
 
 export function isScenario(value: unknown): value is Scenario {
   if (!isObject(value)) return false
-  if (value['version'] !== 1) return false
+  if (value['version'] !== 2) return false
   if (!CURRENCIES.includes(value['currency'] as Currency)) return false
-  if (!isInstrument(value['entry'])) return false
   const rounds = value['rounds']
   if (!Array.isArray(rounds) || rounds.length === 0 || rounds.length > 30) return false
   if (!rounds.every(isRound)) return false
+  // You cannot skip your own entry — the first round must always invest.
+  if ((rounds[0] as Round | undefined)?.participation === undefined) return false
   const fees = value['fees']
   if (!isObject(fees)) return false
-  if (!isEntryFee(fees['entry'])) return false
   if (!isCarry(fees['carry'])) return false
   if (fees['management'] !== undefined && !isManagementFee(fees['management'])) return false
   return isExit(value['exit'])

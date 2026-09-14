@@ -3,7 +3,6 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { entryOwnership, ownAfter, postMoney, proRata, stakeValue } from './ownership'
 import type { RoundTerms } from './ownership'
-import { convert } from './instrument'
 import { exitProceeds } from './exit'
 import { applyFees } from './fees'
 
@@ -26,34 +25,6 @@ interface Fixture {
   B: { ownership: number; valueCents: number; postMoneyCents: number }
   C: { proRataCents: number; ownership: number; valueCents: number }
   D: { ownership: number; proRataCents: number }
-  convertRound: { preMoneyCents: number; raisedCents: number }
-  E: {
-    amountCents: number
-    capCents: number
-    ownershipAtConversion: number
-    ownership: number
-    effectiveValuationCents: number
-  }
-  E2: {
-    amountCents: number
-    capCents: number
-    otherConvertingCents: number
-    ownershipAtConversion: number
-    ownership: number
-  }
-  F: {
-    amountCents: number
-    capCents: number
-    discount: number
-    rate: number
-    years: number
-    convertingCents: number
-    effectiveValuationCents: number
-    ownership: number
-    investedCents: number
-  }
-  G: { ownership: number; accrualUplift: number }
-  H: { exitCents: number; proceedsCents: number }
   I: {
     ownership: number
     exitCents: number
@@ -129,69 +100,6 @@ describe('the engine agrees with the Python oracle', () => {
     expect(proRata(fixture.A.ownership, seriesBPooled)).toBe(fixture.D.proRataCents)
   })
 
-  const convertRound = terms(fixture.convertRound)
-
-  it('E — a post-money SAFE, locked then diluted', () => {
-    const result = convert(
-      { type: 'safe_post', amountCents: fixture.E.amountCents, capCents: fixture.E.capCents },
-      convertRound,
-    )
-    expect(result.ownershipAtConversion).toBeCloseTo(fixture.E.ownershipAtConversion, PLACES)
-    expect(result.ownership).toBeCloseTo(fixture.E.ownership, PLACES)
-    expect(result.effectiveValuationCents).toBe(fixture.E.effectiveValuationCents)
-  })
-
-  it('E2 — a pre-money cap, diluted by everything converting alongside it', () => {
-    // The oracle checks this one against a share ledger, because the angel-side
-    // shortcut (cap + amount + others) is a derivation rather than a given.
-    const result = convert(
-      {
-        type: 'safe_pre',
-        amountCents: fixture.E2.amountCents,
-        capCents: fixture.E2.capCents,
-        otherConvertingCents: fixture.E2.otherConvertingCents,
-      },
-      convertRound,
-    )
-    expect(result.ownershipAtConversion).toBeCloseTo(fixture.E2.ownershipAtConversion, PLACES)
-    expect(result.ownership).toBeCloseTo(fixture.E2.ownership, PLACES)
-    expect(result.estimate).toBe(true)
-  })
-
-  const loan = {
-    type: 'cla' as const,
-    amountCents: fixture.F.amountCents,
-    capCents: fixture.F.capCents,
-    discount: fixture.F.discount,
-    interestRate: fixture.F.rate,
-    interestMode: 'simple' as const,
-    years: fixture.F.years,
-  }
-
-  it('F — a convertible loan, interest and all', () => {
-    const result = convert(loan, convertRound)
-    expect(result.convertingCents).toBe(fixture.F.convertingCents)
-    expect(result.effectiveValuationCents).toBe(fixture.F.effectiveValuationCents)
-    expect(result.ownership).toBeCloseTo(fixture.F.ownership, PLACES)
-    expect(result.investedCents).toBe(fixture.F.investedCents)
-  })
-
-  it('G — the same loan without interest, and what accrual was worth', () => {
-    const plain = convert(
-      { ...loan, interestRate: undefined, years: undefined },
-      convertRound,
-    )
-    expect(plain.ownership).toBeCloseTo(fixture.G.ownership, PLACES)
-    const accruing = convert(loan, convertRound)
-    expect(accruing.ownership / plain.ownership - 1).toBeCloseTo(fixture.G.accrualUplift, PLACES)
-  })
-
-  it('H — what case F is worth at exit, against what was actually paid', () => {
-    const result = convert(loan, convertRound)
-    expect(stakeValue(result.ownership, fixture.H.exitCents)).toBe(fixture.H.proceedsCents)
-    expect(result.investedCents).toBe(fixture.F.investedCents)
-  })
-
   it('I — a clean exit pays the ownership share', () => {
     const result = exitProceeds({
       valueCents: fixture.I.exitCents,
@@ -203,11 +111,12 @@ describe('the engine agrees with the Python oracle', () => {
     expect(result.lowCents).toBe(fixture.I.proceedsCents)
   })
 
-  it('J — fees turn a 10x gross into an 8.04x net', () => {
-    const result = applyFees(fixture.J.chequeCents, fixture.J.grossCents, {
-      entry: { rule: 'percent', percent: fixture.J.entryPercent, charged: 'on_top' },
-      carry: { percent: fixture.J.carryPercent, basis: 'per_deal' },
-    })
+  it('J — fees on a $500k gross', () => {
+    const result = applyFees(
+      [{ chequeCents: fixture.J.chequeCents, entryFeeCents: fixture.J.chequeCents * fixture.J.entryPercent }],
+      fixture.J.grossCents,
+      { carry: { percent: fixture.J.carryPercent, basis: 'per_deal' } },
+    )
     expect(result.outlayCents).toBe(fixture.J.outlayCents)
     expect(result.carryCents).toBe(fixture.J.carryCents)
     expect(result.netCents).toBe(fixture.J.netCents)
@@ -229,10 +138,11 @@ describe('the engine agrees with the Python oracle', () => {
   })
 
   it('reproduces the fee drag figure the plan illustrates', () => {
-    const result = applyFees(fixture.K.investedCents, fixture.feeDrag.grossCents, {
-      entry: { rule: 'percent', percent: fixture.J.entryPercent, charged: 'on_top' },
-      carry: { percent: fixture.J.carryPercent, basis: 'per_deal' },
-    })
+    const result = applyFees(
+      [{ chequeCents: fixture.K.investedCents, entryFeeCents: fixture.K.investedCents * fixture.J.entryPercent }],
+      fixture.feeDrag.grossCents,
+      { carry: { percent: fixture.J.carryPercent, basis: 'per_deal' } },
+    )
     expect(result.carryCents).toBe(fixture.feeDrag.carryCents)
     expect(result.netCents).toBe(fixture.feeDrag.netCents)
     expect(result.outlayCents).toBe(fixture.feeDrag.outlayCents)

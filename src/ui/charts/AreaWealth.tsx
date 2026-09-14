@@ -51,7 +51,7 @@ export function AreaWealth({ points }: { points: AreaPoint[] }) {
         const w = Math.max(2, (p.ownership / maxOwn) * maxBarW)
         const h = Math.max(2, (p.valuationCents / maxVal) * MAX_H)
         return (
-          <g key={p.label}>
+          <g key={i}>
             <rect
               x={cx - w / 2}
               y={BASE - h}

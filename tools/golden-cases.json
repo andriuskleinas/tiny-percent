@@ -28,43 +28,6 @@
     "ownership": 0.0035000000000000005,
     "proRataCents": 4500000
   },
-  "convertRound": {
-    "preMoneyCents": 800000000,
-    "raisedCents": 200000000
-  },
-  "E": {
-    "amountCents": 10000000,
-    "capCents": 500000000,
-    "ownershipAtConversion": 0.02,
-    "ownership": 0.016,
-    "effectiveValuationCents": 625000000
-  },
-  "E2": {
-    "amountCents": 10000000,
-    "capCents": 500000000,
-    "otherConvertingCents": 40000000,
-    "ownershipAtConversion": 0.01818181818181818,
-    "ownership": 0.014545454545454545
-  },
-  "F": {
-    "amountCents": 5000000,
-    "capCents": 500000000,
-    "discount": 0.2,
-    "rate": 0.08,
-    "years": 2,
-    "convertingCents": 5800000,
-    "effectiveValuationCents": 625000000,
-    "ownership": 0.009279999999999998,
-    "investedCents": 5000000
-  },
-  "G": {
-    "ownership": 0.008,
-    "accrualUplift": 0.1599999999999997
-  },
-  "H": {
-    "exitCents": 6000000000,
-    "proceedsCents": 55680000
-  },
   "I": {
     "ownership": 0.0032,
     "exitCents": 6000000000,
@@ -76,12 +39,12 @@
     "grossCents": 50000000,
     "entryPercent": 0.02,
     "carryPercent": 0.2,
-    "outlayCents": 5100000,
-    "carryCents": 9000000,
-    "netCents": 41000000,
-    "dragCents": 9100000,
-    "grossMultiple": 10.0,
-    "netMultiple": 8.03921568627451
+    "outlayCents": 5000000,
+    "carryCents": 9020000,
+    "netCents": 40980000,
+    "dragCents": 9120000,
+    "grossMultiple": 10.204081632653061,
+    "netMultiple": 8.196
   },
   "K": {
     "exitCents": 1500000000,
@@ -92,10 +55,10 @@
   },
   "feeDrag": {
     "grossCents": 19200000,
-    "carryCents": 2840000,
-    "netCents": 16360000,
-    "outlayCents": 5100000,
-    "grossMultiple": 3.84,
-    "netMultiple": 3.207843137254902
+    "carryCents": 2860000,
+    "netCents": 16340000,
+    "outlayCents": 5000000,
+    "grossMultiple": 3.9183673469387754,
+    "netMultiple": 3.268
   }
 }

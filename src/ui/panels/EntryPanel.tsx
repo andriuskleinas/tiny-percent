@@ -1,139 +1,122 @@
 import { useMoney } from '../currency'
-import { accruesInterest, defaultCapBasis, instrumentPath } from '../../engine/instrument'
-import type { Conversion } from '../../engine/instrument'
-import type { Currency, Instrument, InstrumentType } from '../../engine/types'
+import type { RoundState } from '../../engine/scenario'
+import type { Currency, Instrument, InstrumentType, Round } from '../../engine/types'
 import type { Action } from '../../state/reducer'
-import { MoneyField, Panel, PercentField, SelectField, Stat, TextField } from '../controls'
-import { percent } from '../format'
-
-// Plain names, no symbols: the option text is part of the page.
-const CURRENCIES: ReadonlyArray<readonly [Currency, string]> = [
-  ['USD', 'US dollar'],
-  ['EUR', 'Euro'],
-  ['GBP', 'Pound sterling'],
-]
+import { MoneyField, Panel, PercentField, SelectField, Stat, SwitchField, TextField } from '../controls'
+import { INSTRUMENT_NOTE, percent } from '../format'
 
 const TYPES: ReadonlyArray<readonly [InstrumentType, string]> = [
   ['equity', 'Priced equity'],
-  ['safe_post', 'SAFE — post-money cap'],
-  ['safe_pre', 'SAFE — pre-money cap'],
+  ['safe', 'SAFE'],
   ['cla', 'Convertible loan (CLA)'],
-  ['asa', 'ASA (UK, SEIS/EIS)'],
-  ['kiss_equity', 'KISS — equity'],
-  ['kiss_debt', 'KISS — debt'],
 ]
 
-/** Which fields this instrument actually needs. Everything else stays hidden. */
-function fieldsFor(type: InstrumentType) {
-  const priced = instrumentPath(type) === 'priced'
-  return {
-    cap: !priced,
-    discount: !priced,
-    interest: accruesInterest(type),
-    otherConverting: !priced && defaultCapBasis(type) === 'pre',
-  }
-}
+const CURRENCIES: readonly [readonly [Currency, string], readonly [Currency, string]] = [
+  ['USD', 'US dollar'],
+  ['EUR', 'Euro'],
+]
+
+const VALUATION_BASIS = [
+  ['pre', 'Pre-money'],
+  ['post', 'Post-money'],
+] as const
 
 export function EntryPanel({
-  entry,
+  round,
   currency,
-  conversion,
-  stakeValueCents,
+  state,
   dispatch,
 }: {
-  entry: Instrument
+  round: Round
   currency: Currency
-  conversion: Conversion | undefined
-  /** What the stake was worth the moment it was bought. */
-  stakeValueCents: number
+  state: RoundState | undefined
   dispatch: (action: Action) => void
 }) {
   const { money } = useMoney()
-  const show = fieldsFor(entry.type)
-  const set = (patch: Partial<Instrument>) => dispatch({ type: 'entry:set', patch })
+  const set = (patch: Partial<Round>) => dispatch({ type: 'round:set', id: round.id, patch })
+  const participate = (patch: Partial<Instrument>) => dispatch({ type: 'round:participate', id: round.id, patch })
+  const entry = round.participation
 
   return (
     <Panel
       title="Your investment"
-      lede="What you put in, and on what paper. The fields change with the instrument, because a SAFE and a priced round need different things from you."
+      lede="What you put in, on what paper, and what the startup itself is worth right now."
     >
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <SelectField
           label="Instrument"
-          value={entry.type}
+          value={entry?.type ?? 'equity'}
+          hint={INSTRUMENT_NOTE}
           options={TYPES}
-          onChange={(type) => set({ type })}
+          onChange={(type) => participate({ type })}
         />
-        <MoneyField label="Amount" valueCents={entry.amountCents} onChange={(amountCents) => set({ amountCents })} />
-        <SelectField
+        <MoneyField
+          label="Amount invested"
+          valueCents={entry?.amountCents ?? 0}
+          onChange={(amountCents) => participate({ amountCents })}
+        />
+        <SwitchField
           label="Currency"
           value={currency}
           options={CURRENCIES}
           onChange={(next) => dispatch({ type: 'currency:set', currency: next })}
+          hint="Used for every amount in the deal, including later rounds and the exit."
         />
-        <TextField label="Date" type="date" value={entry.date} onChange={(date) => set({ date })} />
+        <TextField label="Date" type="date" value={round.date} onChange={(date) => set({ date })} />
+        <MoneyField
+          label="Startup raising"
+          valueCents={round.raisedCents}
+          onChange={(raisedCents) => set({ raisedCents })}
+        />
+        <MoneyField
+          label="Startup valuation"
+          valueCents={round.valuationCents}
+          onChange={(valuationCents) => set({ valuationCents })}
+        />
+        <SwitchField
+          label="Valuation basis"
+          value={round.valuationBasis}
+          options={VALUATION_BASIS}
+          onChange={(valuationBasis) => set({ valuationBasis })}
+        />
+      </div>
 
-        {show.cap ? (
-          <MoneyField
-            label={`Valuation cap (${defaultCapBasis(entry.type)}-money)`}
-            valueCents={entry.capCents ?? 0}
-            onChange={(capCents) => set({ capCents: capCents || undefined })}
-            hint="Leave at zero for no cap."
-          />
-        ) : null}
-        {show.discount ? (
+      <h3 className="mt-8 font-mono text-[10px] uppercase tracking-wider text-ink-faint">Entry fee</h3>
+      <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <SelectField
+          label="Entry fee basis"
+          value={entry?.entryFee.rule ?? 'percent'}
+          options={[
+            ['percent', 'Percentage of the cheque'],
+            ['fixed', 'Fixed amount'],
+            ['greater_of', 'Greater of the two'],
+          ] as const}
+          onChange={(rule) => participate({ entryFee: { ...entry?.entryFee, rule } })}
+        />
+        {entry?.entryFee.rule !== 'fixed' ? (
           <PercentField
-            label="Discount"
-            value={entry.discount ?? 0}
-            onChange={(discount) => set({ discount: discount || undefined })}
-            hint="You get the cap or the discount, never both."
+            label="Entry fee percentage"
+            value={entry?.entryFee.percent ?? 0}
+            onChange={(value) => participate({ entryFee: { ...entry?.entryFee, rule: entry?.entryFee.rule ?? 'percent', percent: value } })}
           />
         ) : null}
-        {show.interest ? (
-          <>
-            <PercentField
-              label="Interest rate"
-              value={entry.interestRate ?? 0}
-              onChange={(interestRate) => set({ interestRate: interestRate || undefined })}
-            />
-            <SelectField
-              label="Interest basis"
-              value={entry.interestMode ?? 'simple'}
-              options={[
-                ['simple', 'Simple'],
-                ['compound', 'Compounding'],
-              ] as const}
-              onChange={(interestMode) => set({ interestMode })}
-            />
-          </>
-        ) : null}
-        {show.otherConverting ? (
+        {entry?.entryFee.rule !== 'percent' ? (
           <MoneyField
-            label="Other instruments converting"
-            valueCents={entry.otherConvertingCents ?? 0}
-            onChange={(otherConvertingCents) => set({ otherConvertingCents: otherConvertingCents || undefined })}
-            hint="A pre-money cap is diluted by everything converting beside it."
+            label="Fixed entry fee"
+            valueCents={entry?.entryFee.fixedCents ?? 0}
+            onChange={(fixedCents) => participate({ entryFee: { ...entry?.entryFee, rule: entry?.entryFee.rule ?? 'fixed', fixedCents } })}
+            hint={entry?.entryFee.rule === 'greater_of' ? 'Charged instead when it is larger.' : undefined}
           />
         ) : null}
       </div>
 
-      {conversion ? (
-        <div className="mt-6 grid gap-x-8 sm:grid-cols-2 lg:grid-cols-4">
-          <Stat label="Converts" value={money(conversion.convertingCents)} tone="soft"
-            sub={conversion.accruedCents > 0 ? `${money(conversion.accruedCents)} of it accrued interest` : 'No interest accrued'} />
-          <Stat label="Priced at" value={money(conversion.effectiveValuationCents)} tone="soft"
-            sub={`via the ${conversion.route.replace('_', ' ')}`} />
-          <Stat label="Stake bought" value={`${percent(conversion.ownership, 3)} · ${money(stakeValueCents)}`} tone="gain"
-            sub={conversion.route === 'cap' ? `${percent(conversion.ownershipAtConversion, 3)} before the new money` : 'worth, at that round'} />
-          <Stat label="You paid" value={money(conversion.investedCents)} tone="ink"
-            sub={conversion.estimate ? 'Estimate — other converters are invisible' : undefined} />
+      {state ? (
+        <div className="mt-6 grid gap-x-8 sm:grid-cols-2 lg:grid-cols-3">
+          <Stat label="Your stake" value={percent(state.ownershipAfter, 3)} tone="dilute" />
+          <Stat label="Worth" value={money(state.stakeValueCents)} tone="gain" />
+          <Stat label="You paid" value={money(state.investedCents)} tone="ink" />
         </div>
-      ) : (
-        <p className="mt-6 border-t border-rule pt-4 text-sm text-dilute">
-          This loan is not being converted, so it stays debt and is repaid ahead of every
-          shareholder. Change the maturity choice on the exit to convert it instead.
-        </p>
-      )}
+      ) : null}
     </Panel>
   )
 }

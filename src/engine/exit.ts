@@ -21,8 +21,6 @@ export interface ExitInput {
   ownership: number
   /** Total you put in, in cents. */
   investedCents: number
-  /** Set when you hold a loan that never converted. It is repaid first. */
-  unconvertedLoanOwedCents?: number | undefined
   /**
    * Multiple of the capital raised above which preferences stop mattering.
    * Preferred convert once their as-converted share beats their preference, so
@@ -74,22 +72,6 @@ export function exitProceeds(input: ExitInput): ExitProceeds {
       : input.valueCents > input.totalRaisedCents * clean
         ? 'clean'
         : 'uncertain'
-
-  // A loan that never converted is senior debt. It is repaid in full before any
-  // equity holder sees anything, and it does not share in the upside.
-  if (input.unconvertedLoanOwedCents !== undefined && input.unconvertedLoanOwedCents > 0) {
-    const repaid = Math.min(input.unconvertedLoanOwedCents, input.valueCents)
-    return {
-      regime,
-      lowCents: repaid,
-      highCents: repaid,
-      uncertain: false,
-      explanation:
-        `Your loan never converted, so it is repaid ahead of every equity holder. ` +
-        `You are owed ${currency(input.unconvertedLoanOwedCents)} and the sale covers ` +
-        `${currency(repaid)} of it. You do not share in the upside.`,
-    }
-  }
 
   if (regime === 'downside') {
     const proceeds = preferenceShare(input)

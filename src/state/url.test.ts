@@ -13,34 +13,24 @@ describe('a shared link carries the exact scenario', () => {
     const loaded = {
       ...WORKED_EXAMPLE,
       currency: 'EUR' as const,
-      entry: {
-        type: 'cla' as const,
-        amountCents: toCents(50_000),
-        date: '2019-06-01',
-        capCents: toCents(5_000_000),
-        discount: 0.2,
-        interestRate: 0.08,
-        interestMode: 'compound' as const,
-        maturityDate: '2022-06-01',
-        otherConvertingCents: toCents(250_000),
-      },
       rounds: WORKED_EXAMPLE.rounds.map((r, i) => ({
         ...r,
         newOptionPool: 0.1,
-        convertsHere: i === 0,
-        angelAction: { kind: 'custom' as const, amountCents: toCents(12_345) },
+        ...(i === 0
+          ? {
+              participation: {
+                type: 'cla' as const,
+                amountCents: toCents(50_000),
+                entryFee: { rule: 'greater_of' as const, percent: 0.02, fixedCents: toCents(2_500) },
+              },
+            }
+          : { participation: { type: 'equity' as const, amountCents: toCents(12_345), entryFee: { rule: 'fixed' as const, fixedCents: toCents(500) } } }),
       })),
       fees: {
-        entry: {
-          rule: 'greater_of' as const,
-          percent: 0.02,
-          fixedCents: toCents(2_500),
-          charged: 'deducted' as const,
-        },
-        management: { annualPercent: 0.02, years: 10, source: 'capital' as const },
-        carry: { percent: 0.2, hurdlePercent: 0.08, basis: 'per_deal' as const },
+        management: { annualPercent: 0.02, years: 10 },
+        carry: { percent: 0.2, basis: 'per_deal' as const },
       },
-      exit: { ...WORKED_EXAMPLE.exit, unconvertedLoan: 'extend' as const },
+      exit: { ...WORKED_EXAMPLE.exit, date: '2030-06-30' },
     }
     expect(decodeScenario(encodeScenario(loaded))).toEqual(loaded)
   })
@@ -48,9 +38,9 @@ describe('a shared link carries the exact scenario', () => {
   it('survives labels that are not plain ASCII', () => {
     const accented = {
       ...WORKED_EXAMPLE,
-      rounds: WORKED_EXAMPLE.rounds.map((r) => ({ ...r, label: `Série ${r.label} — 日本` })),
+      rounds: WORKED_EXAMPLE.rounds.map((r) => ({ ...r, id: `${r.id}-日本` })),
     }
-    expect(decodeScenario(encodeScenario(accented))?.rounds[0]?.label).toBe('Série Series A — 日本')
+    expect(decodeScenario(encodeScenario(accented))?.rounds[0]?.id).toBe('a-日本')
   })
 
   it('produces a link short enough to paste into a message', () => {
@@ -83,32 +73,44 @@ describe('a link that is malformed or hostile is refused, never trusted', () => 
   })
 
   const broken: Array<[string, unknown]> = [
-    ['a future version', { ...WORKED_EXAMPLE, version: 2 }],
-    ['an unknown currency', { ...WORKED_EXAMPLE, currency: 'XYZ' }],
-    ['an unknown instrument', { ...WORKED_EXAMPLE, entry: { ...WORKED_EXAMPLE.entry, type: 'nft' } }],
+    ['a future version', { ...WORKED_EXAMPLE, version: 3 }],
+    ['an unknown currency', { ...WORKED_EXAMPLE, currency: 'GBP' }],
+    [
+      'an unknown instrument',
+      {
+        ...WORKED_EXAMPLE,
+        rounds: [{ ...WORKED_EXAMPLE.rounds[0], participation: { ...WORKED_EXAMPLE.rounds[0]?.participation, type: 'nft' } }],
+      },
+    ],
     ['no rounds', { ...WORKED_EXAMPLE, rounds: [] }],
-    ['a zero pre-money, which would divide by zero', {
-      ...WORKED_EXAMPLE,
-      rounds: [{ ...WORKED_EXAMPLE.rounds[0], preMoneyCents: 0 }],
-    }],
-    ['a negative cheque', {
-      ...WORKED_EXAMPLE,
-      entry: { ...WORKED_EXAMPLE.entry, amountCents: -1 },
-    }],
-    ['an amount that is not a number', {
-      ...WORKED_EXAMPLE,
-      entry: { ...WORKED_EXAMPLE.entry, amountCents: 'lots' },
-    }],
-    ['an infinite valuation', {
-      ...WORKED_EXAMPLE,
-      exit: { ...WORKED_EXAMPLE.exit, valueCents: Number.POSITIVE_INFINITY },
-    }],
-    ['an unknown angel action', {
-      ...WORKED_EXAMPLE,
-      rounds: [{ ...WORKED_EXAMPLE.rounds[0], angelAction: { kind: 'short_it' } }],
-    }],
+    [
+      'a round that skips the entry',
+      { ...WORKED_EXAMPLE, rounds: [{ ...WORKED_EXAMPLE.rounds[0], participation: undefined }, ...WORKED_EXAMPLE.rounds.slice(1)] },
+    ],
+    [
+      'a zero valuation, which would divide by zero',
+      { ...WORKED_EXAMPLE, rounds: [{ ...WORKED_EXAMPLE.rounds[0], valuationCents: 0 }] },
+    ],
+    [
+      'a negative cheque',
+      {
+        ...WORKED_EXAMPLE,
+        rounds: [{ ...WORKED_EXAMPLE.rounds[0], participation: { ...WORKED_EXAMPLE.rounds[0]?.participation, amountCents: -1 } }],
+      },
+    ],
+    [
+      'an amount that is not a number',
+      {
+        ...WORKED_EXAMPLE,
+        rounds: [{ ...WORKED_EXAMPLE.rounds[0], participation: { ...WORKED_EXAMPLE.rounds[0]?.participation, amountCents: 'lots' } }],
+      },
+    ],
+    [
+      'an infinite valuation',
+      { ...WORKED_EXAMPLE, exit: { ...WORKED_EXAMPLE.exit, valueCents: Number.POSITIVE_INFINITY } },
+    ],
     ['missing fees', { ...WORKED_EXAMPLE, fees: undefined }],
-    ['a prototype-pollution attempt', JSON.parse('{"__proto__":{"polluted":true},"version":1}')],
+    ['a prototype-pollution attempt', JSON.parse('{"__proto__":{"polluted":true},"version":2}')],
   ]
 
   it.each(broken)('refuses %s', (_name, value) => {

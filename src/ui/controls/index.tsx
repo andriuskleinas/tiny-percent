@@ -202,6 +202,43 @@ export function SelectField<T extends string>({
   )
 }
 
+export function SwitchField<T extends string>({
+  label,
+  hint,
+  value,
+  options,
+  onChange,
+}: {
+  label: string
+  hint?: string | undefined
+  value: T
+  options: readonly [readonly [T, string], readonly [T, string]]
+  onChange: (value: T) => void
+}) {
+  return (
+    <Field label={label} hint={hint}>
+      {(id) => (
+        <div id={id} role="radiogroup" aria-label={label} className="flex border border-rule">
+          {options.map(([key, text]) => (
+            <button
+              key={key}
+              type="button"
+              role="radio"
+              aria-checked={value === key}
+              onClick={() => onChange(key)}
+              className={`flex-1 border-rule px-3 py-2 font-mono text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent/40 ${
+                key === options[0][0] ? 'border-r' : ''
+              } ${value === key ? 'bg-accent text-white' : 'bg-surface text-ink-faint hover:text-ink'}`}
+            >
+              {text}
+            </button>
+          ))}
+        </div>
+      )}
+    </Field>
+  )
+}
+
 export function Panel({
   title,
   lede,

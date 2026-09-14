@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, describe, expect, it } from 'vitest'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import App from '../App'
 import type { Scenario } from '../engine/types'
 import { CONVERTIBLE_LOAN, WORKED_EXAMPLE } from '../state/presets'
@@ -9,6 +9,8 @@ import { encodeScenario } from '../state/url'
 /**
  * Regression guard. Scenarios carry a currency, but every figure used to be
  * formatted as dollars, so the euro example showed dollar signs throughout.
+ * Later, each round got its own currency switch with no exchange rate behind
+ * it, so euros and dollars were silently added one for one.
  */
 
 function open(scenario: Scenario) {
@@ -17,11 +19,15 @@ function open(scenario: Scenario) {
   return document.body.textContent ?? ''
 }
 
-beforeEach(() => window.localStorage.clear())
 afterEach(() => {
   cleanup()
   window.history.replaceState(null, '', '/')
 })
+
+/** The one currency switch on the page. */
+function currencySwitch(): HTMLElement {
+  return screen.getByRole('radiogroup', { name: 'Currency' })
+}
 
 describe('every figure on the page is in the scenario’s currency', () => {
   it('shows euros for a euro deal, and no dollar sign anywhere', () => {
@@ -36,17 +42,23 @@ describe('every figure on the page is in the scenario’s currency', () => {
     expect(text).not.toContain('€')
   })
 
+  it('has exactly one currency switch, because a scenario has exactly one currency', () => {
+    open(WORKED_EXAMPLE)
+    expect(screen.getAllByRole('radiogroup', { name: 'Currency' })).toHaveLength(1)
+  })
+
   it('switches everything, charts and explanations included, when the currency changes', () => {
     open(WORKED_EXAMPLE)
-    fireEvent.change(screen.getByLabelText('Currency'), { target: { value: 'GBP' } })
+    fireEvent.click(within(currencySwitch()).getByRole('radio', { name: 'Euro' }))
     const text = document.body.textContent ?? ''
-    expect(text).toContain('£')
+    expect(text).toContain('€')
     expect(text).not.toContain('$')
   })
 
   it('carries the change into the shared link', () => {
     open(WORKED_EXAMPLE)
-    fireEvent.change(screen.getByLabelText('Currency'), { target: { value: 'EUR' } })
-    expect(window.location.hash).toBe(`#s=${encodeScenario({ ...WORKED_EXAMPLE, currency: 'EUR' })}`)
+    fireEvent.click(within(currencySwitch()).getByRole('radio', { name: 'Euro' }))
+    const expected: Scenario = { ...WORKED_EXAMPLE, currency: 'EUR' }
+    expect(window.location.hash).toBe(`#s=${encodeScenario(expected)}`)
   })
 })

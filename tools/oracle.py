@@ -23,22 +23,6 @@ def pro_rata(own_before, raised, pre, pool=0.0):
     V = pre + raised
     return own_before * (raised + pool * V)
 
-def convert(amount, cap, discount, pre, raised):
-    V = pre + raised
-    routes = []
-    if cap:      routes.append(cap * V / pre)
-    if discount: routes.append(V * (1 - discount))
-    if not routes: routes.append(V)          # priced equity
-    return amount / min(routes)
-
-def convert_pre_cap(amount, cap, others, discount, pre, raised):
-    """A pre-money cap behaves exactly like a post-money cap of cap+amount+others,
-       because everything converting at that price dilutes everything else."""
-    return convert(amount, cap + amount + others, discount, pre, raised)
-
-def accrue(principal, rate, years, mode="simple"):
-    return principal * (1 + rate * years) if mode == "simple" else principal * (1 + rate) ** years
-
 # ---------- model 2: an independent share ledger ----------
 class Ledger:
     def __init__(self, founder_shares=8_000_000):
@@ -54,18 +38,6 @@ class Ledger:
         self.unallocated_pool = pool * self.total
         self.angel += angel_invests / p
         return p, new_pool
-    def convert_at_pre_cap(self, amount, cap, others):
-        # Conversion price is the cap divided by the pre-conversion share count,
-        # so simultaneous converters dilute one another.
-        price = cap / self.total
-        mine, theirs = amount / price, others / price
-        self.total += mine + theirs
-        self.angel += mine
-    def convert_at_post_cap(self, amount, cap_fraction):
-        # holder ends up owning cap_fraction of the company pre-new-money
-        s = self.total * cap_fraction / (1 - cap_fraction)
-        self.total += s
-        self.angel += s
     def own(self): return self.angel / self.total
 
 print("=" * 72)
@@ -106,69 +78,28 @@ L5 = Ledger(); L5.priced_round(8e6, 2e6, angel_invests=50_000); L5.priced_round(
 eq("D pro-rata holds 0.50%", L5.own(), 0.005)
 print(f"D  10% pool, sit out ........... {d:.4%}   pro-rata now ${d_cheque:,.0f}  [ledger {L4.own():.4%}]")
 
-# E: post-money SAFE
-e_conv = 100_000 / 5e6
-e = convert(100_000, cap=5e6, discount=0, pre=8e6, raised=2e6)
-eq("E at conversion", e_conv, 0.02); eq("E after round", e, 0.016)
-L6 = Ledger(); L6.convert_at_post_cap(100_000, e_conv)
-eq("E ledger at conversion", L6.own(), 0.02)
-L6.priced_round(8e6, 2e6)
-eq("E ledger after round", L6.own(), e)
-print(f"E  $100k SAFE @ $5M cap ....... {e_conv:.4%} -> {e:.4%}      [ledger {L6.own():.4%}]")
-
-# E2: pre-money cap, the one formula the angel-side model cannot see all of
-pre_amt, pre_cap, pre_other = 100_000, 5e6, 400_000
-e2 = convert_pre_cap(pre_amt, pre_cap, pre_other, 0, 8e6, 2e6)
-e2_at_conv = pre_amt / (pre_cap + pre_amt + pre_other)
-eq("E2 at conversion", e2_at_conv, 100_000 / 5_500_000)
-eq("E2 after round", e2, e2_at_conv * 0.8)
-L8 = Ledger(); L8.convert_at_pre_cap(pre_amt, pre_cap, pre_other)
-eq("E2 ledger at conversion", L8.own(), e2_at_conv)
-L8.priced_round(8e6, 2e6)
-eq("E2 ledger after round", L8.own(), e2)
-e2_solo = convert_pre_cap(pre_amt, pre_cap, 0, 0, 8e6, 2e6)
-assert e2_solo > e2, "other converters must dilute you"
-assert e2_solo < e, "a pre-money cap must be worse than the same post-money cap"
-print(f"E2 $100k pre-money cap @ $5M ... {e2_at_conv:.4%} -> {e2:.4%}      [ledger {L8.own():.4%}]")
-
-# F: CLA with interest
-f_amt = accrue(50_000, 0.08, 2, "simple")
-f_eff = min(5e6 * 10e6 / 8e6, 10e6 * 0.8)
-f = convert(f_amt, cap=5e6, discount=0.20, pre=8e6, raised=2e6)
-eq("F converting amount", f_amt, 58_000)
-eq("F effective valuation", f_eff, 6.25e6)
-eq("F ownership", f, 0.00928)
-L7 = Ledger(); L7.convert_at_post_cap(f_amt, f_amt / 5e6); L7.priced_round(8e6, 2e6)
-eq("F ledger agrees", L7.own(), f)
-print(f"F  $50k CLA 8%/2yr ............ ${f_amt:,.0f} at ${f_eff/1e6:.2f}M -> {f:.4%}  [ledger {L7.own():.4%}]")
-
-# G: same terms, no interest
-g = convert(50_000, cap=5e6, discount=0.20, pre=8e6, raised=2e6)
-eq("G ownership", g, 0.008)
-eq("G accrual uplift", f / g - 1, 0.16)
-print(f"G  identical, no interest ..... {g:.4%}   accrual worth +{f/g-1:.1%} ownership")
-
-# H / I: exit values
+# I: exit values
 c_own = own_after(b, 48e6, 12e6)
 eq("Series C sit-out ownership", c_own, 0.0032)
 i_gross = c_own * 60e6
 eq("I gross proceeds", i_gross, 192_000)
-h_gross = f * 60e6
-print(f"H  case F at $60M exit ........ ${h_gross:,.0f} on {f:.4%}, invested stays $50,000")
 print(f"I  0.32% of $60M .............. ${i_gross:,.0f}")
 
-# J: fees
-def fees(gross, deployed, entry_pct, carry_pct, charged="on_top"):
-    entry = deployed * entry_pct
-    outlay = deployed + entry if charged == "on_top" else deployed
+# J: fees. The entry fee always comes out of the cheque (never on top), and the
+# management fee always reduces deployed capital — the syndicate's other
+# choices here are not modelled.
+def fees(gross, cheque, entry_pct, carry_pct):
+    entry = cheque * entry_pct
+    deployed = cheque - entry
+    outlay = cheque
     carry = max(0.0, gross - deployed) * carry_pct
     net = gross - carry
     return dict(entry=entry, outlay=outlay, carry=carry, net=net,
                 gross_x=gross / deployed, net_x=net / outlay, drag=carry + entry)
 j = fees(500_000, 50_000, 0.02, 0.20)
-eq("J outlay", j["outlay"], 51_000); eq("J carry", j["carry"], 90_000)
-eq("J net", j["net"], 410_000);      eq("J net multiple", j["net_x"], 8.0392156862745, 1e-9)
-eq("J drag", j["drag"], 91_000)
+eq("J outlay", j["outlay"], 50_000); eq("J carry", j["carry"], 90_200)
+eq("J net", j["net"], 409_800)
+eq("J drag", j["drag"], 91_200)
 print(f"J  fees on $500k gross ........ outlay ${j['outlay']:,.0f}  carry ${j['carry']:,.0f}  "
       f"net ${j['net']:,.0f}  {j['gross_x']:.2f}x -> {j['net_x']:.2f}x  drag ${j['drag']:,.0f}")
 
@@ -228,8 +159,8 @@ print("   the two answers disagree ... CONFIRMED (more dollars, worse multiple)"
 
 # viz 4: fee drag on the running deal
 v4 = fees(192_000, 50_000, 0.02, 0.20)
-eq("viz4 carry", v4["carry"], 28_400); eq("viz4 net", v4["net"], 163_600)
-eq("viz4 gross x", v4["gross_x"], 3.84); eq("viz4 net x", v4["net_x"], 163_600 / 51_000)
+eq("viz4 carry", v4["carry"], 28_600); eq("viz4 net", v4["net"], 163_400)
+eq("viz4 gross x", v4["gross_x"], 192_000 / 49_000); eq("viz4 net x", v4["net_x"], 163_400 / 50_000)
 print(f"4  fee drag .................. ${192_000:,} gross -> ${v4['net']:,.0f} net   "
       f"{v4['gross_x']:.2f}x -> {v4['net_x']:.2f}x")
 seg = 323.7 + 56.2 + 4.0
@@ -267,19 +198,6 @@ def emit_fixture(path):
         "B": {"ownership": b, "valueCents": cents(b * 30e6), "postMoneyCents": cents(30e6)},
         "C": {"proRataCents": cents(c_cheque), "ownership": c, "valueCents": cents(c * 30e6)},
         "D": {"ownership": d, "proRataCents": cents(d_cheque)},
-        "convertRound": {"preMoneyCents": cents(8e6), "raisedCents": cents(2e6)},
-        "E": {"amountCents": cents(100_000), "capCents": cents(5e6),
-              "ownershipAtConversion": e_conv, "ownership": e,
-              "effectiveValuationCents": cents(6.25e6)},
-        "E2": {"amountCents": cents(pre_amt), "capCents": cents(pre_cap),
-               "otherConvertingCents": cents(pre_other),
-               "ownershipAtConversion": e2_at_conv, "ownership": e2},
-        "F": {"amountCents": cents(50_000), "capCents": cents(5e6), "discount": 0.20,
-              "rate": 0.08, "years": 2, "convertingCents": cents(f_amt),
-              "effectiveValuationCents": cents(f_eff), "ownership": f,
-              "investedCents": cents(50_000)},
-        "G": {"ownership": g, "accrualUplift": f / g - 1},
-        "H": {"exitCents": cents(60e6), "proceedsCents": cents(f * 60e6)},
         "I": {"ownership": c_own, "exitCents": cents(60e6),
               "totalRaisedCents": cents(20e6), "proceedsCents": cents(i_gross)},
         "J": {"chequeCents": cents(50_000), "grossCents": cents(500_000),
@@ -306,7 +224,7 @@ if "--emit" in sys.argv:
 
 print()
 print("=" * 72)
-print(f"{checks} assertions across 11 golden cases and 4 visuals")
+print(f"{checks} assertions across 7 golden cases and 4 visuals")
 print("RESULT:", "ALL PASS — two independent models agree" if not fails else f"{len(fails)} FAILURES")
 for f_ in fails: print("  FAIL", f_)
 print("=" * 72)

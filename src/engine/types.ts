@@ -7,58 +7,40 @@
  * Every money field is an integer number of cents. See `money.ts`.
  */
 
-export type Currency = 'USD' | 'EUR' | 'GBP'
+export type Currency = 'USD' | 'EUR'
 
-export type InstrumentType =
-  | 'equity'
-  | 'safe_post'
-  | 'safe_pre'
-  | 'cla'
-  | 'asa'
-  | 'kiss_equity'
-  | 'kiss_debt'
+/** A label only — every instrument converts identically at the round's valuation. */
+export type InstrumentType = 'equity' | 'safe' | 'cla'
 
+/** A cheque written into a round. Present on `Round.participation`. */
 export interface Instrument {
   type: InstrumentType
   amountCents: number
-  /** ISO 8601 date. */
-  date: string
-  capCents?: number | undefined
-  /** 0..1 */
-  discount?: number | undefined
-  /** 0..1, annual */
-  interestRate?: number | undefined
-  interestMode?: 'simple' | 'compound' | undefined
-  maturityDate?: string | undefined
-  /** Only meaningful for `safe_pre`, where the result is an estimate. */
-  otherConvertingCents?: number | undefined
+  entryFee: EntryFeeTerms
 }
 
-export type AngelAction =
-  | { kind: 'sit_out' }
-  | { kind: 'pro_rata' }
-  | { kind: 'custom'; amountCents: number }
+export type RoundLabel = 'Pre-seed' | 'Seed' | 'Series A' | 'Series B' | 'Series C' | 'Series D+'
 
 export interface Round {
   id: string
-  label: string
+  label: RoundLabel
   /** ISO 8601 date. */
   date: string
   raisedCents: number
-  /** Post-money is always derived from this and the raise, never stored. */
-  preMoneyCents: number
+  /** Meaning depends on `valuationBasis`. */
+  valuationCents: number
+  valuationBasis: 'pre' | 'post'
   /** New option pool created in this round, 0..1 of post-money. */
   newOptionPool?: number | undefined
-  /** Whether the angel's convertible converts in this round. */
-  convertsHere?: boolean | undefined
-  angelAction: AngelAction
+  /** Undefined means sitting this round out. `rounds[0]` must always have one. */
+  participation?: Instrument | undefined
 }
 
 /**
  * Fee terms are defined in `fees.ts` and re-exported here so the serialised
  * shape and the engine's shape cannot drift apart.
  */
-import type { FeeTerms } from './fees'
+import type { EntryFeeTerms, FeeTerms } from './fees'
 export type { FeeTerms as Fees }
 
 export interface ExitEvent {
@@ -67,14 +49,18 @@ export interface ExitEvent {
   valueCents: number
   /** Total capital the company has raised. Drives which exit regime applies. */
   totalRaisedCents: number
-  unconvertedLoan?: 'convert' | 'repay' | 'extend' | undefined
 }
 
 export interface Scenario {
   /** Bump to migrate links shared under an older shape. */
-  version: 1
+  version: 2
+  /**
+   * The one currency every amount in the scenario is in. There is deliberately
+   * no per-round currency: mixing them needs exchange rates, and without them
+   * euros and dollars would be added one for one.
+   */
   currency: Currency
-  entry: Instrument
+  /** `rounds[0]` is the entry — there is no separate top-level entry field. */
   rounds: Round[]
   fees: FeeTerms
   exit: ExitEvent

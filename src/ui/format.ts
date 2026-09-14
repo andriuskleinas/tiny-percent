@@ -38,3 +38,7 @@ export function symbolFor(currency: string): string {
       .find((part) => part.type === 'currency')?.value ?? currency
   )
 }
+
+/** Shown under every instrument selector. The instrument does not change the maths. */
+export const INSTRUMENT_NOTE =
+  'A label only: every instrument is priced at this round’s valuation — caps, discounts and interest are not modelled.'
