@@ -11,7 +11,8 @@ import type { Currency, ExitEvent, Instrument, Round, Scenario } from '../engine
  */
 
 export type Action =
-  | { type: 'round:add' }
+  /** `id` lets the caller know which round it just added, to open it for editing. */
+  | { type: 'round:add'; id?: string | undefined }
   | { type: 'round:remove'; id: string }
   | { type: 'round:set'; id: string; patch: Partial<Omit<Round, 'participation'>> }
   /** Creates the participation if it is absent, merges into it otherwise. */
@@ -29,7 +30,7 @@ export type Action =
 
 const NO_FEE = { rule: 'percent' as const, percent: 0 }
 
-function nextRound(rounds: Round[]): Round {
+function nextRound(rounds: Round[], id: string | undefined): Round {
   const last = rounds[rounds.length - 1]
   const year = last ? Number(last.date.slice(0, 4)) + 2 : new Date().getFullYear()
   // After a custom name, "Series A" is as good a guess as any.
@@ -37,7 +38,7 @@ function nextRound(rounds: Round[]): Round {
   const nextLabel = last && lastIndex === -1 ? 'Series A' : ROUND_LABELS[Math.min(lastIndex + 1, ROUND_LABELS.length - 1)] ?? 'Series A'
   const lastPost = last ? (last.valuationBasis === 'pre' ? last.valuationCents + last.raisedCents : last.valuationCents) : 0
   return {
-    id: `r${Date.now().toString(36)}${rounds.length}`,
+    id: id ?? `r${Date.now().toString(36)}${rounds.length}`,
     label: nextLabel,
     date: `${year}-01-01`,
     // A sensible next round: two and a half times the last post-money, with the
@@ -56,7 +57,7 @@ export function impliedTotalRaised(rounds: Round[]): number {
 export function reducer(state: Scenario, action: Action): Scenario {
   switch (action.type) {
     case 'round:add': {
-      const rounds = [...state.rounds, nextRound(state.rounds)]
+      const rounds = [...state.rounds, nextRound(state.rounds, action.id)]
       return { ...state, rounds, exit: { ...state.exit, totalRaisedCents: impliedTotalRaised(rounds) } }
     }
 

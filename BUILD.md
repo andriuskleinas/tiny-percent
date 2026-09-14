@@ -324,3 +324,46 @@ originally verified ($51,000 outlay, $90,000 carry). Fees default to none.
 | Oracle assertions | 53 across 8 golden cases |
 | Lint warnings | 0 |
 | Checked in the browser | 1440px light and dark, 320px with no horizontal scroll, every info popup in bounds |
+
+---
+
+## Landing page PRD — Phase 2: the landing page · DONE, awaiting review
+
+The page is now product-led, in the PRD's order: navigation, hero, the
+calculator, what it does, how it works, the worked example, the maths briefly,
+FAQ, updates signup, footer. Privacy and Terms are separate static pages at
+`/privacy` and `/terms` (`vercel.json` turns on clean URLs).
+
+- **Hero.** The PRD headline and CTAs, with the product as the image: the
+  €5,000 example's real figures and its ownership falling round by round.
+  "Calculate my investment" scrolls to the calculator and puts the cursor in the
+  investment amount; "See an example" loads the example.
+- **No number is typed into copy.** `landing/example.ts` runs the example
+  through the engine once, and the hero, worked example, explanations and FAQ
+  all read from it, so they cannot disagree with the calculator or with golden
+  case L.
+- **Navigation keeps the calculation.** The address fragment holds the whole
+  scenario, so an ordinary `href="#faq"` would have replaced it and lost the
+  user's numbers on reload or copy. Links keep real hrefs but scroll by script;
+  arriving from another page at `/#calculator` scrolls there and then restores
+  the scenario fragment.
+- **Round cards collapse.** Loaded rounds show a one-line summary and their
+  pro-rata amount; the round you add, or choose to edit, opens.
+- **Phone summary bar** shows only while the calculator is on screen, so it no
+  longer covers the FAQ and footer.
+- **Updates signup is a form only.** It validates the address and says plainly
+  that nothing was sent or stored; no request is made. `site.ts` and the
+  Privacy page must change before any email service is connected.
+- **Also:** title and meta description from PRD §29, a favicon from the brand
+  mark (it was still Vite's), one h1, skip link, and nav, main and footer
+  landmarks.
+
+**Not yet live-ready.** The Privacy and Terms pages have no operator name or
+contact email (`src/site.ts`); they say contact details will be published. The
+legal text is a plain-language draft, not reviewed by a lawyer, and names no
+governing law.
+
+| | |
+|---|---|
+| Tests | 225 across 19 files |
+| Checked in the browser | 1440px screenshots of every section, 320px with no horizontal scroll, nav and "See an example" live |

@@ -1,4 +1,4 @@
-# Angel Dilution Calculator
+# Angel Investment Calculator
 
 What your cheque buys, what the next rounds take back, and what survives the
 syndicate's carry. Modelled entirely from the angel's chair, using only numbers an

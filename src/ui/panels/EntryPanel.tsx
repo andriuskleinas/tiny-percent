@@ -6,6 +6,7 @@ import { Disclosure, InfoTip, MoneyField, Panel, PercentField, SelectField, Stat
 import { INSTRUMENT_NOTE, ownership } from '../format'
 import { entryIsComplete, hasEntryFee } from '../facts'
 import { EntryFeeFields } from './EntryFeeFields'
+import { INVESTMENT_INPUT_ID } from '../../landing/scroll'
 
 const TYPES: ReadonlyArray<readonly [InstrumentType, string]> = [
   ['equity', 'Priced equity'],
@@ -51,6 +52,7 @@ export function EntryPanel({
         <div className="grid content-start gap-4 sm:grid-cols-2">
           <MoneyField
             label="Investment amount"
+            id={INVESTMENT_INPUT_ID}
             valueCents={entry?.amountCents ?? 0}
             onChange={(amountCents) => participate({ amountCents })}
             placeholder="e.g. 5,000"

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest'
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import App from '../App'
 import { SAFE_AT_A_CAP } from '../state/presets'
 import { encodeScenario } from '../state/url'
@@ -21,6 +21,7 @@ describe('the instrument selector says it does not change the maths', () => {
   it('puts the note under every instrument selector, entry and follow-on alike', () => {
     window.history.replaceState(null, '', `/#s=${encodeScenario(SAFE_AT_A_CAP)}`)
     render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Series A' }))
     const selectors = screen.getAllByLabelText('Instrument')
     expect(selectors).toHaveLength(2)
     for (const select of selectors) {

@@ -71,6 +71,7 @@ describe('editing the entry fee never discards terms you did not touch', () => {
 
   it('keeps a follow-on cheque’s fixed minimum when its percentage is edited', () => {
     const state = mount(SAFE_AT_A_CAP, 'rounds')
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Series A' }))
 
     fireEvent.change(screen.getByLabelText('Entry fee percentage'), { target: { value: '3' } })
 

@@ -81,11 +81,34 @@ describe('start from scratch and load example', () => {
 })
 
 describe('future rounds and the follow-on choice', () => {
+  it('keeps loaded rounds collapsed to a summary until you edit one', () => {
+    open(EXAMPLE)
+    const seriesB = within(rounds()).getByRole('article', { name: 'Series B' })
+    const edit = within(seriesB).getByRole('button', { name: 'Edit Series B' })
+    expect(edit.getAttribute('aria-expanded')).toBe('false')
+    expect(within(seriesB).queryByLabelText('New capital raised')).toBeNull()
+    expect(seriesB.textContent).toContain('€8,000,000 at €40,000,000 post-money')
+    fireEvent.click(edit)
+    expect(edit.getAttribute('aria-expanded')).toBe('true')
+    expect(within(seriesB).getByLabelText('New capital raised')).toBeTruthy()
+    fireEvent.click(edit)
+    expect(within(seriesB).queryByLabelText('New capital raised')).toBeNull()
+  })
+
+  it('opens a round you have just added', () => {
+    open(EXAMPLE)
+    fireEvent.click(within(rounds()).getByRole('button', { name: '+ Add funding round' }))
+    const added = within(rounds()).getByRole('article', { name: 'Series D' })
+    expect(within(added).getByLabelText('New capital raised')).toBeTruthy()
+    expect(within(rounds()).queryAllByLabelText('New capital raised')).toHaveLength(1)
+  })
+
   it('quotes the pro-rata amount and holds ownership when you invest it', () => {
     open(EXAMPLE)
     const seriesA = within(rounds()).getByRole('article', { name: 'Series A' })
     expect(within(seriesA).getByText(/Amount required to keep your 0.10%/).textContent).toContain('€3,000')
     fireEvent.click(within(seriesA).getByRole('button', { name: 'Invest pro-rata' }))
+    fireEvent.click(within(seriesA).getByRole('button', { name: 'Edit Series A' }))
     expect((within(seriesA).getByLabelText('Your follow-on investment') as HTMLInputElement).value).toBe('3,000')
     expect(within(seriesA).getByText('Pro-rata selected')).toBeTruthy()
     expect(within(seriesA).getAllByText('0.10%').length).toBeGreaterThan(0)
@@ -94,6 +117,7 @@ describe('future rounds and the follow-on choice', () => {
   it('compares no follow-on, your follow-on and pro-rata side by side', () => {
     open(EXAMPLE)
     const seriesA = within(rounds()).getByRole('article', { name: 'Series A' })
+    fireEvent.click(within(seriesA).getByRole('button', { name: 'Edit Series A' }))
     for (const title of ['No follow-on', 'Your follow-on', 'Maintain pro-rata']) {
       expect(within(seriesA).getByText(title)).toBeTruthy()
     }

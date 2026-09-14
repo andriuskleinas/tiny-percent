@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { useMoney } from '../currency'
 import type { ScenarioResult } from '../../engine/scenario'
 import type { Scenario } from '../../engine/types'
@@ -71,11 +72,28 @@ export function SummaryPanel({ scenario, run }: { scenario: Scenario; run: Scena
   )
 }
 
-/** The phone version: one line, always in reach. */
+/**
+ * Whether the calculator section is on screen. Without IntersectionObserver
+ * (old browsers, the test DOM) it counts as visible, so the bar still shows.
+ */
+function useOnScreen(id: string): boolean {
+  const [visible, setVisible] = useState(() => typeof IntersectionObserver === 'undefined')
+  useEffect(() => {
+    const target = document.getElementById(id)
+    if (!target || typeof IntersectionObserver === 'undefined') return undefined
+    const observer = new IntersectionObserver(([entry]) => setVisible(entry?.isIntersecting ?? false))
+    observer.observe(target)
+    return () => observer.disconnect()
+  }, [id])
+  return visible
+}
+
+/** The phone version: one line, in reach while you work in the calculator and out of the way elsewhere. */
 export function SummaryBar({ scenario, run }: { scenario: Scenario; run: ScenarioResult }) {
   const { money, compactMoney } = useMoney()
+  const onScreen = useOnScreen('calculator')
   const { entry, initialCents, range } = figures(scenario, run)
-  if (initialCents <= 0 || (entry?.postMoneyCents ?? 0) <= 0) return null
+  if (!onScreen || initialCents <= 0 || (entry?.postMoneyCents ?? 0) <= 0) return null
   const exitCents = scenario.exit.valueCents
   return (
     <div className="fixed inset-x-0 bottom-0 z-20 border-t border-rule-strong bg-surface/95 px-4 py-2.5 backdrop-blur lg:hidden">

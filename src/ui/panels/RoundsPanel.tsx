@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useMoney } from '../currency'
 import { ownAfter, postMoney, stakeValue } from '../../engine/ownership'
 import { roundTerms } from '../../engine/scenario'
@@ -82,8 +83,23 @@ export function RoundsPanel({
   dispatch: (action: Action) => void
 }) {
   const { money } = useMoney()
+  // Loaded rounds start as one-line summaries; the one you add, or choose to
+  // edit, opens. Three open rounds made the page several screens long.
+  const [open, setOpen] = useState<ReadonlySet<string>>(() => new Set())
+  const toggle = (id: string) =>
+    setOpen((was) => {
+      const next = new Set(was)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  const add = () => {
+    const id = `r${Date.now().toString(36)}${rounds.length}`
+    dispatch({ type: 'round:add', id })
+    setOpen((was) => new Set(was).add(id))
+  }
   const addRound = (
-    <Button tone="primary" onClick={() => dispatch({ type: 'round:add' })}>
+    <Button tone="primary" onClick={add}>
       + Add funding round
     </Button>
   )
@@ -136,12 +152,20 @@ export function RoundsPanel({
           const cheque = round.participation
           const name = roundName(round)
           const held = state !== undefined && state.ownershipBefore > 0
+          const expanded = open.has(round.id)
+          const bodyId = `round-${round.id}-details`
 
           return (
             <article key={round.id} aria-label={name} className="border border-rule bg-ground/40 p-4 sm:p-5">
-              <header className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <h3 className="font-semibold text-ink">{name}</h3>
-                <div className="flex items-center gap-3">
+              <header className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h3 className="font-semibold text-ink">{name}</h3>
+                  <p className="mt-0.5 font-mono text-xs tabular-nums text-ink-faint">
+                    {money(round.raisedCents)} at {money(state?.postMoneyCents ?? round.valuationCents)} post-money · {round.date.slice(0, 4)}
+                    {cheque ? ` · you invest ${money(cheque.amountCents)}` : ''}
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-3">
                   {state ? (
                     <p className="font-mono text-xs tabular-nums text-ink-faint">
                       you own <span className="text-ink">{ownership(state.ownershipAfter)}</span>
@@ -149,42 +173,24 @@ export function RoundsPanel({
                       <span className="text-gain">{money(state.stakeValueCents)}</span> paper value
                     </p>
                   ) : null}
+                  <button
+                    type="button"
+                    aria-expanded={expanded}
+                    aria-controls={bodyId}
+                    aria-label={`Edit ${name}`}
+                    onClick={() => toggle(round.id)}
+                    className="border border-accent px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider text-accent outline-none transition-colors hover:bg-accent-wash focus-visible:ring-2 focus-visible:ring-accent/40"
+                  >
+                    {expanded ? 'Done' : 'Edit'}
+                  </button>
                   <Button tone="quiet" onClick={() => dispatch({ type: 'round:remove', id: round.id })} title={`Remove ${name}`}>
                     Remove
                   </Button>
                 </div>
               </header>
 
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <SelectField
-                  label="Round"
-                  value={isPreset(round.label) ? round.label : CUSTOM}
-                  options={LABEL_OPTIONS}
-                  onChange={(label) => set({ label: label === CUSTOM ? 'Custom round' : label })}
-                />
-                {isPreset(round.label) ? null : (
-                  <TextField label="Round name" value={round.label} onChange={(label) => set({ label: label.slice(0, 40) })} />
-                )}
-                <TextField label="Date" type="date" value={round.date} onChange={(date) => set({ date })} />
-                <MoneyField label="New capital raised" valueCents={round.raisedCents} onChange={(raisedCents) => set({ raisedCents })} />
-                <MoneyField
-                  label="Company valuation"
-                  info={round.valuationBasis === 'pre' ? 'preMoney' : 'postMoney'}
-                  valueCents={round.valuationCents}
-                  onChange={(valuationCents) => set({ valuationCents })}
-                />
-                <SwitchField label="Valuation basis" info="valuationBasis" value={round.valuationBasis} options={VALUATION_BASIS} onChange={(valuationBasis) => set({ valuationBasis })} />
-                <PercentField
-                  label="New option pool"
-                  info="optionPool"
-                  value={round.newOptionPool ?? 0}
-                  onChange={(newOptionPool) => set({ newOptionPool: newOptionPool || undefined })}
-                  hint="Carved out of the pre-money, so you share the dilution."
-                />
-              </div>
-
               {held && state ? (
-                <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border border-accent/30 bg-accent-wash/50 px-4 py-3">
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border border-accent/30 bg-accent-wash/50 px-4 py-3">
                   <p className="flex flex-wrap items-center gap-1.5 text-sm text-ink-soft">
                     <span>
                       Amount required to keep your {ownership(state.ownershipBefore)}:{' '}
@@ -209,40 +215,74 @@ export function RoundsPanel({
                 </div>
               ) : null}
 
-              <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <SwitchField
-                  label="Do you invest in this round?"
-                  value={cheque ? 'yes' : 'no'}
-                  options={PARTICIPATE}
-                  onChange={(choice) =>
-                    choice === 'no'
-                      ? dispatch({ type: 'round:sitOut', id: round.id })
-                      : participate(cheque ?? { type: 'equity', amountCents: 0, entryFee: NO_FEE })
-                  }
-                />
-                {cheque ? (
-                  <MoneyField
-                    label="Your follow-on investment"
-                    valueCents={cheque.amountCents}
-                    onChange={(amountCents) => participate({ amountCents })}
-                  />
+              <div id={bodyId} hidden={!expanded}>
+                {expanded ? (
+                  <>
+                    <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                      <SelectField
+                        label="Round"
+                        value={isPreset(round.label) ? round.label : CUSTOM}
+                        options={LABEL_OPTIONS}
+                        onChange={(label) => set({ label: label === CUSTOM ? 'Custom round' : label })}
+                      />
+                      {isPreset(round.label) ? null : (
+                        <TextField label="Round name" value={round.label} onChange={(label) => set({ label: label.slice(0, 40) })} />
+                      )}
+                      <TextField label="Date" type="date" value={round.date} onChange={(date) => set({ date })} />
+                      <MoneyField label="New capital raised" valueCents={round.raisedCents} onChange={(raisedCents) => set({ raisedCents })} />
+                      <MoneyField
+                        label="Company valuation"
+                        info={round.valuationBasis === 'pre' ? 'preMoney' : 'postMoney'}
+                        valueCents={round.valuationCents}
+                        onChange={(valuationCents) => set({ valuationCents })}
+                      />
+                      <SwitchField label="Valuation basis" info="valuationBasis" value={round.valuationBasis} options={VALUATION_BASIS} onChange={(valuationBasis) => set({ valuationBasis })} />
+                      <PercentField
+                        label="New option pool"
+                        info="optionPool"
+                        value={round.newOptionPool ?? 0}
+                        onChange={(newOptionPool) => set({ newOptionPool: newOptionPool || undefined })}
+                        hint="Carved out of the pre-money, so you share the dilution."
+                      />
+                    </div>
+
+                    <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                      <SwitchField
+                        label="Do you invest in this round?"
+                        value={cheque ? 'yes' : 'no'}
+                        options={PARTICIPATE}
+                        onChange={(choice) =>
+                          choice === 'no'
+                            ? dispatch({ type: 'round:sitOut', id: round.id })
+                            : participate(cheque ?? { type: 'equity', amountCents: 0, entryFee: NO_FEE })
+                        }
+                      />
+                      {cheque ? (
+                        <MoneyField
+                          label="Your follow-on investment"
+                          valueCents={cheque.amountCents}
+                          onChange={(amountCents) => participate({ amountCents })}
+                        />
+                      ) : null}
+                    </div>
+
+                    {cheque ? (
+                      <div className="mt-4">
+                        <Disclosure summary="Instrument and fees for this cheque" defaultOpen={hasEntryFee(cheque)}>
+                          <div className="grid gap-4 sm:grid-cols-2">
+                            <SelectField label="Instrument" value={cheque.type} options={TYPES} onChange={(type) => participate({ type })} hint={INSTRUMENT_NOTE} />
+                          </div>
+                          <div className="mt-4">
+                            <EntryFeeFields fee={cheque.entryFee} onChange={(entryFee) => participate({ entryFee })} />
+                          </div>
+                        </Disclosure>
+                      </div>
+                    ) : null}
+
+                    {held && state ? <FollowOnComparison round={round} state={state} /> : null}
+                  </>
                 ) : null}
               </div>
-
-              {cheque ? (
-                <div className="mt-4">
-                  <Disclosure summary="Instrument and fees for this cheque" defaultOpen={hasEntryFee(cheque)}>
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <SelectField label="Instrument" value={cheque.type} options={TYPES} onChange={(type) => participate({ type })} hint={INSTRUMENT_NOTE} />
-                    </div>
-                    <div className="mt-4">
-                      <EntryFeeFields fee={cheque.entryFee} onChange={(entryFee) => participate({ entryFee })} />
-                    </div>
-                  </Disclosure>
-                </div>
-              ) : null}
-
-              {held && state ? <FollowOnComparison round={round} state={state} /> : null}
             </article>
           )
         })}

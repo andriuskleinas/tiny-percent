@@ -99,14 +99,18 @@ export function Field({
   label,
   hint,
   info,
+  id: fixedId,
   children,
 }: {
   label: string
   hint?: string | undefined
   info?: TermKey | undefined
+  /** A stable id, for an input something else needs to focus. */
+  id?: string | undefined
   children: (id: string) => ReactNode
 }) {
-  const id = useId()
+  const generated = useId()
+  const id = fixedId ?? generated
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-center gap-1.5">
@@ -134,6 +138,7 @@ export function MoneyField({
   valueCents,
   onChange,
   placeholder,
+  id,
 }: {
   label: string
   hint?: string | undefined
@@ -141,13 +146,14 @@ export function MoneyField({
   valueCents: number
   onChange: (cents: number) => void
   placeholder?: string | undefined
+  id?: string | undefined
 }) {
   const { symbol } = useMoney()
   const [draft, setDraft] = useState<string | undefined>(undefined)
   const invalid = draft !== undefined && draft.trim() !== '' && parseMoney(draft) === undefined
 
   return (
-    <Field label={label} hint={invalid ? 'Type an amount, like 5000, 5k or 1.5m.' : hint} info={info}>
+    <Field label={label} hint={invalid ? 'Type an amount, like 5000, 5k or 1.5m.' : hint} info={info} id={id}>
       {(id) => (
         <div className="flex items-stretch">
           <span className="flex items-center border border-r-0 border-rule bg-sunk px-2.5 font-mono text-sm text-ink-faint">
