@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { Currency } from '../../engine/types'
 import { EXAMPLE, blankScenario } from '../../state/presets'
 import type { Action } from '../../state/reducer'
+import { track } from '../../analytics/track'
 import { Button } from '../controls'
 
 type ShareState = 'idle' | 'copied' | 'manual'
@@ -26,11 +27,13 @@ export function CalculatorToolbar({ currency, dispatch }: { currency: Currency; 
   }, [share])
 
   const onShare = async () => {
+    track({ name: 'share_clicked' })
     const url = window.location.href
     const touch = window.matchMedia?.('(pointer: coarse)').matches ?? false
     if (touch && typeof navigator.share === 'function') {
       try {
         await navigator.share({ title: 'My angel investment calculation', url })
+        track({ name: 'calculation_link_copied', method: 'share_sheet' })
         return
       } catch (error) {
         if ((error as Error).name === 'AbortError') return
@@ -38,8 +41,10 @@ export function CalculatorToolbar({ currency, dispatch }: { currency: Currency; 
     }
     try {
       await navigator.clipboard.writeText(url)
+      track({ name: 'calculation_link_copied', method: 'clipboard' })
       setShare('copied')
     } catch {
+      track({ name: 'calculation_link_copied', method: 'manual' })
       setShare('manual')
     }
   }
@@ -50,7 +55,13 @@ export function CalculatorToolbar({ currency, dispatch }: { currency: Currency; 
         <Button tone="quiet" onClick={() => dispatch({ type: 'scenario:load', scenario: blankScenario(currency) })}>
           Start from scratch
         </Button>
-        <Button tone="quiet" onClick={() => dispatch({ type: 'scenario:load', scenario: EXAMPLE })}>
+        <Button
+          tone="quiet"
+          onClick={() => {
+            track({ name: 'example_loaded', placement: 'toolbar' })
+            dispatch({ type: 'scenario:load', scenario: EXAMPLE })
+          }}
+        >
           Load example
         </Button>
         <span className="grow" />

@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { trackOnce } from '../../analytics/track'
 import { useMoney } from '../currency'
 import { ownAfter, postMoney, stakeValue } from '../../engine/ownership'
 import { roundTerms } from '../../engine/scenario'
@@ -293,6 +294,8 @@ export function RoundsPanel({
 
 function FollowOnComparison({ round, state }: { round: Round; state: RoundState }) {
   const { money } = useMoney()
+  // It only mounts when a round is opened, so this counts people who looked.
+  useEffect(() => trackOnce({ name: 'pro_rata_scenario_viewed' }), [])
   const options = strategies(state)
   const widest = Math.max(...options.map((o) => o.ownership), Number.EPSILON)
 

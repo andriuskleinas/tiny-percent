@@ -1,4 +1,7 @@
-import { useEffect, useReducer, useState } from 'react'
+import { useEffect, useReducer, useRef, useState } from 'react'
+import { calculatorEvents, createJourney } from './analytics/calculatorEvents'
+import { track, trackOnce } from './analytics/track'
+import type { CtaPlacement } from './analytics/track'
 import type { Scenario } from './engine/types'
 import { Hero } from './landing/Hero'
 import { Faq, Features, HowItWorks, Learn, SiteFooter, UpdatesSignup, WorkedExample } from './landing/Sections'
@@ -6,6 +9,8 @@ import { SiteHeader } from './landing/SiteHeader'
 import { scrollToSection } from './landing/scroll'
 import { appReducer, initialAppState } from './state/app'
 import { EXAMPLE, STARTING_POINT } from './state/presets'
+import { reducer } from './state/reducer'
+import type { Action } from './state/reducer'
 import { encodeScenario, scenarioFromLocation } from './state/url'
 import { Calculator } from './ui/Calculator'
 import { ErrorBoundary } from './ui/ErrorNotice'
@@ -30,7 +35,19 @@ function sectionFromLocation(hash: string): string | undefined {
 }
 
 export default function App() {
-  const [state, dispatch] = useReducer(appReducer, undefined, () => initialAppState(initialScenario()))
+  const [state, dispatchRaw] = useReducer(appReducer, undefined, () => initialAppState(initialScenario()))
+
+  // Every calculator change passes through here once, so its funnel events are
+  // worked out in one place from the scenario before and after it. Each change
+  // re-renders before the next, so this render's scenario is the one it changes.
+  const journey = useRef(createJourney())
+  const dispatch = (action: Action) => {
+    const prev = state.scenario
+    for (const event of calculatorEvents(prev, action, reducer(prev, action), journey.current)) track(event)
+    dispatchRaw(action)
+  }
+
+  useEffect(() => trackOnce({ name: 'page_viewed' }), [])
   // Read before the effect below replaces the fragment with the scenario.
   const [arrivedAt] = useState(() => (typeof window === 'undefined' ? undefined : sectionFromLocation(window.location.hash)))
 
@@ -44,7 +61,9 @@ export default function App() {
     window.history.replaceState(null, '', `#s=${encodeScenario(state.scenario)}`)
   }, [state.scenario])
 
-  const openExample = () => {
+  const openExample = (placement: CtaPlacement) => {
+    track({ name: 'example_cta_clicked', placement })
+    track({ name: 'example_loaded', placement })
     dispatch({ type: 'scenario:load', scenario: EXAMPLE })
     scrollToSection('calculator')
   }
@@ -53,11 +72,11 @@ export default function App() {
     <ErrorBoundary>
       <SiteHeader />
       <main>
-        <Hero onExample={openExample} />
+        <Hero onExample={() => openExample('hero')} />
         <Calculator state={state} dispatch={dispatch} />
         <Features />
         <HowItWorks />
-        <WorkedExample onOpen={openExample} />
+        <WorkedExample onOpen={() => openExample('worked_example')} />
         <Learn />
         <Faq />
         <UpdatesSignup />

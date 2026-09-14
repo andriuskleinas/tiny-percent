@@ -417,3 +417,65 @@ since the hidden in-app browser runs no IntersectionObserver or smooth scroll):
 
 Production address used: `https://startup-investment-calculator.vercel.app`,
 found from Vercel's GitHub deployment records and confirmed serving this app.
+
+---
+
+## Landing page PRD — Phase 4: analytics · DONE, awaiting review
+
+No provider was chosen, so every event from PRD §30–31 is wired to
+`src/analytics/track.ts`, which sends nothing in production until a sink is
+set. In development it logs each event to the console as `[analytics]`. The
+production bundle contains neither the logging nor any network call for it.
+
+**Events carry actions, never inputs.** The event types are the whole
+vocabulary, and the only values they allow are placements, booleans and a round
+count. No amount, valuation, ownership or email address can be sent; a test
+checks every event from a full journey for that.
+
+| Event | Fires when | Once per visit |
+|---|---|---|
+| `page_viewed` | the page loads | yes |
+| `hero_cta_clicked` `{placement}` | a calculate button: hero, nav or features | |
+| `example_cta_clicked` `{placement}` | "See an example" or "Open this example in calculator" | |
+| `calculator_viewed` | the calculator scrolls into view | yes |
+| `calculator_started` | the first change to any calculator input | yes |
+| `initial_investment_entered` | an investment amount above zero is typed | yes |
+| `ownership_calculated` | an edit to the investment leaves an ownership result | yes |
+| `funding_round_added` `{rounds}` | "+ Add funding round" | |
+| `second_funding_round_added` | the second later round is added | yes |
+| `follow_on_amount_entered` `{pro_rata}` | a follow-on amount is first set on a round | once per round |
+| `pro_rata_scenario_viewed` | a round's follow-on comparison is opened | yes |
+| `exit_valuation_changed` `{preset}` | the exit valuation changes | |
+| `exit_scenario_completed` | an exit valuation is chosen with an ownership result | yes |
+| `example_loaded` `{placement}` | any button loads the example | |
+| `share_clicked` | "Share calculation" | |
+| `calculation_link_copied` `{method}` | the share sheet completes, the clipboard copy succeeds, or the manual link is shown | |
+| `email_submitted` | a valid address is submitted (the address is not sent) | |
+| `activated` | same moment as `ownership_calculated` (§31 primary) | yes |
+| `strongly_activated` | ownership reached, a round added and an exit explored, in any order | yes |
+
+Loading the example is not the user calculating, so it never counts as
+`calculator_started`. Calculator events are derived in one pure function,
+`analytics/calculatorEvents.ts`, from the scenario before and after each change;
+the page only fires the button and visibility events.
+
+**§32 metrics, once a provider is connected** (all per visit):
+
+| Metric | Numerator / denominator |
+|---|---|
+| Calculator start rate | `calculator_started` / `page_viewed` |
+| Ownership completion | `ownership_calculated` / `calculator_started` |
+| Follow-on usage | `funding_round_added` (visits with any) / `calculator_started` |
+| Exit calculator usage | `exit_scenario_completed` / `calculator_started` |
+| Sharing rate | `share_clicked` / `ownership_calculated` |
+
+**Connecting a provider** is one call in `src/main.tsx`, for example
+`setAnalyticsSink((e) => window.umami?.track(e.name, e))`, plus the provider's
+script, its origin added to the Content Security Policy in `vercel.json`, and
+the Privacy page's analytics paragraph rewritten to name it. Until then that
+paragraph ("uses no analytics") stays true.
+
+| | |
+|---|---|
+| Tests | 250 across 23 files |
+| Checked in the browser | the §40 journey in development logs each event in order, once |

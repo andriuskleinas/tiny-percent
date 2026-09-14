@@ -1,4 +1,5 @@
 import { Mark } from './Section'
+import { track } from '../analytics/track'
 import { INVESTMENT_INPUT_ID, scrollToSection } from './scroll'
 
 const LINKS = [
@@ -51,7 +52,10 @@ export function SiteHeader() {
         </ul>
         <button
           type="button"
-          onClick={() => scrollToSection('calculator', document.getElementById(INVESTMENT_INPUT_ID))}
+          onClick={() => {
+            track({ name: 'hero_cta_clicked', placement: 'nav' })
+            scrollToSection('calculator', document.getElementById(INVESTMENT_INPUT_ID))
+          }}
           // Below 360px there is no room beside the name; the hero's own button is on screen there.
           className="hidden shrink-0 border border-accent bg-accent px-3 py-1.5 text-sm font-medium text-on-accent outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-accent/40 min-[360px]:inline-flex"
         >

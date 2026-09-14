@@ -1,6 +1,7 @@
 import { CurrencyContext, useMoney } from '../ui/currency'
 import { ownership } from '../ui/format'
 import { EXAMPLE_FACTS, HERO_EXIT_CENTS } from './example'
+import { track } from '../analytics/track'
 import { INVESTMENT_INPUT_ID, scrollToSection } from './scroll'
 
 export function Hero({ onExample }: { onExample: () => void }) {
@@ -18,7 +19,10 @@ export function Hero({ onExample }: { onExample: () => void }) {
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <button
               type="button"
-              onClick={() => scrollToSection('calculator', document.getElementById(INVESTMENT_INPUT_ID))}
+              onClick={() => {
+                track({ name: 'hero_cta_clicked', placement: 'hero' })
+                scrollToSection('calculator', document.getElementById(INVESTMENT_INPUT_ID))
+              }}
               className="border border-accent bg-accent px-5 py-3 font-medium text-on-accent outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2"
             >
               Calculate my investment

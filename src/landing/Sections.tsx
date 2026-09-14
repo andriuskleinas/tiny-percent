@@ -5,6 +5,7 @@ import { multiple, ownership } from '../ui/format'
 import { EXAMPLE_FACTS } from './example'
 import { FAQ } from './faq'
 import { Section } from './Section'
+import { track } from '../analytics/track'
 import { INVESTMENT_INPUT_ID, scrollToSection } from './scroll'
 
 const toCalculator = () => scrollToSection('calculator', document.getElementById(INVESTMENT_INPUT_ID))
@@ -32,7 +33,14 @@ export function Features() {
           </li>
         ))}
       </ul>
-      <button type="button" onClick={toCalculator} className={`${primary} mt-8`}>
+      <button
+        type="button"
+        onClick={() => {
+          track({ name: 'hero_cta_clicked', placement: 'features' })
+          toCalculator()
+        }}
+        className={`${primary} mt-8`}
+      >
         Try the calculator
       </button>
     </Section>
@@ -225,7 +233,10 @@ export function UpdatesSignup() {
 
   const submit = (event: FormEvent) => {
     event.preventDefault()
-    setState(EMAIL.test(email.trim()) ? 'done' : 'invalid')
+    const valid = EMAIL.test(email.trim())
+    // The event says a valid address was submitted — never the address.
+    if (valid) track({ name: 'email_submitted' })
+    setState(valid ? 'done' : 'invalid')
   }
 
   const upcoming = ['Saved investments', 'Portfolio tracking', 'SAFE calculations', 'SPV and carry calculations', 'Advanced exit modelling', 'Term-sheet analysis']
