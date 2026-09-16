@@ -1,5 +1,4 @@
 import { BetaBadge, Wordmark } from './Section'
-import { ThemeToggle } from './ThemeToggle'
 import { track } from '../analytics/track'
 import { INVESTMENT_INPUT_ID, scrollToSection } from './scroll'
 
@@ -29,7 +28,6 @@ export function SiteHeader() {
         </a>
         <BetaBadge />
         <span className="grow" />
-        <ThemeToggle />
         <button
           type="button"
           onClick={() => {

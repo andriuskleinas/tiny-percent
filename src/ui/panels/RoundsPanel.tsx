@@ -1,10 +1,9 @@
 import { useState } from 'react'
-import { useMoney } from '../currency'
 import { ROUND_LABELS } from '../../engine/types'
 import type { Round } from '../../engine/types'
 import type { Action } from '../../state/reducer'
 import { Button, InfoTip, MoneyField, Panel, SelectField, SwitchField, TextField } from '../controls'
-import { ownership, roundName } from '../format'
+import { roundName } from '../format'
 import { FollowOnDecision } from './FollowOnDecision'
 import type { RoundState } from '../../engine/scenario'
 
@@ -44,7 +43,6 @@ export function RoundsPanel({
   onDecided: (id: string) => void
   dispatch: (action: Action) => void
 }) {
-  const { money } = useMoney()
   // Rounds whose reader chose "Other" and is typing a name. While they type,
   // the dropdown stays on "Other" instead of jumping to the half-typed name.
   const [naming, setNaming] = useState<ReadonlySet<string>>(new Set())
@@ -90,7 +88,6 @@ export function RoundsPanel({
         {rounds.map((round) => {
           const state = states.find((s) => s.round.id === round.id)
           const set = (patch: Partial<Round>) => dispatch({ type: 'round:set', id: round.id, patch })
-          const cheque = round.participation
           const name = roundName(round)
           const undecided = pending.has(round.id)
 
@@ -113,17 +110,6 @@ export function RoundsPanel({
 
               <header className="pr-10">
                 <h3 className="font-semibold text-ink">{name}</h3>
-                <p className="mt-0.5 font-mono text-xs tabular-nums text-ink-faint">
-                  {money(round.raisedCents)} at {money(state?.postMoneyCents ?? round.valuationCents)} post-money · {round.date.slice(0, 4)}
-                  {undecided ? ' · decision needed' : cheque && cheque.amountCents > 0 ? ` · you invest ${money(cheque.amountCents)}` : cheque ? '' : ' · you don’t participate'}
-                </p>
-                {state ? (
-                  <p className="mt-1 font-mono text-xs tabular-nums text-ink-faint">
-                    you own <span className="text-ink">{ownership(state.ownershipAfter)}</span>
-                    {' · '}
-                    <span className="text-gain">{money(state.stakeValueCents)}</span> paper value
-                  </p>
-                ) : null}
               </header>
 
               <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

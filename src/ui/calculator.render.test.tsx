@@ -184,11 +184,9 @@ describe('future rounds and the follow-on choice', () => {
   it('quotes the pro-rata amount and holds ownership when you invest it', () => {
     open(EXAMPLE)
     const seriesA = within(rounds()).getByRole('article', { name: 'Series A' })
-    expect(within(seriesA).getByText(/Your pro-rata is/).textContent).toContain('€3,000')
     const proRata = within(seriesA).getByRole('radio', { name: 'Invest pro-rata, €3,000' })
     fireEvent.click(proRata)
     expect(proRata.getAttribute('aria-checked')).toBe('true')
-    expect(seriesA.textContent).toContain('you invest €3,000')
     expect(within(seriesA).getAllByText('0.10%').length).toBeGreaterThan(0)
   })
 
@@ -199,10 +197,11 @@ describe('future rounds and the follow-on choice', () => {
     expect(none.getAttribute('aria-checked')).toBe('true')
     expect(none.textContent).toContain('0.080%')
     expect(none.textContent).toContain('€12,000')
-    expect(none.textContent).toContain('−20.0% of your share')
+    expect(none.textContent).toContain('Diluted 20.0%')
     const proRata = within(seriesA).getByRole('radio', { name: 'Invest pro-rata, €3,000' })
     expect(proRata.textContent).toContain('0.10%')
     expect(proRata.textContent).toContain('€15,000')
+    expect(proRata.textContent).toContain('No dilution')
   })
 
   it('asks for a decision on a round you add, and takes an amount or “don’t participate”', () => {
@@ -218,13 +217,13 @@ describe('future rounds and the follow-on choice', () => {
     expect(within(added).queryByRole('status')).toBeNull()
     expect(within(added).getByText(/Enter the amount you invest/)).toBeTruthy()
     fireEvent.change(within(added).getByLabelText('Your follow-on investment'), { target: { value: '10k' } })
-    expect(added.textContent).toContain('you invest €10,000')
     expect(summaryValue('Follow-on investments')).toBe('€10,000')
     expect(within(chart()).getByRole('rowheader', { name: /^Series D/ }).parentElement?.textContent).toContain('cheque €10,000')
     expect(within(added).getByText(/% of your pro-rata/)).toBeTruthy()
 
-    fireEvent.click(within(added).getByRole('radio', { name: 'Don’t participate in Series D' }))
-    expect(added.textContent).toContain('you don’t participate')
+    const none = within(added).getByRole('radio', { name: 'Don’t participate in Series D' })
+    fireEvent.click(none)
+    expect(none.getAttribute('aria-checked')).toBe('true')
     expect(within(added).queryByLabelText('Your follow-on investment')).toBeNull()
   })
 
@@ -270,8 +269,8 @@ describe('the follow-on chart', () => {
     for (const title of ['No follow-on', 'Your choices', 'Always pro-rata']) {
       expect(within(chart()).getByRole('listitem', { name: title })).toBeTruthy()
     }
-    expect(within(chart()).getByText(/paying your pro-rata every round costs/).textContent).toMatch(
-      /€31,000 more .* €122,000 more — 3.94× on the extra money/,
+    expect(within(chart()).getByText(/paying your pro-rata every round turns/).textContent).toMatch(
+      /€31,000 extra into €122,000 more: 3.94× on that money/,
     )
   })
 

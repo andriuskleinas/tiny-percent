@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react'
 import { SITE } from '../site'
 import { BetaBadge, Wordmark } from './Section'
-import { ThemeToggle } from './ThemeToggle'
 
 /**
  * Privacy and Terms. Plain statements of what the site actually does today —
@@ -133,7 +132,6 @@ export function LegalPage({ page }: { page: 'privacy' | 'terms' }) {
           </a>
           <BetaBadge />
           <span className="grow" />
-          <ThemeToggle />
           <a
             href="/#calculator"
             className="shrink-0 rounded-full border border-accent bg-accent px-4 py-1.5 text-sm font-medium text-on-accent hover:opacity-90"

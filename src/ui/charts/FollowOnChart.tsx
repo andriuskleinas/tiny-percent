@@ -229,7 +229,7 @@ export function FollowOnChart({ paths, pending }: { paths: StrategyPaths; pendin
           Follow on or sit out?
         </h3>
         <p className="mt-2 max-w-2xl text-ink-soft">
-          Only your cheques differ. Compare keeping your first cheque alone, paying your pro-rata in every round, and
+          Compare keeping your first cheque alone, paying your pro-rata in every round, and
           the follow-ons you chose above.
         </p>
       </header>
@@ -451,14 +451,18 @@ export function FollowOnChart({ paths, pending }: { paths: StrategyPaths; pendin
       <div className="border-t border-rule bg-ground/40 px-5 py-5 sm:px-8">
         {extraIn > 0 ? (
           <p className="max-w-3xl text-ink-soft">
-            {exitText.charAt(0).toUpperCase() + exitText.slice(1)}, paying your pro-rata every round costs{' '}
-            <strong className="font-mono tabular-nums text-ink">{money(extraIn)}</strong> more than never following on
-            and returns{' '}
-            <strong className={`font-mono tabular-nums ${extraOut >= extraIn ? 'text-gain' : 'text-dilute'}`}>
-              {extraOut >= 0 ? money(extraOut) : `−${money(-extraOut)}`}
-            </strong>{' '}
-            more{extraOut > 0 ? ` — ${multiple(extraOut / extraIn)} on the extra money` : ''}. Without following on, your{' '}
-            {ownership(columns[0]?.cells.sitOut.ownership ?? 0)} becomes {ownership(sit.ownership)}.
+            {exitText.charAt(0).toUpperCase() + exitText.slice(1)}, paying your pro-rata every round{' '}
+            {extraOut > 0 ? 'turns ' : 'costs '}
+            <strong className="font-mono tabular-nums text-ink">{money(extraIn)}</strong> extra
+            {extraOut > 0 ? (
+              <>
+                {' '}into{' '}
+                <strong className={`font-mono tabular-nums ${extraOut >= extraIn ? 'text-gain' : 'text-dilute'}`}>{money(extraOut)}</strong> more:{' '}
+                {multiple(extraOut / extraIn)} on that money.
+              </>
+            ) : (
+              ' and returns nothing more.'
+            )}
           </p>
         ) : null}
         {pendingNames.length > 0 ? (
@@ -466,11 +470,6 @@ export function FollowOnChart({ paths, pending }: { paths: StrategyPaths; pendin
             Decide whether you invest in {pendingNames.join(', ')}. Until you do, “Your choices” counts {pendingNames.length > 1 ? 'them' : 'it'} as not participating.
           </p>
         ) : null}
-        <p className="mt-2 text-xs text-ink-faint">
-          Values before the exit are paper values implied by each round’s valuation, not prices you could sell at.
-          Exit figures are hypothetical{carry ? ' and after carry' : ''}. Near the capital raised, liquidation preferences
-          can pay you less.
-        </p>
       </div>
 
       <div className="sr-only">

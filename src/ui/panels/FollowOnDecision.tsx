@@ -7,7 +7,7 @@ import type { Instrument, Round } from '../../engine/types'
 import type { Action } from '../../state/reducer'
 import { InfoTip, MoneyField } from '../controls'
 import { useMoney } from '../currency'
-import { ownership, percent, roundName } from '../format'
+import { ownership, roundName } from '../format'
 
 /**
  * The follow-on decision for one round, always in view: invest your pro-rata,
@@ -94,15 +94,23 @@ export function FollowOnDecision({
     choose(option.key)
     refs.current[next]?.focus()
   }
-  const change = (c: number | undefined) =>
-    c === undefined || Math.abs(c) < 1e-9 ? (held ? 'no dilution' : '') : `${c > 0 ? '+' : '−'}${Math.abs(c * 100).toFixed(1)}% of your share`
+  // Rounded first, so a cheque a cent short of pro-rata reads "No dilution", not "−0.0%".
+  const change = (c: number | undefined) => {
+    if (c === undefined) return undefined
+    const points = Math.abs(c * 100).toFixed(1)
+    if (points === '0.0') return { text: 'No dilution', tone: 'text-ink-faint' }
+    return c < 0 ? { text: `Diluted ${points}%`, tone: 'text-dilute' } : { text: `Share up ${points}%`, tone: 'text-gain' }
+  }
 
   return (
     <div className={`mt-4 rounded-2xl border p-4 sm:p-5 ${pending ? 'border-dilute/60 bg-dilute/[0.06]' : 'border-accent/30 bg-accent-wash/40'}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h4 id={titleId} className="font-medium text-ink">
-          Do you invest in {name}?
-        </h4>
+        <div className="flex items-center gap-1.5">
+          <h4 id={titleId} className="font-medium text-ink">
+            Do you invest in {name}?
+          </h4>
+          {held ? <InfoTip term="proRata" /> : null}
+        </div>
         {pending ? (
           <span role="status" className="rounded-full bg-dilute/10 px-2.5 py-1 text-xs font-medium text-dilute">
             Decision needed
@@ -110,22 +118,7 @@ export function FollowOnDecision({
         ) : null}
       </div>
 
-      {held ? (
-        <div className="mt-2">
-          <p className="flex flex-wrap items-center gap-1.5 text-sm text-ink-soft">
-            <span>
-              Your pro-rata is{' '}
-              <strong className="font-mono tabular-nums text-ink">{money(state.proRataCents)}</strong>: what it takes to
-              keep your {ownership(before)}
-            </span>
-            <InfoTip term="proRata" />
-          </p>
-          <p className="mt-0.5 font-mono text-[11px] tabular-nums text-ink-faint">
-            {ownership(before)} × {money(round.raisedCents)} raised
-            {terms.newOptionPool ? ` + your share of the ${percent(terms.newOptionPool, 0)} new option pool` : ''}
-          </p>
-        </div>
-      ) : (
+      {held ? null : (
         <p className="mt-2 text-sm text-ink-soft">This round comes before your first cheque, so there is no position to keep yet.</p>
       )}
 
@@ -133,6 +126,7 @@ export function FollowOnDecision({
         {options.map((option, i) => {
           const checked = option.key === choice
           const result = option.invested === undefined ? undefined : outcome(option.invested)
+          const shift = result ? change(result.change) : undefined
           return (
             <button
               key={option.key}
@@ -166,11 +160,13 @@ export function FollowOnDecision({
                 />
               </span>
               {result ? (
-                <span className="font-mono text-xs tabular-nums text-ink-soft">
-                  you own <span className="text-ink">{ownership(result.own)}</span> · <span className="text-gain">{money(result.value)}</span>
-                  <br />
-                  <span className={result.change !== undefined && result.change < -1e-9 ? 'text-dilute' : 'text-ink-faint'}>{change(result.change)}</span>
-                </span>
+                <>
+                  <span className="flex items-baseline gap-3 tabular-nums">
+                    <span className="text-lg font-semibold text-ink">{ownership(result.own)}</span>
+                    <span className="text-sm text-gain">{money(result.value)}</span>
+                  </span>
+                  {shift ? <span className={`text-xs ${shift.tone}`}>{shift.text}</span> : null}
+                </>
               ) : (
                 <span className="text-xs text-ink-faint">Enter the amount you invest</span>
               )}
