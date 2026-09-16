@@ -1,0 +1,8 @@
+// Cloudflare Pages: the static, prerendered site in dist/. Deploy with
+// `npm run deploy:cloudflare`. Response headers live in public/_headers.
+// The /api/waitlist function is Vercel-only and is not deployed here.
+{
+  "name": "tinypercent",
+  "pages_build_output_dir": "./dist",
+  "compatibility_date": "2026-09-01"
+}
