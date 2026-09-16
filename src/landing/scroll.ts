@@ -1,6 +1,6 @@
 /**
  * In-page navigation that leaves the address bar alone. The fragment already
- * holds the whole calculation (`#s=…`), so a plain `href="#faq"` would replace
+ * holds the whole calculation (`#s=…`), so a plain `href="#how-it-works"` would replace
  * it and a reload or a copied link would lose the user's numbers. Links keep a
  * real `href` for crawlers and no-JS readers; clicks come through here.
  */
@@ -16,5 +16,5 @@ export function scrollToSection(id: string, focus?: HTMLElement | null): void {
   }
 }
 
-/** The calculator's first input, for "Calculate my investment". */
+/** The calculator's first input, for "Use calculator". */
 export const INVESTMENT_INPUT_ID = 'investment-amount'

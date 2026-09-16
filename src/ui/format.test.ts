@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { compactMoney, money, moneyInputText, multiple, ownership, parseMoney, symbolFor } from './format'
+import { caretAfter, compactMoney, groupDigits, money, moneyInputText, multiple, ownership, parseMoney, symbolFor, parsePercent } from './format'
 
 describe('money is formatted in the currency it is given', () => {
   it('writes dollars, euros and pounds', () => {
@@ -70,5 +70,46 @@ describe('multiples and small ownerships stay readable', () => {
     [0, '0%'],
   ])('writes an ownership of %s as %s', (fraction, text) => {
     expect(ownership(fraction)).toBe(text)
+  })
+})
+
+describe('reading a typed percentage', () => {
+  it('accepts plain, decimal, comma and percent-sign forms', () => {
+    expect(parsePercent('20')).toBeCloseTo(0.2, 12)
+    expect(parsePercent('20.5')).toBeCloseTo(0.205, 12)
+    expect(parsePercent('20,5 %')).toBeCloseTo(0.205, 12)
+    expect(parsePercent('')).toBe(0)
+  })
+
+  it('rejects anything that is not a percentage', () => {
+    expect(parsePercent('abc')).toBeUndefined()
+    expect(parsePercent('-5')).toBeUndefined()
+    expect(parsePercent('.')).toBeUndefined()
+  })
+})
+
+describe('amounts are grouped while they are typed', () => {
+  it.each([
+    ['48000000', '48,000,000'],
+    ['4800', '4,800'],
+    ['480', '480'],
+    ['48,00,000', '4,800,000'],
+    ['1234.5', '1,234.5'],
+    ['1234.', '1,234.'],
+    ['0.5', '0.5'],
+    ['12 500', '12,500'],
+    ['4m', '4m'],
+    ['1.5k', '1.5k'],
+    ['abc', 'abc'],
+    ['', ''],
+  ])('shows %j as %j', (typed, shown) => {
+    expect(groupDigits(typed)).toBe(shown)
+  })
+
+  it('keeps the caret after the same digit once separators are added', () => {
+    expect(caretAfter('48,000,000', 8)).toBe(10)
+    expect(caretAfter('48,000,000', 3)).toBe(4)
+    expect(caretAfter('48,000,000', 0)).toBe(0)
+    expect(caretAfter('1,234.5', 5)).toBe(6)
   })
 })

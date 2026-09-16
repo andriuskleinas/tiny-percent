@@ -1,6 +1,8 @@
 import { StrictMode } from 'react'
 import { createRoot, hydrateRoot } from 'react-dom/client'
 import { LegalPage } from './landing/LegalPage'
+import '@fontsource-variable/inter-tight/wght.css'
+import '@fontsource-variable/jetbrains-mono/wght.css'
 import './index.css'
 
 const root = document.getElementById('root')!

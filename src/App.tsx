@@ -1,14 +1,14 @@
 import { useEffect, useReducer, useRef, useState } from 'react'
 import { calculatorEvents, createJourney } from './analytics/calculatorEvents'
 import { track, trackOnce } from './analytics/track'
-import type { CtaPlacement } from './analytics/track'
 import type { Scenario } from './engine/types'
 import { Hero } from './landing/Hero'
-import { Faq, Features, HowItWorks, Learn, SiteFooter, UpdatesSignup, WorkedExample } from './landing/Sections'
+import { Learn, SiteFooter, UpdatesSignup } from './landing/Sections'
 import { SiteHeader } from './landing/SiteHeader'
 import { scrollToSection } from './landing/scroll'
 import { appReducer, initialAppState } from './state/app'
-import { EXAMPLE, STARTING_POINT } from './state/presets'
+import { STARTING_POINT } from './state/presets'
+import { SITE } from './site'
 import { reducer } from './state/reducer'
 import type { Action } from './state/reducer'
 import { encodeScenario, scenarioFromLocation } from './state/url'
@@ -61,25 +61,14 @@ export default function App() {
     window.history.replaceState(null, '', `#s=${encodeScenario(state.scenario)}`)
   }, [state.scenario])
 
-  const openExample = (placement: CtaPlacement) => {
-    track({ name: 'example_cta_clicked', placement })
-    track({ name: 'example_loaded', placement })
-    dispatch({ type: 'scenario:load', scenario: EXAMPLE })
-    scrollToSection('calculator')
-  }
-
   return (
     <ErrorBoundary>
       <SiteHeader />
       <main>
-        <Hero onExample={() => openExample('hero')} />
+        <Hero />
         <Calculator state={state} dispatch={dispatch} />
-        <Features />
-        <HowItWorks />
-        <WorkedExample onOpen={() => openExample('worked_example')} />
         <Learn />
-        <Faq />
-        <UpdatesSignup />
+        {SITE.waitlist ? <UpdatesSignup /> : null}
       </main>
       <SiteFooter />
     </ErrorBoundary>

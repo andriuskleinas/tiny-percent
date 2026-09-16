@@ -40,10 +40,6 @@ export function symbolFor(currency: string): string {
   )
 }
 
-/** Shown under every instrument selector. The instrument does not change the maths. */
-export const INSTRUMENT_NOTE =
-  'A label only: every instrument is priced at this round’s valuation — caps, discounts and interest are not modelled.'
-
 const SUFFIX: Record<string, number> = { '': 1, k: 1e3, m: 1e6, b: 1e9, bn: 1e9 }
 
 /**
@@ -57,6 +53,42 @@ export function parseMoney(text: string): number | undefined {
   if (!match) return undefined
   const multiplier = SUFFIX[match[2] ?? ''] ?? 1
   return toCents(Number(match[1]) * multiplier)
+}
+
+/** A typed percentage, "20", "20.5", "20%" or "20,5", as a fraction; undefined when it is not one. */
+export function parsePercent(text: string): number | undefined {
+  const cleaned = text.replace(/[\s%]/g, '').replace(',', '.')
+  if (cleaned === '') return 0
+  if (!/^\d*\.?\d*$/.test(cleaned) || cleaned === '.') return undefined
+  return Number(cleaned) / 100
+}
+
+/**
+ * A number being typed, regrouped with thousands separators as it grows, so
+ * 48000000 reads as 48,000,000 before you leave the field. Shorthand such as
+ * "4m" and anything that is not a plain number are left exactly as typed.
+ */
+export function groupDigits(text: string): string {
+  const match = /^\s*([\d,\s]*)(\.\d*)?\s*$/.exec(text)
+  const digits = match?.[1]?.replace(/[,\s]/g, '') ?? ''
+  if (!match || digits === '') return text
+  const whole = digits.replace(/^0+(?=\d)/, '').replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+  return `${whole}${match[2] ?? ''}`
+}
+
+/**
+ * Where the caret belongs after regrouping: just after the same number of
+ * digits (and decimal point) it was after before, so typing in the middle of a
+ * number does not throw the cursor to the end.
+ */
+export function caretAfter(formatted: string, significantBefore: number): number {
+  if (significantBefore <= 0) return 0
+  let seen = 0
+  for (let i = 0; i < formatted.length; i++) {
+    if (/[\d.]/.test(formatted[i] ?? '')) seen++
+    if (seen === significantBefore) return i + 1
+  }
+  return formatted.length
 }
 
 /** An amount as it sits in an input: grouped, no symbol, and empty for zero. */

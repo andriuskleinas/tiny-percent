@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
+import { strategyPaths } from '../engine/paths'
 import { outcomesAt, runScenario } from '../engine/scenario'
-import { EXAMPLE, EXIT_PRESETS_CENTS } from './presets'
+import { EXAMPLE, EXIT_PRESETS_CENTS, HERO_EXAMPLE } from './presets'
 
 /**
  * The €5,000 example is what the page shows before anyone types, and every
@@ -19,9 +20,15 @@ interface Fixture {
     totalRaisedCents: number
     ladder: Array<{ valueCents: number; regime: string; lowCents: number; highCents: number }>
   }
+  M: {
+    exitCents: number
+    carryPercent: number
+    sitOut: { path: number[]; valuesCents: number[]; investedCents: number; grossCents: number }
+    proRata: { path: number[]; chequesCents: number[]; investedCents: number; grossCents: number; netCents: number }
+  }
 }
 
-const { L } = JSON.parse(
+const { L, M } = JSON.parse(
   readFileSync(fileURLToPath(new URL('../../tools/golden-cases.json', import.meta.url)), 'utf8'),
 ) as Fixture
 
@@ -48,5 +55,38 @@ describe('the €5,000 example agrees with the Python oracle', () => {
       expect(row.exit.lowCents).toBe(want?.lowCents)
       expect(row.exit.highCents).toBe(want?.highCents)
     })
+  })
+})
+
+describe('the three paths through the €5,000 example agree with the oracle (case M)', () => {
+  const paths = strategyPaths({ ...EXAMPLE, fees: { carry: { percent: M.carryPercent, basis: 'per_deal' } } })
+
+  it('sitting out walks the stake down and still ends at €128,000', () => {
+    expect(EXAMPLE.exit.valueCents).toBe(M.exitCents)
+    paths.sitOut.points.forEach((p, i) => {
+      expect(p.ownership).toBeCloseTo(M.sitOut.path[i] as number, PLACES)
+      expect(p.stakeValueCents).toBe(M.sitOut.valuesCents[i])
+    })
+    expect(paths.sitOut.run.totalInvestedCents).toBe(M.sitOut.investedCents)
+    expect(paths.sitOut.run.exit.highCents).toBe(M.sitOut.grossCents)
+  })
+
+  it('pro-rata writes €3,000, €8,000 and €20,000 to hold 0.10%', () => {
+    paths.proRata.points.forEach((p, i) => {
+      expect(p.ownership).toBeCloseTo(M.proRata.path[i] as number, PLACES)
+      expect(p.chequeCents).toBe(M.proRata.chequesCents[i])
+    })
+    expect(paths.proRata.run.totalInvestedCents).toBe(M.proRata.investedCents)
+    expect(paths.proRata.run.exit.highCents).toBe(M.proRata.grossCents)
+    expect(paths.proRata.run.feesHigh.netCents).toBe(M.proRata.netCents)
+  })
+})
+
+describe('the hero tells the same example from a Pre-seed cheque', () => {
+  it('differs from the example only in its round names', () => {
+    expect(HERO_EXAMPLE.rounds.map((r) => r.label)).toEqual(['Pre-seed', 'Seed', 'Series A', 'Series B'])
+    const unnamed = (s: typeof EXAMPLE) => ({ ...s, rounds: s.rounds.map(({ id: _id, label: _label, ...r }) => r) })
+    expect(unnamed(HERO_EXAMPLE)).toEqual(unnamed(EXAMPLE))
+    runScenario(HERO_EXAMPLE).rounds.forEach((round, i) => expect(round.ownershipAfter).toBeCloseTo(L.path[i] as number, PLACES))
   })
 })

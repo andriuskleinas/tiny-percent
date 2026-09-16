@@ -137,3 +137,22 @@ describe('a link that is malformed or hostile is refused, never trusted', () => 
     expect(({} as Record<string, unknown>)['polluted']).toBeUndefined()
   })
 })
+
+describe('a link shared before the redesign', () => {
+  // Pasted by the user on 2026-09-16: the €5,000 example, following on pro-rata
+  // at every round, with 20% carry. The schema did not change, so it must open
+  // onto exactly the figures it showed then.
+  const LINK =
+    'eyJ2ZXJzaW9uIjoyLCJjdXJyZW5jeSI6IkVVUiIsInJvdW5kcyI6W3siaWQiOiJzZWVkIiwibGFiZWwiOiJTZWVkIiwiZGF0ZSI6IjIwMjYtMDEtMTUiLCJ2YWx1YXRpb25DZW50cyI6NDAwMDAwMDAwLCJ2YWx1YXRpb25CYXNpcyI6InByZSIsInJhaXNlZENlbnRzIjoxMDAwMDAwMDAsInBhcnRpY2lwYXRpb24iOnsidHlwZSI6ImVxdWl0eSIsImFtb3VudENlbnRzIjo1MDAwMDAsImVudHJ5RmVlIjp7InJ1bGUiOiJwZXJjZW50IiwicGVyY2VudCI6MH19fSx7ImlkIjoic2VyaWVzLWEiLCJsYWJlbCI6IlNlcmllcyBBIiwiZGF0ZSI6IjIwMjctMDktMDEiLCJ2YWx1YXRpb25DZW50cyI6MTUwMDAwMDAwMCwidmFsdWF0aW9uQmFzaXMiOiJwb3N0IiwicmFpc2VkQ2VudHMiOjMwMDAwMDAwMCwicGFydGljaXBhdGlvbiI6eyJ0eXBlIjoiZXF1aXR5IiwiYW1vdW50Q2VudHMiOjMwMDAwMCwiZW50cnlGZWUiOnsicnVsZSI6InBlcmNlbnQiLCJwZXJjZW50IjowfX19LHsiaWQiOiJzZXJpZXMtYiIsImxhYmVsIjoiU2VyaWVzIEIiLCJkYXRlIjoiMjAyOS0wOS0wMSIsInZhbHVhdGlvbkNlbnRzIjo0MDAwMDAwMDAwLCJ2YWx1YXRpb25CYXNpcyI6InBvc3QiLCJyYWlzZWRDZW50cyI6ODAwMDAwMDAwLCJwYXJ0aWNpcGF0aW9uIjp7InR5cGUiOiJlcXVpdHkiLCJhbW91bnRDZW50cyI6ODAwMDAwLCJlbnRyeUZlZSI6eyJydWxlIjoicGVyY2VudCIsInBlcmNlbnQiOjB9fX0seyJpZCI6InNlcmllcy1jIiwibGFiZWwiOiJTZXJpZXMgQyIsImRhdGUiOiIyMDMxLTA5LTAxIiwidmFsdWF0aW9uQ2VudHMiOjEwMDAwMDAwMDAwLCJ2YWx1YXRpb25CYXNpcyI6InBvc3QiLCJyYWlzZWRDZW50cyI6MjAwMDAwMDAwMCwicGFydGljaXBhdGlvbiI6eyJ0eXBlIjoiZXF1aXR5IiwiYW1vdW50Q2VudHMiOjIwMDAwMDAsImVudHJ5RmVlIjp7InJ1bGUiOiJwZXJjZW50IiwicGVyY2VudCI6MH19fV0sImZlZXMiOnsiY2FycnkiOnsicGVyY2VudCI6MC4yLCJiYXNpcyI6InBlcl9kZWFsIn19LCJleGl0Ijp7ImRhdGUiOiIyMDM0LTAxLTE1IiwidmFsdWVDZW50cyI6MjUwMDAwMDAwMDAsInRvdGFsUmFpc2VkQ2VudHMiOjMyMDAwMDAwMDB9fQ'
+
+  it('decodes and runs to €36,000 invested, 0.10% held and €250,000 gross at €250M', () => {
+    const scenario = decodeScenario(LINK)
+    expect(scenario).toBeDefined()
+    const run = runScenario(scenario!)
+    expect(run.totalInvestedCents).toBe(toCents(36_000))
+    expect(run.finalOwnership).toBeCloseTo(0.001, 12)
+    expect(run.exit.highCents).toBe(toCents(250_000))
+    expect(run.feesHigh.netCents).toBe(toCents(207_200))
+    expect(run.feesHigh.netMultiple).toBeCloseTo(5.7556, 4)
+  })
+})

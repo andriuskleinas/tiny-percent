@@ -1,4 +1,5 @@
 import type { CarryTerms, ManagementFeeTerms } from '../engine/fees'
+import { previousPostMoney, roundFromStep } from '../engine/step'
 import { ROUND_LABELS } from '../engine/types'
 import type { Currency, ExitEvent, Instrument, Round, Scenario } from '../engine/types'
 
@@ -15,6 +16,8 @@ export type Action =
   | { type: 'round:add'; id?: string | undefined }
   | { type: 'round:remove'; id: string }
   | { type: 'round:set'; id: string; patch: Partial<Omit<Round, 'participation'>> }
+  /** The same round described as "valuation grows ×growth, the company sells `sold`". Ignored for the earliest round. */
+  | { type: 'round:step'; id: string; growth: number; sold: number }
   /** Creates the participation if it is absent, merges into it otherwise. */
   | { type: 'round:participate'; id: string; patch: Partial<Instrument> }
   /** Blocked for `rounds[0]` — you cannot skip your own entry. */
@@ -77,6 +80,18 @@ export function reducer(state: Scenario, action: Action): Scenario {
           ? { ...state.exit, totalRaisedCents: impliedTotalRaised(rounds) }
           : state.exit,
       }
+    }
+
+    case 'round:step': {
+      const prev = previousPostMoney(state, action.id)
+      if (prev === undefined) return state
+      let patch
+      try {
+        patch = roundFromStep(prev, action.growth, action.sold)
+      } catch {
+        return state
+      }
+      return reducer(state, { type: 'round:set', id: action.id, patch })
     }
 
     case 'round:participate': {

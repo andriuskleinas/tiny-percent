@@ -1,4 +1,6 @@
-# Angel Investment Calculator
+# TinyPercent
+
+Angel investment calculator, live at tinypercent.com (domain pending).
 
 What your cheque buys, what the next rounds take back, and what survives the
 syndicate's carry. Modelled entirely from the angel's chair, using only numbers an
@@ -25,6 +27,23 @@ npm run oracle   # verifies the plan's own numbers
 > the committed lockfile is unaffected, so `npm install` and `npm ci` both work on
 > a normal clone. It only bites when resolving a new package, so add one with
 > `npm install -D <pkg> --legacy-peer-deps`.
+
+## Waiting list
+
+The "Want more tools for investing?" form posts first name, surname and email to
+`/api/waitlist` (`api/waitlist.ts`, logic in `src/server/waitlist.ts`). The
+function forwards them to a Google Apps Script web app that appends a row to a
+Google Sheet. `tools/waitlist-apps-script.gs` holds the script and the setup
+steps.
+
+It needs two environment variables, in Vercel and in `.env.local` for `npm run dev`:
+
+```
+WAITLIST_SCRIPT_URL=https://script.google.com/macros/s/…/exec
+WAITLIST_SECRET=the same random string as SECRET in the script
+```
+
+Without them the endpoint answers 503 and the form says the list isn't open yet.
 
 ## The oracle
 

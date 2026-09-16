@@ -26,6 +26,7 @@ export type AnalyticsEvent =
   | { name: 'second_funding_round_added' }
   | { name: 'follow_on_amount_entered'; pro_rata: boolean }
   | { name: 'pro_rata_scenario_viewed' }
+  | { name: 'path_chart_viewed' }
   | { name: 'exit_valuation_changed'; preset: boolean }
   | { name: 'exit_scenario_completed' }
   // Growth

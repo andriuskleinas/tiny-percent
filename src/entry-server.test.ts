@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import { headTags, renderPage, sitemap, robots } from './entry-server'
-import { FAQ } from './landing/faq'
 import { SITE } from './site'
 
 /**
@@ -13,11 +12,11 @@ import { SITE } from './site'
 describe('the prerendered home page', () => {
   const html = renderPage('home')
 
-  it('contains the headline, the calculator and every FAQ answer as HTML', () => {
-    expect(html).toContain('See what your angel investment could become.')
-    expect(html).toContain('Calculate your investment')
+  it('contains the headline and the calculator as HTML', () => {
+    expect(html).toContain('See what your startup investment could become')
+    expect(html).toContain('Run your own numbers')
     expect(html).toContain('Investment amount')
-    for (const { question } of FAQ) expect(html).toContain(question)
+    expect(html).not.toContain('Frequently asked questions')
   })
 
   it('shows the default calculation, with its figures', () => {
@@ -44,12 +43,9 @@ describe('head tags', () => {
     expect(home).toContain('<meta name="twitter:card" content="summary_large_image"')
   })
 
-  it('describes the FAQ and the app as structured data, matching the page word for word', () => {
+  it('describes the app as structured data, and no longer claims an FAQ', () => {
     const blocks = [...home.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/gs)].map((m) => JSON.parse(m[1] as string))
-    const faq = blocks.find((b) => b['@type'] === 'FAQPage')
-    expect(faq.mainEntity).toHaveLength(FAQ.length)
-    expect(faq.mainEntity[0].name).toBe(FAQ[0]?.question)
-    expect(faq.mainEntity[0].acceptedAnswer.text).toBe(FAQ[0]?.answer)
+    expect(blocks.find((b) => b['@type'] === 'FAQPage')).toBeUndefined()
     const app = blocks.find((b) => b['@type'] === 'WebApplication')
     expect(app.offers.price).toBe('0')
     expect(app.isAccessibleForFree).toBe(true)

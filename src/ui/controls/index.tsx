@@ -1,7 +1,7 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useMoney } from '../currency'
-import { moneyInputText, parseMoney } from '../format'
+import { caretAfter, groupDigits, moneyInputText, parseMoney, parsePercent } from '../format'
 import { GLOSSARY } from '../glossary'
 import type { TermKey } from '../glossary'
 
@@ -13,8 +13,23 @@ import type { TermKey } from '../glossary'
  */
 
 const inputClass =
-  'w-full border border-rule bg-surface px-3 py-2 font-mono text-sm tabular-nums text-ink ' +
-  'outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/30'
+  'w-full rounded-xl border border-rule bg-surface px-3.5 py-2.5 font-mono text-sm tabular-nums text-ink ' +
+  'outline-none transition-[border-color,box-shadow] hover:border-rule-strong focus-visible:border-accent focus-visible:ring-4 focus-visible:ring-accent/15'
+
+/** An input with a unit beside it: the rounded shell carries the border and focus ring. */
+const shellClass =
+  'flex items-stretch overflow-hidden rounded-xl border border-rule bg-surface transition-[border-color,box-shadow] ' +
+  'hover:border-rule-strong focus-within:border-accent focus-within:ring-4 focus-within:ring-accent/15 ' +
+  'has-[[aria-invalid=true]]:border-dilute'
+const bareInputClass = 'w-full min-w-0 bg-transparent px-3.5 py-2.5 font-mono text-sm tabular-nums text-ink outline-none'
+const unitClass = 'flex items-center bg-sunk/70 px-3 font-mono text-sm text-ink-faint'
+
+/** Arrow keys move between a radio group's options, as in any native radio group. */
+function arrowStep(e: { key: string; preventDefault: () => void }): number {
+  const step = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0
+  if (step !== 0) e.preventDefault()
+  return step
+}
 
 /**
  * A term's explanation, behind a small button beside the thing it explains.
@@ -76,7 +91,7 @@ export function InfoTip({ term }: { term: TermKey }) {
         aria-expanded={open}
         aria-controls={id}
         onClick={() => setOpen((was) => !was)}
-        className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-rule-strong font-sans text-[10px] font-semibold leading-none text-ink-faint outline-none transition-colors hover:border-accent hover:text-accent focus-visible:ring-2 focus-visible:ring-accent/40"
+        className="inline-flex h-[18px] w-[18px] items-center justify-center rounded-full border border-rule-strong bg-surface font-sans text-[10px] font-semibold leading-none text-ink-faint outline-none transition-colors hover:border-accent hover:bg-accent-wash hover:text-accent focus-visible:ring-2 focus-visible:ring-accent/40"
       >
         i
       </button>
@@ -86,7 +101,7 @@ export function InfoTip({ term }: { term: TermKey }) {
         role="note"
         hidden={!open}
         style={{ transform: `translateX(calc(-50% + ${shift}px))` }}
-        className="absolute left-1/2 top-6 z-30 w-64 max-w-[calc(100vw-1rem)] border border-rule-strong bg-surface p-3 text-left font-sans text-xs leading-relaxed text-ink-soft shadow-lg"
+        className="absolute left-1/2 top-7 z-30 w-64 max-w-[calc(100vw-1rem)] rounded-xl border border-rule bg-surface p-3.5 text-left font-sans text-xs leading-relaxed text-ink-soft shadow-pop"
       >
         <span className="mb-1 block font-semibold text-ink">{question}</span>
         {body}
@@ -114,7 +129,7 @@ export function Field({
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-center gap-1.5">
-        <label htmlFor={id} className="font-mono text-[10px] uppercase tracking-wider text-ink-faint">
+        <label htmlFor={id} className="text-[13px] font-medium text-ink-soft">
           {label}
         </label>
         {info ? <InfoTip term={info} /> : null}
@@ -148,17 +163,26 @@ export function MoneyField({
   placeholder?: string | undefined
   id?: string | undefined
 }) {
-  const { symbol } = useMoney()
+  const { symbol, money } = useMoney()
   const [draft, setDraft] = useState<string | undefined>(undefined)
-  const invalid = draft !== undefined && draft.trim() !== '' && parseMoney(draft) === undefined
+  const input = useRef<HTMLInputElement | null>(null)
+  const caret = useRef<number | undefined>(undefined)
+  const parsed = draft === undefined ? undefined : parseMoney(draft)
+  const invalid = draft !== undefined && draft.trim() !== '' && parsed === undefined
+  // Shorthand stays as typed, so say what it means: "4m" is 4,000,000.
+  const spelled = draft !== undefined && /[kmb]/i.test(draft) && parsed !== undefined ? `= ${money(parsed)}` : undefined
+
+  useLayoutEffect(() => {
+    if (caret.current === undefined || !input.current || document.activeElement !== input.current) return
+    input.current.setSelectionRange(caret.current, caret.current)
+    caret.current = undefined
+  }, [draft])
 
   return (
-    <Field label={label} hint={invalid ? 'Type an amount, like 5000, 5k or 1.5m.' : hint} info={info} id={id}>
+    <Field label={label} hint={invalid ? 'Enter an amount, like 5000, 5k or 1.5m.' : (spelled ?? hint)} info={info} id={id}>
       {(id) => (
-        <div className="flex items-stretch">
-          <span className="flex items-center border border-r-0 border-rule bg-sunk px-2.5 font-mono text-sm text-ink-faint">
-            {symbol}
-          </span>
+        <div className={shellClass}>
+          <span className={`${unitClass} border-r border-rule`}>{symbol}</span>
           <input
             id={id}
             type="text"
@@ -167,11 +191,16 @@ export function MoneyField({
             spellCheck={false}
             placeholder={placeholder ?? '0'}
             aria-invalid={invalid || undefined}
-            className={inputClass}
+            ref={input}
+            className={bareInputClass}
             value={draft ?? moneyInputText(valueCents)}
             onChange={(e) => {
-              setDraft(e.target.value)
-              const cents = e.target.value.trim() === '' ? 0 : parseMoney(e.target.value)
+              const raw = e.target.value
+              const grouped = groupDigits(raw)
+              const before = raw.slice(0, e.target.selectionStart ?? raw.length).replace(/[^\d.]/g, '').length
+              caret.current = caretAfter(grouped, before)
+              setDraft(grouped)
+              const cents = raw.trim() === '' ? 0 : parseMoney(raw)
               if (cents !== undefined) onChange(cents)
             }}
             onBlur={() => setDraft(undefined)}
@@ -182,6 +211,11 @@ export function MoneyField({
   )
 }
 
+/**
+ * Typed as text, like money, so the field shows exactly what was typed while it
+ * has focus: clearing it leaves it empty rather than snapping back to "0", and a
+ * zero is selected on focus so typing replaces it. On blur it shows the value.
+ */
 export function PercentField({
   label,
   hint,
@@ -197,24 +231,34 @@ export function PercentField({
   onChange: (fraction: number) => void
   max?: number
 }) {
+  const [draft, setDraft] = useState<string | undefined>(undefined)
+  const parsed = draft === undefined ? value : parsePercent(draft)
+  const invalid = draft !== undefined && (parsed === undefined || parsed * 100 > max)
+
   return (
-    <Field label={label} hint={hint} info={info}>
+    <Field label={label} hint={invalid ? `Enter a percentage from 0 to ${max}.` : hint} info={info}>
       {(id) => (
-        <div className="flex items-stretch">
+        <div className={shellClass}>
           <input
             id={id}
-            type="number"
+            type="text"
             inputMode="decimal"
-            min={0}
-            max={max}
-            step="any"
-            className={inputClass}
-            value={Number((value * 100).toFixed(4))}
-            onChange={(e) => onChange((Number(e.target.value) || 0) / 100)}
+            autoComplete="off"
+            aria-invalid={invalid || undefined}
+            className={bareInputClass}
+            value={draft ?? String(Number((value * 100).toFixed(4)))}
+            onFocus={(e) => {
+              setDraft(e.target.value)
+              if (value === 0) e.target.select()
+            }}
+            onChange={(e) => {
+              setDraft(e.target.value)
+              const fraction = parsePercent(e.target.value)
+              if (fraction !== undefined && fraction * 100 <= max) onChange(fraction)
+            }}
+            onBlur={() => setDraft(undefined)}
           />
-          <span className="flex items-center border border-l-0 border-rule bg-sunk px-2.5 font-mono text-sm text-ink-faint">
-            %
-          </span>
+          <span className={`${unitClass} border-l border-rule`}>%</span>
         </div>
       )}
     </Field>
@@ -260,11 +304,16 @@ export function TextField({
   value,
   onChange,
   type = 'text',
+  placeholder,
+  autoFocus,
 }: {
   label: string
   value: string
   onChange: (value: string) => void
   type?: 'text' | 'date'
+  placeholder?: string | undefined
+  /** Only for a field that appears because the reader just asked for it. */
+  autoFocus?: boolean | undefined
 }) {
   return (
     <Field label={label}>
@@ -272,6 +321,8 @@ export function TextField({
         <input
           id={id}
           type={type}
+          placeholder={placeholder}
+          autoFocus={autoFocus}
           className={inputClass}
           value={value}
           onChange={(e) => onChange(e.target.value)}
@@ -299,7 +350,7 @@ export function SelectField<T extends string>({
       {(id) => (
         <select
           id={id}
-          className={`${inputClass} font-sans`}
+          className={`${inputClass} cursor-pointer font-sans`}
           value={value}
           onChange={(e) => onChange(e.target.value as T)}
         >
@@ -329,24 +380,45 @@ export function SwitchField<T extends string>({
   options: readonly [readonly [T, string], readonly [T, string]]
   onChange: (value: T) => void
 }) {
+  const refs = useRef<Array<HTMLButtonElement | null>>([])
+  const second = value === options[1][0]
   return (
     <Field label={label} hint={hint} info={info}>
       {(id) => (
-        <div id={id} role="radiogroup" aria-label={label} className="flex border border-rule">
-          {options.map(([key, text]) => (
-            <button
-              key={key}
-              type="button"
-              role="radio"
-              aria-checked={value === key}
-              onClick={() => onChange(key)}
-              className={`flex-1 border-rule px-3 py-2 font-mono text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent/40 ${
-                key === options[0][0] ? 'border-r' : ''
-              } ${value === key ? 'bg-accent text-on-accent' : 'bg-surface text-ink-faint hover:text-ink'}`}
-            >
-              {text}
-            </button>
-          ))}
+        <div id={id} role="radiogroup" aria-label={label} className="relative grid grid-cols-2 rounded-full bg-sunk p-1">
+          {/* The thumb slides under whichever side is chosen. */}
+          <span
+            aria-hidden="true"
+            className={`absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-full bg-surface shadow-sm ring-1 ring-rule transition-transform duration-200 ease-out motion-reduce:transition-none ${
+              second ? 'translate-x-full' : 'translate-x-0'
+            }`}
+          />
+          {options.map(([key, text], i) => {
+            const checked = value === key
+            return (
+              <button
+                key={key}
+                ref={(el) => {
+                  refs.current[i] = el
+                }}
+                type="button"
+                role="radio"
+                aria-checked={checked}
+                tabIndex={checked ? 0 : -1}
+                onClick={() => onChange(key)}
+                onKeyDown={(e) => {
+                  if (arrowStep(e) === 0) return
+                  onChange(options[i === 0 ? 1 : 0][0])
+                  refs.current[1 - i]?.focus()
+                }}
+                className={`relative z-10 rounded-full px-3 py-2 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent/40 ${
+                  checked ? 'text-accent' : 'text-ink-faint hover:text-ink'
+                }`}
+              >
+                {text}
+              </button>
+            )
+          })}
         </div>
       )}
     </Field>
@@ -379,7 +451,7 @@ export function ChoiceGroup<T extends string>({
     refs.current[next]?.focus()
   }
   return (
-    <div role="radiogroup" aria-label={label} className="flex flex-wrap gap-2">
+    <div role="radiogroup" aria-label={label} className="flex w-full gap-1 rounded-full bg-sunk p-1 sm:inline-flex sm:w-auto">
       {options.map(([key, text], i) => {
         const checked = key === value
         return (
@@ -394,16 +466,11 @@ export function ChoiceGroup<T extends string>({
             tabIndex={checked || (current === -1 && i === 0) ? 0 : -1}
             onClick={() => onChange(key)}
             onKeyDown={(e) => {
-              if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-                e.preventDefault()
-                move(i, 1)
-              } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-                e.preventDefault()
-                move(i, -1)
-              }
+              const step = arrowStep(e)
+              if (step !== 0) move(i, step)
             }}
-            className={`border px-3 py-1.5 font-mono text-sm tabular-nums outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent/40 ${
-              checked ? 'border-accent bg-accent text-on-accent' : 'border-rule bg-surface text-ink-soft hover:border-rule-strong hover:text-ink'
+            className={`flex-1 whitespace-nowrap rounded-full px-2 py-1.5 text-sm font-medium outline-none transition-all sm:flex-none sm:px-4 focus-visible:ring-2 focus-visible:ring-accent/40 ${
+              checked ? 'bg-surface text-accent shadow-sm ring-1 ring-rule' : 'text-ink-faint hover:text-ink'
             }`}
           >
             {text}
@@ -425,7 +492,7 @@ export function Disclosure({
   children: ReactNode
 }) {
   return (
-    <details open={defaultOpen} className="group border border-rule">
+    <details open={defaultOpen} className="group overflow-hidden rounded-xl border border-rule">
       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-medium text-ink-soft outline-none hover:text-ink focus-visible:ring-2 focus-visible:ring-accent/40 [&::-webkit-details-marker]:hidden">
         {summary}
         <span aria-hidden="true" className="font-mono text-ink-faint transition-transform group-open:rotate-45">
@@ -451,7 +518,7 @@ export function Panel({
   id?: string | undefined
 }) {
   return (
-    <section id={id} aria-labelledby={id ? `${id}-title` : undefined} className="scroll-mt-20 border border-rule bg-surface">
+    <section id={id} aria-labelledby={id ? `${id}-title` : undefined} className="scroll-mt-20 rounded-2xl border border-rule bg-surface shadow-card">
       <header className="flex flex-wrap items-baseline justify-between gap-3 border-b border-rule px-5 py-4 sm:px-6">
         <div>
           <h2 id={id ? `${id}-title` : undefined} className="text-lg font-semibold tracking-tight text-ink">{title}</h2>
@@ -484,7 +551,7 @@ export function Stat({
   return (
     <div className="border-t border-rule py-3">
       <div className="flex items-center gap-1.5">
-        <p className="font-mono text-[10px] uppercase tracking-wider text-ink-faint">{label}</p>
+        <p className="text-xs font-medium text-ink-faint">{label}</p>
         {info ? <InfoTip term={info} /> : null}
       </div>
       <p className={`mt-1 font-mono tabular-nums ${size === 'large' ? 'text-2xl font-semibold tracking-tight' : 'text-base'} ${colour}`}>
@@ -507,13 +574,13 @@ export function Button({
   title?: string | undefined
 }) {
   const base =
-    'border px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider transition-colors ' +
+    'inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition-colors ' +
     'outline-none focus-visible:ring-2 focus-visible:ring-accent/40'
   const look =
     tone === 'quiet'
       ? 'border-rule text-ink-faint hover:border-rule-strong hover:text-ink'
       : tone === 'primary'
-        ? 'border-accent bg-accent text-on-accent hover:opacity-90'
+        ? 'border-accent bg-accent text-on-accent shadow-sm hover:opacity-90'
         : 'border-accent text-accent hover:bg-accent-wash'
   return (
     <button type="button" title={title} onClick={onClick} className={`${base} ${look}`}>

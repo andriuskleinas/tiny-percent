@@ -2,6 +2,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import App from '../App'
+import { UpdatesSignup } from '../landing/Sections'
+import { positionOf } from '../ui/exitScale'
 import { resetAnalytics, setAnalyticsSink } from './track'
 import type { AnalyticsEvent } from './track'
 
@@ -31,7 +33,7 @@ describe('the funnel, reported from the page', () => {
     render(<App />)
     expect(names()).toEqual(['page_viewed'])
 
-    fireEvent.click(screen.getByRole('button', { name: 'Calculate my investment' }))
+    fireEvent.click(within(screen.getByRole('region', { name: 'See what your startup investment could become' })).getByRole('button', { name: 'Use calculator' }))
     expect(events.at(-1)).toEqual({ name: 'hero_cta_clicked', placement: 'hero' })
 
     const investment = within(region('Your initial investment'))
@@ -39,31 +41,22 @@ describe('the funnel, reported from the page', () => {
     expect(names()).toEqual(expect.arrayContaining(['calculator_started', 'initial_investment_entered', 'ownership_calculated', 'activated']))
 
     const rounds = () => within(region('Future funding rounds'))
-    fireEvent.click(rounds().getAllByRole('button', { name: '+ Add funding round' })[0] as HTMLElement)
+    fireEvent.click(rounds().getByRole('button', { name: '+ Add funding round' }))
     expect(names()).toContain('pro_rata_scenario_viewed')
     fireEvent.click(rounds().getByRole('button', { name: '+ Add funding round' }))
     expect(names().filter((n) => n === 'funding_round_added')).toHaveLength(2)
     expect(names()).toContain('second_funding_round_added')
 
     const seriesA = within(rounds().getByRole('article', { name: 'Series A' }))
-    fireEvent.click(seriesA.getByRole('button', { name: 'Invest pro-rata' }))
+    fireEvent.click(seriesA.getByRole('radio', { name: /Invest pro-rata/ }))
     expect(events).toContainEqual({ name: 'follow_on_amount_entered', pro_rata: true })
 
-    fireEvent.click(within(region('What could your investment be worth?')).getByRole('radio', { name: '€250M' }))
+    const slider = within(region('What could it be worth?')).getByRole('slider', { name: 'Exit valuation' })
+    fireEvent.change(slider, { target: { value: String(positionOf(25_000_000_000)) } })
     expect(events).toContainEqual({ name: 'exit_valuation_changed', preset: true })
     expect(names()).toContain('exit_scenario_completed')
     expect(names()).toContain('strongly_activated')
 
-    const writeText = vi.fn().mockResolvedValue(undefined)
-    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true })
-    fireEvent.click(screen.getByRole('button', { name: 'Share calculation' }))
-    await waitFor(() => expect(events).toContainEqual({ name: 'calculation_link_copied', method: 'clipboard' }))
-    expect(names()).toContain('share_clicked')
-
-    const updates = within(region('Want more tools for angel investing?'))
-    fireEvent.change(updates.getByLabelText('Email address'), { target: { value: 'angel@example.com' } })
-    fireEvent.click(updates.getByRole('button', { name: 'Notify me' }))
-    expect(names()).toContain('email_submitted')
 
     for (const event of events) {
       const json = JSON.stringify(event)
@@ -72,38 +65,34 @@ describe('the funnel, reported from the page', () => {
     }
   })
 
-  it('reports each example button by where it sits, and the load it causes', () => {
-    render(<App />)
-    fireEvent.click(screen.getByRole('button', { name: 'See an example' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Open this example in calculator →' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Load example' }))
-    expect(events.filter((e) => e.name === 'example_cta_clicked')).toEqual([
-      { name: 'example_cta_clicked', placement: 'hero' },
-      { name: 'example_cta_clicked', placement: 'worked_example' },
-    ])
-    expect(events.filter((e) => e.name === 'example_loaded').map((e) => 'placement' in e && e.placement)).toEqual([
-      'hero',
-      'worked_example',
-      'toolbar',
-    ])
-    expect(names()).not.toContain('calculator_started')
-  })
-
   it('reports the other calculator buttons by placement', () => {
     render(<App />)
     fireEvent.click(within(screen.getByRole('navigation', { name: 'Main' })).getByRole('button', { name: 'Use calculator' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Try the calculator' }))
     expect(events.filter((e) => e.name === 'hero_cta_clicked')).toEqual([
       { name: 'hero_cta_clicked', placement: 'nav' },
-      { name: 'hero_cta_clicked', placement: 'features' },
     ])
   })
 
-  it('does not report an invalid email as submitted', () => {
-    render(<App />)
-    const updates = within(region('Want more tools for angel investing?'))
+  it('reports a waiting-list signup only once it is saved, and never an invalid one', async () => {
+    render(<UpdatesSignup />)
+    const form = within(region('More tools are on the way'))
+    fireEvent.change(form.getByLabelText('Email address'), { target: { value: 'nope' } })
+    fireEvent.click(form.getByRole('button', { name: 'Join the waiting list' }))
+    expect(names()).not.toContain('email_submitted')
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{"ok":true}', { status: 200 }))
+    fireEvent.change(form.getByLabelText('First name'), { target: { value: 'Ada' } })
+    fireEvent.change(form.getByLabelText('Surname'), { target: { value: 'Lovelace' } })
+    fireEvent.change(form.getByLabelText('Email address'), { target: { value: 'angel@example.com' } })
+    fireEvent.click(form.getByRole('button', { name: 'Join the waiting list' }))
+    await waitFor(() => expect(names()).toContain('email_submitted'))
+    expect(JSON.stringify(events)).not.toContain('@')
+  })
+
+  it('does not report an invalid signup as submitted', () => {
+    render(<UpdatesSignup />)
+    const updates = within(region('More tools are on the way'))
     fireEvent.change(updates.getByLabelText('Email address'), { target: { value: 'nope' } })
-    fireEvent.click(updates.getByRole('button', { name: 'Notify me' }))
+    fireEvent.click(updates.getByRole('button', { name: 'Join the waiting list' }))
     expect(names()).not.toContain('email_submitted')
   })
 })

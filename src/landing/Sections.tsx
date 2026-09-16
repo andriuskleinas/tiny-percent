@@ -1,150 +1,17 @@
 import { useId, useState } from 'react'
-import type { FormEvent } from 'react'
+import type { ChangeEvent, FormEvent } from 'react'
+import { validateSignup } from '../server/waitlist'
+import type { SignupField } from '../server/waitlist'
 import { CurrencyContext, useMoney } from '../ui/currency'
-import { multiple, ownership } from '../ui/format'
+import { multiple, percent } from '../ui/format'
 import { EXAMPLE_FACTS } from './example'
-import { FAQ } from './faq'
-import { Section } from './Section'
+import { Section, Wordmark } from './Section'
 import { track } from '../analytics/track'
-import { INVESTMENT_INPUT_ID, scrollToSection } from './scroll'
+import { scrollToSection } from './scroll'
 
-const toCalculator = () => scrollToSection('calculator', document.getElementById(INVESTMENT_INPUT_ID))
 
 const primary =
-  'inline-flex items-center border border-accent bg-accent px-4 py-2.5 text-sm font-medium text-on-accent outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2'
-
-export function Features() {
-  const cards = [
-    ['Know what you own', 'See how much startup equity your investment buys based on the valuation and financing round.'],
-    [
-      'Understand dilution',
-      'Model future fundraising rounds and see how your ownership changes over time. Compare participating, not participating and maintaining pro-rata ownership.',
-    ],
-    ['Explore exit outcomes', 'See how different hypothetical company exit valuations could affect the value of your investment.'],
-  ] as const
-  return (
-    <Section id="features" eyebrow="What it does" title="Your investment, from cheque to exit." tone="band">
-      <ul className="grid gap-4 md:grid-cols-3">
-        {cards.map(([title, body], i) => (
-          <li key={title} className="border border-rule bg-ground/50 p-6">
-            <p className="font-mono text-[11px] tabular-nums text-accent">0{i + 1}</p>
-            <h3 className="mt-3 text-lg font-semibold tracking-tight text-ink">{title}</h3>
-            <p className="mt-2 text-ink-soft">{body}</p>
-          </li>
-        ))}
-      </ul>
-      <button
-        type="button"
-        onClick={() => {
-          track({ name: 'hero_cta_clicked', placement: 'features' })
-          toCalculator()
-        }}
-        className={`${primary} mt-8`}
-      >
-        Try the calculator
-      </button>
-    </Section>
-  )
-}
-
-export function HowItWorks() {
-  const steps = [
-    ['Enter your investment', 'Add your cheque size, company valuation and financing terms.'],
-    ['Add future rounds', 'Model Seed, Series A, Series B and other fundraising rounds.'],
-    ['Explore outcomes', 'Compare dilution, follow-on requirements and hypothetical exit scenarios.'],
-  ] as const
-  return (
-    <Section id="how-it-works" eyebrow="How it works" title="Three steps, about thirty seconds.">
-      <ol className="grid gap-8 md:grid-cols-3">
-        {steps.map(([title, body], i) => (
-          <li key={title} className="border-t-2 border-accent pt-5">
-            <p className="font-mono text-sm tabular-nums text-ink-faint">0{i + 1}</p>
-            <h3 className="mt-2 text-lg font-semibold tracking-tight text-ink">{title}</h3>
-            <p className="mt-2 text-ink-soft">{body}</p>
-          </li>
-        ))}
-      </ol>
-    </Section>
-  )
-}
-
-export function WorkedExample({ onOpen }: { onOpen: () => void }) {
-  return (
-    <CurrencyContext.Provider value={EXAMPLE_FACTS.currency}>
-      <WorkedExampleBody onOpen={onOpen} />
-    </CurrencyContext.Provider>
-  )
-}
-
-function WorkedExampleBody({ onOpen }: { onOpen: () => void }) {
-  const { money, compactMoney } = useMoney()
-  const f = EXAMPLE_FACTS
-  const terms: Array<[string, string]> = [
-    ['Initial investment', money(f.chequeCents)],
-    ['Pre-money valuation', compactMoney(f.preMoneyCents)],
-    ['Amount raised', compactMoney(f.raisedCents)],
-  ]
-  const results: Array<[string, string, string]> = [
-    ['Initial ownership', ownership(f.initialOwnership), 'text-ink'],
-    ['Ownership after dilution', ownership(f.finalOwnership), 'text-ink'],
-    [`Potential value at a ${compactMoney(f.exitCents)} exit`, money(f.exitProceedsCents), 'text-gain'],
-  ]
-
-  return (
-    <Section
-      id="example"
-      eyebrow="Worked example"
-      title={`What happens to a ${money(f.chequeCents)} angel investment?`}
-      tone="band"
-    >
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <div className="flex flex-col gap-6">
-          <dl className="grid grid-cols-3 gap-4">
-            {terms.map(([label, value]) => (
-              <div key={label} className="border-t border-rule pt-3">
-                <dt className="text-xs text-ink-faint">{label}</dt>
-                <dd className="mt-1 font-mono text-lg tabular-nums text-ink">{value}</dd>
-              </div>
-            ))}
-          </dl>
-          <div>
-            <h3 className="font-mono text-[11px] uppercase tracking-wider text-ink-faint">Future rounds</h3>
-            <ol className="mt-3 flex flex-col divide-y divide-rule border-y border-rule">
-              {f.rounds.map((r) => (
-                <li key={r.label} className="grid grid-cols-[6rem_minmax(0,1fr)_auto] items-baseline gap-3 py-2.5 text-sm">
-                  <span className="font-medium text-ink">{r.label}</span>
-                  <span className="text-ink-soft">
-                    {compactMoney(r.postMoneyCents)} valuation, raising {compactMoney(r.raisedCents)}
-                  </span>
-                  <span className="font-mono tabular-nums text-ink">{ownership(r.ownership)}</span>
-                </li>
-              ))}
-            </ol>
-            <p className="mt-2 text-xs text-ink-faint">Valuations are post-money. You sit out every later round.</p>
-          </div>
-        </div>
-
-        <div className="border border-rule bg-ground/50 p-6">
-          <dl className="flex flex-col gap-4">
-            {results.map(([label, value, tone]) => (
-              <div key={label} className="flex items-baseline justify-between gap-4 border-b border-rule pb-4 last:border-0 last:pb-0">
-                <dt className="text-ink-soft">{label}</dt>
-                <dd className={`font-mono text-2xl font-semibold tabular-nums ${tone}`}>{value}</dd>
-              </div>
-            ))}
-          </dl>
-          <p className="mt-4 text-sm text-ink-soft">
-            Your share is almost halved, yet the stake is worth {multiple(f.exitMultiple)} what you paid — if the company
-            ever sells for {compactMoney(f.exitCents)}, which is a hypothetical, not a forecast.
-          </p>
-          <button type="button" onClick={onOpen} className={`${primary} mt-6`}>
-            Open this example in calculator →
-          </button>
-        </div>
-      </div>
-    </Section>
-  )
-}
+  'inline-flex items-center rounded-full border border-accent bg-accent px-5 py-2.5 shadow-sm text-sm font-medium text-on-accent outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2'
 
 export function Learn() {
   return (
@@ -154,44 +21,100 @@ export function Learn() {
   )
 }
 
+interface Worked {
+  title: string
+  lede: string
+  /** Each step is [what is being worked out, the arithmetic, its result]. */
+  steps: Array<readonly [string, string, string]>
+  note: string
+}
+
 function LearnBody() {
   const { money, compactMoney } = useMoney()
   const f = EXAMPLE_FACTS
-  const blocks: Array<[string, string, string]> = [
-    [
-      'Equity: what your cheque buys',
-      `Divide your investment by the post-money valuation. ${money(f.chequeCents)} ÷ ${money(f.postMoneyCents)} = ${ownership(f.initialOwnership)}.`,
-      'Pre-money is the value before the round; post-money adds the new money in.',
-    ],
-    [
-      'Dilution: why your percentage falls',
-      `A Series A raising ${compactMoney(f.seriesA.raisedCents)} at ${compactMoney(f.seriesA.postMoneyCents)} post-money issues new shares worth a fifth of the company. You keep ${Math.round(f.seriesA.keptShare * 100)}% of your percentage: ${ownership(f.initialOwnership)} becomes ${ownership(f.seriesA.ownership)}.`,
-      `Your paper value still rises, from ${money(f.chequeCents)} to ${money(f.seriesA.valueCents)}, because the company is worth more.`,
-    ],
-    [
-      'Pro-rata: what it costs to keep your share',
-      `Multiply your ownership by the round. Keeping ${ownership(f.initialOwnership)} through that Series A costs ${money(f.seriesA.proRataCents)}.`,
-      'A new option pool in the same round adds your share of the pool to that amount.',
-    ],
-    [
-      'Exit: what the stake could return',
-      `At a sale, your ownership times the price is the starting point: ${ownership(f.finalOwnership)} of ${compactMoney(f.exitCents)} is ${money(f.exitProceedsCents)}.`,
-      `Near or below the ${compactMoney(f.totalRaisedCents)} the company raised, investors with liquidation preferences are paid first, so you can receive less.`,
-    ],
+  const pct = (fraction: number, places = 2) => percent(fraction, places)
+  const blocks: Worked[] = [
+    {
+      title: 'Equity: what your cheque buys',
+      lede: `You invest ${money(f.chequeCents)} in a ${f.entryLabel} round: ${compactMoney(f.preMoneyCents)} pre-money, raising ${compactMoney(f.raisedCents)}.`,
+      steps: [
+        ['Post-money valuation', `${money(f.preMoneyCents)} + ${money(f.raisedCents)}`, money(f.postMoneyCents)],
+        ['Your ownership', `${money(f.chequeCents)} ÷ ${money(f.postMoneyCents)}`, pct(f.initialOwnership)],
+      ],
+      note: 'Pre-money is the company’s value before the round; post-money adds the new money. Your ownership is always your cheque divided by post-money.',
+    },
+    {
+      title: 'Dilution: why your percentage falls',
+      lede: `The ${f.next.label} raises ${compactMoney(f.next.raisedCents)} at a ${compactMoney(f.next.postMoneyCents)} post-money valuation, and you don’t invest.`,
+      steps: [
+        ['Share of the company sold', `${money(f.next.raisedCents)} ÷ ${money(f.next.postMoneyCents)}`, pct(f.next.sold, 0)],
+        ['Share of your stake you keep', `100% − ${pct(f.next.sold, 0)}`, pct(f.next.kept, 0)],
+        ['Your new ownership', `${pct(f.initialOwnership)} × ${pct(f.next.kept, 0)}`, pct(f.next.ownership, 3)],
+        ['Your paper value', `${pct(f.next.ownership, 3)} × ${money(f.next.postMoneyCents)}`, money(f.next.valueCents)],
+      ],
+      note: `Your percentage fell, yet your paper value rose from ${money(f.chequeCents)} to ${money(f.next.valueCents)}, because the company grew faster than it diluted you.`,
+    },
+    {
+      title: 'Pro-rata: what it costs to keep your share',
+      lede: `To stay at ${pct(f.initialOwnership)} through the ${f.next.label}, you buy your share of the new money.`,
+      steps: [
+        ['Pro-rata cheque', `${pct(f.initialOwnership)} × ${money(f.next.raisedCents)}`, money(f.next.proRataCents)],
+        [
+          'Ownership after investing',
+          `${pct(f.next.ownership, 3)} + (${money(f.next.proRataCents)} ÷ ${money(f.next.postMoneyCents)})`,
+          pct(f.initialOwnership),
+        ],
+        ['Your paper value', `${pct(f.initialOwnership)} × ${money(f.next.postMoneyCents)}`, money(f.next.proRataValueCents)],
+      ],
+      note: `Investing ${money(f.next.proRataCents)} more lifts your paper value from ${money(f.next.valueCents)} to ${money(f.next.proRataValueCents)}. Skip it and your share falls to ${pct(f.next.ownership, 3)}.`,
+    },
+    {
+      title: 'Exit: what your stake could return',
+      lede: `You sit out every later round and the company sells for ${compactMoney(f.exitCents)}.`,
+      steps: [
+        [
+          `Ownership after ${f.later.map((r) => r.label).join(', ').replace(/, ([^,]*)$/, ' and $1')}`,
+          `${pct(f.initialOwnership)} × ${f.later.map((r) => pct(r.kept, 0)).join(' × ')}`,
+          pct(f.finalOwnership, 4),
+        ],
+        ['Your proceeds', `${pct(f.finalOwnership, 4)} × ${money(f.exitCents)}`, money(f.exitProceedsCents)],
+        ['Your multiple', `${money(f.exitProceedsCents)} ÷ ${money(f.chequeCents)}`, multiple(f.exitMultiple)],
+        [
+          `After ${pct(f.carry.percent, 0)} carry`,
+          `${money(f.exitProceedsCents)} − ${pct(f.carry.percent, 0)} × (${money(f.exitProceedsCents)} − ${money(f.chequeCents)})`,
+          `${money(f.carry.netCents)} · ${multiple(f.carry.netMultiple)}`,
+        ],
+      ],
+      note: `Near or below the ${compactMoney(f.totalRaisedCents)} the company raised, liquidation preferences pay later investors first, so you can receive less than your percentage suggests.`,
+    },
   ]
   return (
     <Section
       id="learn"
       eyebrow="The maths, briefly"
-      title="From cheque to exit."
-      lede="Your startup investment doesn’t stay static. See how your ownership changes as the company raises more capital — and what your stake could potentially become."
+      title="How a small stake grows, shrinks and pays out"
+      lede={`Four ideas decide what your cheque returns. Each is worked through with one example, ${money(f.chequeCents)} into a ${f.entryLabel} round, using the same engine as the calculator.`}
     >
-      <div className="grid gap-x-10 gap-y-8 md:grid-cols-2">
-        {blocks.map(([title, main, aside]) => (
-          <article key={title}>
-            <h3 className="text-lg font-semibold tracking-tight text-ink">{title}</h3>
-            <p className="mt-2 text-ink-soft">{main}</p>
-            <p className="mt-2 text-sm text-ink-faint">{aside}</p>
+      <div className="grid gap-6 md:grid-cols-2">
+        {blocks.map((block) => (
+          <article key={block.title} className="flex flex-col rounded-2xl border border-rule bg-surface p-5 shadow-card sm:p-6">
+            <h3 className="text-lg font-semibold tracking-tight text-ink">{block.title}</h3>
+            <p className="mt-2 text-ink-soft">{block.lede}</p>
+            <ol className="mt-4 flex flex-col divide-y divide-rule border-y border-rule">
+              {block.steps.map(([label, sum, result], i) => (
+                <li key={label} className="py-2.5">
+                  <p className="flex items-baseline gap-2 text-xs text-ink-faint">
+                    <span className="font-mono tabular-nums text-accent">{i + 1}</span>
+                    {label}
+                  </p>
+                  <p className="mt-1 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 font-mono text-sm tabular-nums">
+                    <span className="text-ink-soft">{sum} =</span>
+                    <span className="font-semibold text-ink">{result}</span>
+                  </p>
+                </li>
+              ))}
+            </ol>
+            <p className="mt-3 text-sm text-ink-faint">{block.note}</p>
           </article>
         ))}
       </div>
@@ -199,98 +122,142 @@ function LearnBody() {
   )
 }
 
-export function Faq() {
-  return (
-    <Section id="faq" eyebrow="FAQ" title="Frequently asked questions" tone="band">
-      <div className="max-w-3xl divide-y divide-rule border-y border-rule">
-        {FAQ.map(({ question, answer }) => (
-          <details key={question} className="group">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-4 text-left font-medium text-ink outline-none hover:text-accent focus-visible:ring-2 focus-visible:ring-accent/40 [&::-webkit-details-marker]:hidden">
-              {question}
-              <span aria-hidden="true" className="font-mono text-lg text-ink-faint transition-transform group-open:rotate-45">
-                +
-              </span>
-            </summary>
-            <p className="pb-5 pr-8 text-ink-soft">{answer}</p>
-          </details>
-        ))}
-      </div>
-    </Section>
-  )
+type SignupState = 'idle' | 'sending' | 'done' | 'unavailable' | 'failed'
+
+const FIELD_ERRORS: Record<SignupField, string> = {
+  firstName: 'Enter your first name.',
+  lastName: 'Enter your surname.',
+  email: 'Enter a valid email address.',
 }
 
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
+const input =
+  'w-full rounded-xl border border-rule bg-surface px-3.5 py-2.5 text-ink outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/30 aria-[invalid=true]:border-dilute'
 
 /**
- * Optional, and shown only after the calculator. No email service is connected
- * yet, so a valid address is acknowledged honestly and goes nowhere — nothing
- * is sent, stored or logged until a provider is chosen.
+ * The waiting list. Name, surname and email go to this site's own
+ * `/api/waitlist`, which adds them to a Google Sheet; nothing is claimed as
+ * saved until the server says it was.
  */
 export function UpdatesSignup() {
-  const [email, setEmail] = useState('')
-  const [state, setState] = useState<'idle' | 'invalid' | 'done'>('idle')
-  const errorId = useId()
+  const [values, setValues] = useState({ firstName: '', lastName: '', email: '', website: '' })
+  const [errors, setErrors] = useState<readonly SignupField[]>([])
+  const [state, setState] = useState<SignupState>('idle')
+  const [joined, setJoined] = useState<{ firstName: string; email: string } | undefined>(undefined)
+  const ids = { firstName: useId(), lastName: useId(), email: useId(), trap: useId() }
 
-  const submit = (event: FormEvent) => {
-    event.preventDefault()
-    const valid = EMAIL.test(email.trim())
-    // The event says a valid address was submitted — never the address.
-    if (valid) track({ name: 'email_submitted' })
-    setState(valid ? 'done' : 'invalid')
+  const change = (field: keyof typeof values) => (e: ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setValues((was) => ({ ...was, [field]: value }))
+    if (errors.length > 0) setErrors((was) => was.filter((f) => f !== field))
+    if (state === 'failed' || state === 'unavailable') setState('idle')
   }
 
-  const upcoming = ['Saved investments', 'Portfolio tracking', 'SAFE calculations', 'SPV and carry calculations', 'Advanced exit modelling', 'Term-sheet analysis']
+  const submit = async (event: FormEvent) => {
+    event.preventDefault()
+    if (state === 'sending') return
+    const checked = validateSignup(values)
+    if (!checked.ok) {
+      setErrors(checked.fields)
+      document.getElementById(ids[checked.fields[0] ?? 'email'])?.focus()
+      return
+    }
+    setErrors([])
+    setState('sending')
+    try {
+      const response = await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ ...checked.signup, website: values.website }),
+      })
+      if (response.ok) {
+        // The event says someone joined — never who.
+        track({ name: 'email_submitted' })
+        setJoined({ firstName: checked.signup.firstName, email: checked.signup.email })
+        setState('done')
+        return
+      }
+      setState(response.status === 503 ? 'unavailable' : 'failed')
+    } catch {
+      setState('failed')
+    }
+  }
+
+  const field = (name: SignupField, label: string, autoComplete: string, type = 'text') => {
+    const invalid = errors.includes(name)
+    return (
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor={ids[name]} className="text-sm font-medium text-ink">
+          {label}
+        </label>
+        <input
+          id={ids[name]}
+          type={type}
+          autoComplete={autoComplete}
+          value={values[name]}
+          onChange={change(name)}
+          aria-invalid={invalid || undefined}
+          aria-describedby={invalid ? `${ids[name]}-error` : undefined}
+          className={input}
+        />
+        {invalid ? (
+          <p id={`${ids[name]}-error`} className="text-sm text-dilute">
+            {FIELD_ERRORS[name]}
+          </p>
+        ) : null}
+      </div>
+    )
+  }
 
   return (
     <Section
       id="updates"
       eyebrow="Coming next"
-      title="Want more tools for angel investing?"
-      lede="We’re building more tools for understanding and managing startup investments. Leave an email if you’d like to hear when they launch — the calculator stays free either way."
+      align="center"
+      title="More tools are on the way"
+      lede="We’re building more tools for understanding and managing startup investments. Join the waiting list to hear when they launch. The calculator stays free either way."
     >
-      <div className="grid gap-10 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <form onSubmit={submit} noValidate className="flex max-w-md flex-col gap-3">
-          <label htmlFor="updates-email" className="text-sm font-medium text-ink">
-            Email address
-          </label>
-          <div className="flex gap-2">
-            <input
-              id="updates-email"
-              type="email"
-              autoComplete="email"
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value)
-                if (state !== 'idle') setState('idle')
-              }}
-              aria-invalid={state === 'invalid' || undefined}
-              aria-describedby={state === 'invalid' ? errorId : undefined}
-              className="min-w-0 flex-1 border border-rule bg-surface px-3 py-2.5 text-ink outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/30"
-              placeholder="you@example.com"
-            />
-            <button type="submit" className={primary}>
-              Notify me
-            </button>
-          </div>
-          {state === 'invalid' ? (
-            <p id={errorId} className="text-sm text-dilute">
-              Enter a valid email address.
+      <div>
+        {state === 'done' && joined ? (
+          <div role="status" className="mx-auto max-w-md rounded-2xl border border-gain/40 bg-gain/[0.06] p-5">
+            <p className="font-semibold text-ink">You’re on the waiting list, {joined.firstName}.</p>
+            <p className="mt-2 text-sm text-ink-soft">
+              We’ll email <span className="font-medium text-ink">{joined.email}</span> when new tools launch. Nothing
+              else, and you can ask to be removed at any time.
             </p>
-          ) : null}
-          <p role="status" className="text-sm text-ink-soft">
-            {state === 'done'
-              ? 'Thanks. Email updates aren’t switched on yet, so nothing was sent or stored — check back soon.'
-              : ''}
-          </p>
-        </form>
-        <ul className="grid grid-cols-2 gap-x-6 gap-y-2 self-start text-sm text-ink-soft">
-          {upcoming.map((item) => (
-            <li key={item} className="flex items-center gap-2">
-              <span aria-hidden="true" className="h-1 w-1 bg-accent" />
-              {item}
-            </li>
-          ))}
-        </ul>
+          </div>
+        ) : (
+          <form onSubmit={submit} noValidate className="mx-auto flex max-w-md flex-col gap-4 text-left">
+            <div className="grid gap-4 sm:grid-cols-2">
+              {field('firstName', 'First name', 'given-name')}
+              {field('lastName', 'Surname', 'family-name')}
+            </div>
+            {field('email', 'Email address', 'email', 'email')}
+            {/* Hidden from people, tempting to bots. */}
+            <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
+              <label htmlFor={ids.trap}>Website</label>
+              <input id={ids.trap} type="text" tabIndex={-1} autoComplete="off" value={values.website} onChange={change('website')} />
+            </div>
+            <div className="flex flex-col items-center gap-2 text-center">
+              <button type="submit" disabled={state === 'sending'} className={`${primary} disabled:opacity-60`}>
+                {state === 'sending' ? 'Joining…' : 'Join the waiting list'}
+              </button>
+              <p className="text-xs text-ink-faint">
+                Used only to tell you about new tools. See{' '}
+                <a href="/privacy" className="underline hover:text-ink">
+                  Privacy
+                </a>
+                .
+              </p>
+            </div>
+            <p role="status" className="text-center text-sm text-dilute">
+              {state === 'failed'
+                ? 'Something went wrong and your details weren’t saved. Please try again.'
+                : state === 'unavailable'
+                  ? 'The waiting list isn’t open yet, so your details weren’t saved. Please try again later.'
+                  : ''}
+            </p>
+          </form>
+        )}
       </div>
     </Section>
   )
@@ -299,8 +266,6 @@ export function UpdatesSignup() {
 export function SiteFooter() {
   const links: Array<[string, string, string | undefined]> = [
     ['Calculator', '#calculator', 'calculator'],
-    ['How it works', '#how-it-works', 'how-it-works'],
-    ['FAQ', '#faq', 'faq'],
     ['Privacy', '/privacy', undefined],
     ['Terms', '/terms', undefined],
   ]
@@ -308,8 +273,10 @@ export function SiteFooter() {
     <footer className="border-t border-rule bg-surface">
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:px-6 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
         <div>
-          <p className="font-semibold tracking-tight text-ink">Angel Investment Calculator</p>
-          <p className="mt-2 text-sm text-ink-soft">Free tools for understanding startup investments.</p>
+          <p className="text-lg text-ink">
+            <Wordmark />
+          </p>
+          <p className="mt-2 text-sm text-ink-soft">Your tiny percent, from first cheque to exit. A free angel investment calculator.</p>
           <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm">
             {links.map(([text, href, section]) => (
               <li key={text}>
@@ -338,8 +305,8 @@ export function SiteFooter() {
             Actual investment outcomes may differ significantly.
           </p>
           <p>
-            Modelled from the angel’s side only: instruments are priced at each round’s valuation, and other holders’
-            terms beyond a 1× non-participating liquidation preference are not modelled.
+            Built from the angel’s side only. Every cheque is priced at its round’s valuation, and later investors are
+            assumed to hold a standard 1× non-participating liquidation preference.
           </p>
         </div>
       </div>

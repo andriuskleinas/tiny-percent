@@ -81,6 +81,17 @@ export const EXAMPLE: Scenario = {
 }
 
 /**
+ * The animated example in the hero: the same deal as `EXAMPLE`, told from a
+ * Pre-seed cheque. Only the round names differ, so golden case L still holds
+ * every figure it shows.
+ */
+const HERO_LABELS = ['Pre-seed', 'Seed', 'Series A', 'Series B']
+export const HERO_EXAMPLE: Scenario = {
+  ...EXAMPLE,
+  rounds: EXAMPLE.rounds.map((round, i) => ({ ...round, id: `hero-${i}`, label: HERO_LABELS[i] ?? round.label })),
+}
+
+/**
  * "Start from scratch": every amount empty. The engine runs this to zeros, and
  * the page asks for an investment and a valuation instead of showing results.
  */

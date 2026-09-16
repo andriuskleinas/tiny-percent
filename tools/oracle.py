@@ -148,6 +148,52 @@ print(f"L  EUR 5k example ............. {l_entry:.4%} -> {l_own:.4%}  [ledger {L
 print("   exit table ................. " + "  ".join(
     f"{r['value']/1e6:g}M:{r['regime'][0]}" for r in l_ladder))
 
+# M: the three paths through the EUR 5k example. Sitting out every round, and
+# following on with exactly the pro-rata cheque each time, checked against the
+# share ledger. The user's own path lies between them.
+def paths(entry_pre, entry_raised, cheque, rounds, exit_value, total_raised, follow):
+    own = own_after(0.0, entry_pre, entry_raised, invested=cheque)
+    led = Ledger(); led.priced_round(entry_pre, entry_raised, angel_invests=cheque)
+    cheques, series = [cheque], [(own, own * (entry_pre + entry_raised))]
+    for pre, raised in rounds:
+        c = pro_rata(own, raised, pre) if follow else 0.0
+        own = own_after(own, pre, raised, invested=c)
+        led.priced_round(pre, raised, angel_invests=c)
+        cheques.append(c); series.append((own, own * (pre + raised)))
+    eq("M ledger agrees", led.own(), own)
+    lo, hi, regime = exit_band(own, sum(cheques), exit_value, total_raised)
+    return dict(own=own, cheques=cheques, series=series, invested=sum(cheques), low=lo, high=hi, regime=regime)
+m_sit = paths(4e6, 1e6, 5_000, l_rounds, 250e6, l_raised, follow=False)
+m_pro = paths(4e6, 1e6, 5_000, l_rounds, 250e6, l_raised, follow=True)
+eq("M sit-out final", m_sit["own"], 0.000512); eq("M sit-out gross", m_sit["high"], 128_000)
+eq("M pro-rata final", m_pro["own"], 0.001); eq("M pro-rata invested", m_pro["invested"], 36_000)
+eq("M pro-rata gross", m_pro["high"], 250_000)
+m_carry = 0.20
+m_net = lambda gross, invested: gross - max(0.0, gross - invested) * m_carry
+eq("M pro-rata net", m_net(m_pro["high"], 36_000), 207_200)
+eq("M pro-rata net multiple", m_net(m_pro["high"], 36_000) / 36_000, 207_200 / 36_000)
+print(f"M  three paths at EUR 250M .... sit out {m_sit['own']:.4%} EUR {m_sit['high']:,.0f} on EUR 5,000   "
+      f"pro-rata {m_pro['own']:.4%} EUR {m_pro['high']:,.0f} on EUR {m_pro['invested']:,.0f}")
+
+# N: a round described as "valuation grows xg, company sells s%". The value of
+# a stake that sits out changes by g * (1 - s - pool), which is the new price per
+# share over the old one. Growing x1.25 while selling 25% loses value.
+def stake_factor_ledger(prev_pre, prev_raised, g, s, pool=0.0):
+    V0 = prev_pre + prev_raised
+    V = g * V0; raised = s * V; pre = V - raised
+    led = Ledger(); p0, _ = led.priced_round(prev_pre, prev_raised, angel_invests=10_000)
+    before = led.angel * p0
+    p1, _ = led.priced_round(pre, raised, pool=pool)
+    return led.angel * p1 / before, V, raised
+n_steps = []
+for g, s, pool in [(3.0, 0.20, 0.0), (1.25, 0.25, 0.0), (2.0, 0.20, 0.10), (0.8, 0.30, 0.0)]:
+    factor, V, raised = stake_factor_ledger(4e6, 1e6, g, s, pool)
+    eq(f"N factor x{g} sells {s:.0%} pool {pool:.0%}", factor, g * (1 - s - pool))
+    n_steps.append(dict(growth=g, sold=s, pool=pool, post=V, raised=raised, factor=factor))
+assert n_steps[1]["factor"] < 1, "an up round that sells too much must lose value"
+print("N  stake factor g(1-s-pool) ... " + "  ".join(
+    f"x{r['growth']:g}/{r['sold']:.0%}/{r['pool']:.0%}->{r['factor']:.4f}" for r in n_steps))
+
 print()
 print("=" * 72)
 print("CLAIMS MADE IN THE FOUR VISUALS")
@@ -253,6 +299,18 @@ def emit_fixture(path):
               "ladder": [{"valueCents": cents(r["value"]), "regime": r["regime"],
                           "lowCents": cents(r["low"]), "highCents": cents(r["high"])}
                          for r in l_ladder]},
+        "M": {"exitCents": cents(250e6), "carryPercent": m_carry,
+              "sitOut": {"path": [o for o, _ in m_sit["series"]],
+                         "valuesCents": [cents(v) for _, v in m_sit["series"]],
+                         "investedCents": cents(m_sit["invested"]), "grossCents": cents(m_sit["high"])},
+              "proRata": {"path": [o for o, _ in m_pro["series"]],
+                          "chequesCents": [cents(c) for c in m_pro["cheques"]],
+                          "investedCents": cents(m_pro["invested"]), "grossCents": cents(m_pro["high"]),
+                          "netCents": cents(m_net(m_pro["high"], m_pro["invested"]))}},
+        "N": {"prevPostCents": cents(5e6),
+              "steps": [{"growth": r["growth"], "sold": r["sold"], "pool": r["pool"],
+                         "postMoneyCents": cents(r["post"]), "raisedCents": cents(r["raised"]),
+                         "stakeFactor": r["factor"]} for r in n_steps]},
     }
     with open(path, "w") as fh:
         json.dump(fixture, fh, indent=2)
@@ -266,7 +324,7 @@ if "--emit" in sys.argv:
 
 print()
 print("=" * 72)
-print(f"{checks} assertions across 8 golden cases and 4 visuals")
+print(f"{checks} assertions across 10 golden cases and 4 visuals")
 print("RESULT:", "ALL PASS — two independent models agree" if not fails else f"{len(fails)} FAILURES")
 for f_ in fails: print("  FAIL", f_)
 print("=" * 72)

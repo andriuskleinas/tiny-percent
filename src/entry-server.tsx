@@ -2,7 +2,6 @@ import { StrictMode } from 'react'
 import { renderToString } from 'react-dom/server'
 import App from './App'
 import { LegalPage } from './landing/LegalPage'
-import { FAQ } from './landing/faq'
 import { SITE } from './site'
 
 /**
@@ -24,8 +23,8 @@ const TITLES: Record<Page, string> = {
 
 const DESCRIPTIONS: Record<Page, string> = {
   home: SITE.description,
-  privacy: 'What the Angel Investment Calculator does and does not collect: no accounts, no cookies, no analytics.',
-  terms: 'Terms of use for the Angel Investment Calculator, a free educational tool that does not give investment advice.',
+  privacy: `What ${SITE.name} does and does not collect: no accounts, no cookies, no analytics.`,
+  terms: `Terms of use for ${SITE.name}, a free educational angel investment calculator that does not give investment advice.`,
 }
 
 export function renderPage(page: Page): string {
@@ -55,12 +54,12 @@ export function headTags(page: Page): string {
     `<meta property="og:image" content="${attr(`${SITE.url}/og.png`)}" />`,
     `<meta property="og:image:width" content="1200" />`,
     `<meta property="og:image:height" content="630" />`,
-    `<meta property="og:image:alt" content="${attr(`${SITE.name}: see what your angel investment could become.`)}" />`,
+    `<meta property="og:image:alt" content="${attr(`${SITE.name}: see whether your startup stake compounds or shrinks.`)}" />`,
     `<meta name="twitter:card" content="summary_large_image" />`,
     `<meta name="twitter:title" content="${attr(title)}" />`,
     `<meta name="twitter:description" content="${attr(description)}" />`,
     `<meta name="twitter:image" content="${attr(`${SITE.url}/og.png`)}" />`,
-    `<meta name="theme-color" content="#2e4a7d" />`,
+    `<meta name="theme-color" content="#f5f2ea" />`,
   ]
   if (page !== 'home') {
     tags.push(`<meta name="description" content="${attr(description)}" />`)
@@ -78,15 +77,6 @@ export function headTags(page: Page): string {
       browserRequirements: 'Requires JavaScript',
       isAccessibleForFree: true,
       offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
-    }),
-    jsonLd({
-      '@context': 'https://schema.org',
-      '@type': 'FAQPage',
-      mainEntity: FAQ.map(({ question, answer }) => ({
-        '@type': 'Question',
-        name: question,
-        acceptedAnswer: { '@type': 'Answer', text: answer },
-      })),
     }),
   )
   return tags.join('\n    ')

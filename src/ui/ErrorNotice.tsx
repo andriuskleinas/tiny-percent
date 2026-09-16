@@ -22,11 +22,11 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { error: E
     if (this.state.error) {
       return (
         <main className="mx-auto max-w-xl px-6 py-20">
-          <h1 className="text-2xl font-medium text-ink">Something broke</h1>
+          <h1 className="text-2xl font-medium text-ink">Something went wrong</h1>
           <p className="mt-3 text-ink-soft">{this.state.error.message}</p>
           <button
             type="button"
-            className="mt-6 border border-accent px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider text-accent"
+            className="mt-6 rounded-full border border-accent px-4 py-2 text-sm font-medium text-accent hover:bg-accent-wash"
             onClick={() => window.location.reload()}
           >
             Start again
@@ -41,7 +41,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { error: E
 /** Inline banner for an input the engine cannot answer. */
 export function ErrorNotice({ message }: { message: string }) {
   return (
-    <div role="alert" className="border border-dilute bg-dilute/10 px-5 py-4 sm:px-6">
+    <div role="alert" className="rounded-2xl border border-dilute bg-dilute/10 px-5 py-4 sm:px-6">
       <p className="font-mono text-[10px] uppercase tracking-wider text-dilute">
         That figure has no answer
       </p>

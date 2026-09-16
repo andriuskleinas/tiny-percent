@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { SITE } from '../site'
-import { Mark } from './Section'
+import { BetaBadge, Wordmark } from './Section'
+import { ThemeToggle } from './ThemeToggle'
 
 /**
  * Privacy and Terms. Plain statements of what the site actually does today —
@@ -31,6 +32,7 @@ function Privacy() {
     <>
       <p className="text-lg">
         The short version: no accounts, no cookies, no analytics, and the calculator runs in your browser.
+        {SITE.waitlist ? ' If you join the waiting list, we keep your name and email address to tell you when new tools launch.' : ''}
       </p>
       <H2>Your calculations</H2>
       <p>
@@ -55,15 +57,26 @@ function Privacy() {
         usage analytics are added, this page will be updated first to say which provider is used and what it
         records.
       </p>
-      <H2>Email updates</H2>
+      {SITE.waitlist ? (
+        <>
+      <H2>Waiting list</H2>
       <p>
-        Email signup is not switched on yet. Addresses typed into the form are not sent or stored. Before it is
-        switched on, this page will name the service used and explain how to unsubscribe.
+        If you join the waiting list, we collect your first name, surname and email address. Your browser sends them
+        to this site’s server, hosted by Vercel, which stores them in a Google Sheets spreadsheet held in Google’s
+        cloud. Nothing is saved unless you submit the form.
       </p>
+      <p>
+        We use these details only to email you when new tools launch. We do not sell or share them, and we do not
+        add you to any other list. We keep them until the waiting list closes or you ask to be removed, whichever
+        comes first. The legal basis is your consent, which you can withdraw at any time by asking to be removed.
+      </p>
+        </>
+      ) : null}
       <H2>Your rights</H2>
       <p>
         Under data protection laws such as the GDPR you can ask what personal data is held about you and ask for it
-        to be corrected or deleted. Apart from the hosting records above, this site holds none.
+        to be corrected or deleted. Apart from the hosting records{SITE.waitlist ? ' and any waiting-list details' : ''}{' '}
+        above, this site holds none.
       </p>
       <H2>Contact</H2>
       <Contact />
@@ -114,15 +127,16 @@ export function LegalPage({ page }: { page: 'privacy' | 'terms' }) {
   return (
     <>
       <header className="border-b border-rule bg-ground">
-        <nav aria-label="Main" className="mx-auto flex h-14 max-w-3xl items-center gap-6 px-4 sm:px-6">
-          <a href="/" className="flex items-center gap-2 font-semibold tracking-tight text-ink">
-            <Mark />
-            {SITE.name}
+        <nav aria-label="Main" className="mx-auto flex h-14 max-w-3xl items-center gap-2 px-4 sm:gap-3 sm:px-6">
+          <a href="/" className="text-lg text-ink">
+            <Wordmark />
           </a>
+          <BetaBadge />
           <span className="grow" />
+          <ThemeToggle />
           <a
             href="/#calculator"
-            className="shrink-0 border border-accent bg-accent px-3 py-1.5 text-sm font-medium text-on-accent hover:opacity-90"
+            className="shrink-0 rounded-full border border-accent bg-accent px-4 py-1.5 text-sm font-medium text-on-accent hover:opacity-90"
           >
             Use calculator
           </a>

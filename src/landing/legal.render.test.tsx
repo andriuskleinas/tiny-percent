@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest'
 import { cleanup, render, screen } from '@testing-library/react'
+import { SITE } from '../site'
 import { LegalPage } from './LegalPage'
 
 afterEach(cleanup)
@@ -13,7 +14,20 @@ describe('the privacy page', () => {
     expect(text).toMatch(/no cookies/i)
     expect(text).toMatch(/runs in your browser/i)
     expect(text).toMatch(/Vercel/)
-    expect(text).toMatch(/not switched on/i)
+    expect(text).not.toMatch(/waiting list/i)
+  })
+
+  it('describes the waiting list only when it is switched on', () => {
+    SITE.waitlist = true
+    try {
+      render(<LegalPage page="privacy" />)
+      const text = document.body.textContent ?? ''
+      expect(text).toMatch(/first name, surname and email address/)
+      expect(text).toMatch(/Google Sheets/)
+      expect(text).toMatch(/ask to be removed/)
+    } finally {
+      SITE.waitlist = false
+    }
   })
 })
 

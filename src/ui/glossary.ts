@@ -1,6 +1,6 @@
 /**
  * Plain-language definitions for every financial term the calculator uses. The
- * info buttons beside the inputs read from here, and so will the FAQ, so a term
+ * info buttons beside the inputs read from here, so a term
  * is explained the same way everywhere it appears.
  */
 
@@ -18,6 +18,10 @@ export const GLOSSARY = {
   postMoney: {
     question: 'What is a post-money valuation?',
     body: 'The company’s value once the new investment has been added: pre-money plus the amount raised. Your ownership is your cheque divided by this.',
+  },
+  currency: {
+    question: 'Which currency is used?',
+    body: 'Used for every amount, including later rounds and the exit. Switching relabels the amounts; it does not convert them.',
   },
   valuationBasis: {
     question: 'Pre-money or post-money?',
@@ -40,8 +44,8 @@ export const GLOSSARY = {
     body: 'Your ownership multiplied by the company’s latest valuation. It is an implied figure, not a price anyone has offered: it does not mean your stake could be sold for that amount today.',
   },
   moic: {
-    question: 'What is MOIC?',
-    body: 'Multiple on invested capital: what comes back divided by what you put in. A 5× MOIC means the investment returned five times its cost.',
+    question: 'What is the multiple?',
+    body: 'What comes back divided by what you put in, also called MOIC (multiple on invested capital). A 5× multiple means the investment returned five times its cost.',
   },
   irr: {
     question: 'What is IRR?',

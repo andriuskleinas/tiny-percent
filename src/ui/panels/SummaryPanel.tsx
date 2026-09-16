@@ -3,12 +3,13 @@ import { useMoney } from '../currency'
 import type { ScenarioResult } from '../../engine/scenario'
 import type { Scenario } from '../../engine/types'
 import { InfoTip } from '../controls'
-import { multiple, ownership } from '../format'
+import { multiple, ownership, percent, roundName } from '../format'
 
 /**
- * The handful of numbers someone should leave with even if they ignore every
- * detail: kept beside the calculator on a wide screen, and pinned to the bottom
- * of a narrow one.
+ * Every figure the calculator changes, in one card: the cheques, the ownership
+ * they end in, and what an exit returns after carry. It sits under the exit
+ * slider on a wide screen, and a one-line version is pinned to a phone's
+ * bottom edge while the calculator is in view.
  */
 
 function figures(scenario: Scenario, run: ScenarioResult) {
@@ -21,46 +22,89 @@ function figures(scenario: Scenario, run: ScenarioResult) {
 }
 
 export function SummaryPanel({ scenario, run }: { scenario: Scenario; run: ScenarioResult }) {
-  const { money } = useMoney()
+  const { money, compactMoney } = useMoney()
   const { entry, initialCents, followOnCents, range } = figures(scenario, run)
   const ready = initialCents > 0 && (entry?.postMoneyCents ?? 0) > 0
   const exitCents = scenario.exit.valueCents
+  const { feesLow: low, feesHigh: high } = run
+  const charged = low.carryCents > 0 || high.carryCents > 0 || low.managementFeeCents > 0 || low.entryFeeCents > 0
 
-  const rows: Array<[string, string, 'moic' | undefined]> = ready
+  const rows: Array<[string, string]> = ready
     ? [
-        ['Initial investment', money(initialCents), undefined],
-        ['Initial ownership', ownership(entry?.ownershipAfter ?? 0), undefined],
-        ['Final ownership', ownership(run.finalOwnership), undefined],
-        ['Follow-on investments', money(followOnCents), undefined],
-        ['Total invested', money(run.totalInvestedCents), undefined],
+        [`Initial investment${entry ? ` (${roundName(entry.round)})` : ''}`, money(initialCents)],
+        ['Initial ownership', ownership(entry?.ownershipAfter ?? 0)],
+        ['Follow-on investments', money(followOnCents)],
+        ['Total invested', money(run.totalInvestedCents)],
+        ['Final ownership', ownership(run.finalOwnership)],
       ]
     : []
 
   return (
-    <section aria-labelledby="summary-title" className="border border-rule bg-surface">
+    <section aria-labelledby="summary-title" className="rounded-2xl border border-rule bg-surface shadow-card">
       <h2 id="summary-title" className="border-b border-rule px-5 py-3 text-base font-semibold text-ink">
-        Your investment
+        Your investment summary
       </h2>
       {ready ? (
-        <div className="px-5 py-4">
+        <div aria-live="polite" className="px-5 py-4">
           <dl className="flex flex-col gap-2 text-sm">
             {rows.map(([label, value]) => (
-              <div key={label} className="flex justify-between gap-4">
-                <dt className="text-ink-faint">{label}</dt>
-                <dd className="font-mono tabular-nums text-ink">{value}</dd>
+              <div key={label} className="flex items-baseline justify-between gap-3">
+                <dt className="min-w-0 truncate text-ink-faint">{label}</dt>
+                <dd className="shrink-0 whitespace-nowrap text-right font-mono tabular-nums text-ink">{value}</dd>
               </div>
             ))}
           </dl>
           {exitCents > 0 ? (
             <div className="mt-4 border-t border-rule pt-4">
-              <p className="text-xs text-ink-faint">Potential proceeds at a {money(exitCents)} exit</p>
-              <p className="mt-1 font-mono text-2xl font-semibold tracking-tight tabular-nums text-gain">
-                {range(money(run.exit.lowCents), money(run.exit.highCents))}
-              </p>
-              <p className="mt-1 flex items-center gap-1.5 font-mono text-sm tabular-nums text-ink">
-                {range(multiple(run.feesLow.netMultiple), multiple(run.feesHigh.netMultiple))} MOIC
-                <InfoTip term="moic" />
-              </p>
+              <p className="whitespace-nowrap text-xs text-ink-faint">If the company sells for {compactMoney(exitCents)}</p>
+              <dl className="mt-2 flex flex-col gap-2 text-sm">
+                <div className="flex items-baseline justify-between gap-3">
+                  <dt className="min-w-0 truncate text-ink-faint">Gross proceeds</dt>
+                  <dd className="shrink-0 whitespace-nowrap text-right font-mono tabular-nums text-ink">{range(money(run.exit.lowCents), money(run.exit.highCents))}</dd>
+                </div>
+                {charged ? (
+                  <div className="flex items-baseline justify-between gap-3">
+                    <dt className="min-w-0 truncate text-ink-faint">
+                      {low.entryFeeCents > 0 || low.managementFeeCents > 0
+                        ? 'Carry and fees'
+                        : `Carry (${percent(scenario.fees.carry.percent, 0)})`}
+                    </dt>
+                    <dd className="shrink-0 whitespace-nowrap text-right font-mono tabular-nums text-dilute">
+                      {low.dragCents === high.dragCents || !run.exit.uncertain
+                        ? `−${money(high.dragCents)}`
+                        : low.dragCents === 0
+                          ? `up to −${money(high.dragCents)}`
+                          : `−${money(low.dragCents)} – ${money(high.dragCents)}`}
+                    </dd>
+                  </div>
+                ) : null}
+                <div className="flex items-baseline justify-between gap-3">
+                  <dt className="shrink-0 whitespace-nowrap text-ink-faint">Net proceeds</dt>
+                  <dd
+                    className={`whitespace-nowrap text-right font-mono font-semibold tracking-tight tabular-nums text-gain ${
+                      run.exit.uncertain && low.netCents !== high.netCents ? 'text-base' : 'text-2xl'
+                    }`}
+                  >
+                    {range(money(low.netCents), money(high.netCents))}
+                  </dd>
+                </div>
+                <div className="flex items-baseline justify-between gap-3">
+                  <dt className="flex items-center gap-1.5 whitespace-nowrap text-ink-faint">
+                    Multiple <InfoTip term="moic" />
+                  </dt>
+                  <dd className="shrink-0 whitespace-nowrap text-right font-mono tabular-nums text-ink">{range(multiple(low.netMultiple), multiple(high.netMultiple))}</dd>
+                </div>
+              </dl>
+              {run.exit.regime === 'clean' ? null : (
+                <p className="mt-3 flex gap-1.5 rounded-lg border-l-2 border-dilute bg-dilute/[0.06] py-2 pl-2.5 pr-2 text-xs text-ink-soft">
+                  <span>
+                    {run.exit.regime === 'downside'
+                      ? `At or below the ${compactMoney(scenario.exit.totalRaisedCents)} the company raised, liquidation preferences pay later investors first, so you may receive less.`
+                      : `Close to the ${compactMoney(scenario.exit.totalRaisedCents)} the company raised, liquidation preferences decide where in this range you land.`}
+                  </span>
+                  <InfoTip term="preferences" />
+                </p>
+              )}
               <p className="mt-3 text-[11px] leading-snug text-ink-faint">Hypothetical, not a forecast.</p>
             </div>
           ) : null}
@@ -108,7 +152,7 @@ export function SummaryBar({ scenario, run }: { scenario: Scenario; run: Scenari
         </span>
         {exitCents > 0 ? (
           <span>
-            <strong className="text-gain">{range(money(run.exit.lowCents), money(run.exit.highCents))}</strong> at{' '}
+            <strong className="text-gain">{range(money(run.feesLow.netCents), money(run.feesHigh.netCents))}</strong> at{' '}
             {compactMoney(exitCents)} · {range(multiple(run.feesLow.netMultiple), multiple(run.feesHigh.netMultiple))}
           </span>
         ) : null}

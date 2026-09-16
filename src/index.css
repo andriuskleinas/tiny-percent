@@ -1,59 +1,84 @@
 @import "tailwindcss";
 
-/* Identity shared with the build plan: ledger neutrals biased toward an ink-blue
-   accent, with one hue for growth and one for dilution and fees. */
+/* TinyPercent, "paper & cobalt": warm paper neutrals and one electric cobalt for
+   your slice of the company, with one hue for growth and one for dilution and
+   fees. Every text colour clears WCAG AA (4.5:1) on every background token in
+   both themes. `slice` and `grid` are the company-grid visuals' own names. */
 @theme {
-  --color-ground: #f2f4f7;
-  --color-surface: #ffffff;
-  --color-sunk: #eaeef3;
-  --color-ink: #151922;
-  --color-ink-soft: #485063;
-  --color-ink-faint: #606879;
-  --color-rule: #d8dee7;
-  --color-rule-strong: #b9c2d0;
-  --color-accent: #2e4a7d;
-  --color-accent-wash: #e5ebf5;
+  --color-ground: #f5f2ea;
+  --color-surface: #fffdf8;
+  --color-sunk: #ece7dc;
+  --color-ink: #15161a;
+  --color-ink-soft: #4a4c55;
+  --color-ink-faint: #65676f;
+  --color-rule: #ddd6c8;
+  --color-rule-strong: #c3bbaa;
+  --color-accent: #2f4bff;
+  --color-accent-wash: #e6e9ff;
   --color-on-accent: #ffffff;
-  --color-gain: #2a6b4f;
-  --color-dilute: #9c4a2e;
+  --color-gain: #1a6e49;
+  --color-dilute: #a83e25;
+  --color-slice: var(--color-accent);
+  --color-grid: #e3ddd0;
 
-  --font-sans: "Public Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --shadow-card: 0 1px 2px rgb(21 22 26 / 0.04), 0 12px 32px -18px rgb(21 22 26 / 0.14);
+  --shadow-pop: 0 2px 6px rgb(21 22 26 / 0.06), 0 18px 40px -12px rgb(21 22 26 / 0.22);
+
+  --font-sans: "Inter Tight Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 /* Three theme states: explicit light, explicit dark, and the unstamped default
    where only prefers-color-scheme separates them. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --color-ground: #101319;
-    --color-surface: #171b23;
-    --color-sunk: #1d222c;
-    --color-ink: #e4e8f0;
-    --color-ink-soft: #b0b8c8;
-    --color-ink-faint: #8a93a6;
-    --color-rule: #2a3040;
-    --color-rule-strong: #3b4356;
-    --color-accent: #8fb0e8;
-    --color-accent-wash: #1c2740;
-    --color-on-accent: #101319;
-    --color-gain: #6ebf95;
-    --color-dilute: #d9885f;
+    --color-ground: #101114;
+    --color-surface: #17181c;
+    --color-sunk: #1e2025;
+    --color-ink: #eceae4;
+    --color-ink-soft: #b9b8b2;
+    --color-ink-faint: #94938e;
+    --color-rule: #2a2c33;
+    --color-rule-strong: #3b3e47;
+    --color-accent: #7f93ff;
+    --color-accent-wash: #1b2145;
+    --color-on-accent: #101114;
+    --color-gain: #5cc592;
+    --color-dilute: #f08a66;
+    --color-grid: #25272e;
   }
 }
 :root[data-theme="dark"] {
-  --color-ground: #101319;
-  --color-surface: #171b23;
-  --color-sunk: #1d222c;
-  --color-ink: #e4e8f0;
-  --color-ink-soft: #b0b8c8;
-  --color-ink-faint: #8a93a6;
-  --color-rule: #2a3040;
-  --color-rule-strong: #3b4356;
-  --color-accent: #8fb0e8;
-  --color-accent-wash: #1c2740;
-  --color-on-accent: #101319;
-  --color-gain: #6ebf95;
-  --color-dilute: #d9885f;
+  --color-ground: #101114;
+  --color-surface: #17181c;
+  --color-sunk: #1e2025;
+  --color-ink: #eceae4;
+  --color-ink-soft: #b9b8b2;
+  --color-ink-faint: #94938e;
+  --color-rule: #2a2c33;
+  --color-rule-strong: #3b3e47;
+  --color-accent: #7f93ff;
+  --color-accent-wash: #1b2145;
+  --color-on-accent: #101114;
+  --color-gain: #5cc592;
+  --color-dilute: #f08a66;
+  --color-grid: #25272e;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+/* Theme changes cross-fade rather than flash. */
+body,
+section,
+article,
+header {
+  transition: background-color 200ms ease, border-color 200ms ease, color 200ms ease;
 }
 
 body {
@@ -61,4 +86,86 @@ body {
   color: var(--color-ink);
   font-family: var(--font-sans);
   margin: 0;
+}
+
+/* Chart geometry eases between values, so a stake visibly grows or shrinks.
+   Text never animates, and nothing moves for readers who ask for less motion. */
+.chart-anim {
+  transition: d 450ms cubic-bezier(0.33, 1, 0.68, 1), cx 450ms cubic-bezier(0.33, 1, 0.68, 1), cy 450ms cubic-bezier(0.33, 1, 0.68, 1), r 200ms ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .chart-anim {
+    transition: none;
+  }
+}
+
+/* The exit slider: a thin track filled up to the thumb in the slice colour.
+   `--fill` is set inline from the slider's position. */
+.tp-range {
+  appearance: none;
+  height: 28px;
+  background: transparent;
+  cursor: pointer;
+}
+.tp-range:focus-visible {
+  outline: none;
+}
+.tp-range::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 9999px;
+  background: linear-gradient(to right, var(--color-accent) var(--fill, 0%), var(--color-sunk) var(--fill, 0%));
+}
+.tp-range::-moz-range-track {
+  height: 6px;
+  border-radius: 9999px;
+  background: linear-gradient(to right, var(--color-accent) var(--fill, 0%), var(--color-sunk) var(--fill, 0%));
+}
+.tp-range::-webkit-slider-thumb {
+  appearance: none;
+  margin-top: -9px;
+  width: 24px;
+  height: 24px;
+  border-radius: 9999px;
+  background: var(--color-surface);
+  border: 3px solid var(--color-accent);
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.18);
+  transition: transform 120ms ease;
+}
+.tp-range::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: var(--color-surface);
+  border: 3px solid var(--color-accent);
+}
+.tp-range:active::-webkit-slider-thumb {
+  transform: scale(1.12);
+}
+.tp-range:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-accent) 35%, transparent);
+}
+.tp-range:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-accent) 35%, transparent);
+}
+
+/* The brand mark's blue cell hops between cells of the grid: a pause on each,
+   then a quick move. Offsets are multiples of the 4-unit cell pitch, measured
+   from its resting place in the bottom-right corner. */
+.tp-mark-dot {
+  animation: tp-mark-hop 10.5s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+@keyframes tp-mark-hop {
+  0%, 11% { transform: translate(0, 0); }
+  14%, 25% { transform: translate(-12px, -8px); }
+  28%, 39% { transform: translate(-4px, -16px); }
+  42%, 53% { transform: translate(-16px, -4px); }
+  56%, 67% { transform: translate(-8px, -12px); }
+  70%, 81% { transform: translate(-4px, 0); }
+  84%, 97% { transform: translate(-16px, -16px); }
+  100% { transform: translate(0, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tp-mark-dot {
+    animation: none;
+  }
 }

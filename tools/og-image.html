@@ -6,38 +6,45 @@
 <head>
 <meta charset="utf-8" />
 <style>
+  @font-face { font-family: "Inter Tight"; font-weight: 100 900; src: url(../node_modules/@fontsource-variable/inter-tight/files/inter-tight-latin-wght-normal.woff2) format("woff2"); }
+  @font-face { font-family: "JetBrains Mono"; font-weight: 100 900; src: url(../node_modules/@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2) format("woff2"); }
   html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; }
-  body { background: #f2f4f7; color: #151922; font-family: -apple-system, "SF Pro Display", "Helvetica Neue", Arial, sans-serif; }
-  .frame { position: absolute; inset: 0; padding: 72px 80px; display: grid; grid-template-columns: 1fr 360px; gap: 64px; align-items: center; }
-  .brand { display: flex; align-items: center; gap: 14px; font-size: 26px; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 44px; }
-  h1 { margin: 0; font-size: 68px; line-height: 1.04; letter-spacing: -0.035em; font-weight: 700; }
-  p { margin: 32px 0 0; font-size: 27px; color: #485063; line-height: 1.35; }
-  .card { background: #fff; border: 1px solid #d8dee7; padding: 36px 34px; box-shadow: 0 30px 60px -30px rgba(21,25,34,.25); }
-  .bars { display: flex; align-items: flex-end; gap: 22px; height: 250px; border-bottom: 2px solid #b9c2d0; }
-  .bars div { background: #2e4a7d; }
-  .label { margin-top: 18px; font: 500 17px ui-monospace, "SF Mono", Menlo, monospace; color: #606879; letter-spacing: .06em; text-transform: uppercase; }
+  body { background: #f5f2ea; color: #15161a; font-family: "Inter Tight", sans-serif; }
+  .frame { position: absolute; inset: 0; padding: 70px 80px; display: grid; grid-template-columns: 1fr 380px; gap: 70px; align-items: center; }
+  .brand { display: flex; align-items: center; gap: 14px; font-size: 34px; font-weight: 650; letter-spacing: -0.03em; margin-bottom: 52px; }
+  .brand b { color: #2f4bff; font-weight: inherit; }
+  h1 { margin: 0; font-size: 76px; line-height: 1.0; letter-spacing: -0.045em; font-weight: 680; }
+  h1 em { font-style: normal; color: #2f4bff; }
+  p { margin: 34px 0 0; font-size: 28px; color: #4a4c55; line-height: 1.35; letter-spacing: -0.01em; }
+  .grid { display: grid; grid-template-columns: repeat(20, 1fr); gap: 4px; }
+  .grid i { display: block; aspect-ratio: 1; background: #ddd6c8; }
+  .grid i.you { background: #2f4bff; box-shadow: 0 0 0 6px rgba(47,75,255,.18); }
+  .label { margin-top: 20px; display: flex; justify-content: space-between; font: 500 16px "JetBrains Mono", monospace; color: #65676f; letter-spacing: .06em; text-transform: uppercase; }
+  .label span:last-child { color: #2f4bff; }
 </style>
 </head>
 <body>
   <div class="frame">
     <div>
       <div class="brand">
-        <svg width="34" height="34" viewBox="0 0 20 20"><rect x="1" y="13" width="7" height="6" fill="#2e4a7d" opacity=".45"/><rect x="9.5" y="8" width="5" height="11" fill="#2e4a7d" opacity=".7"/><rect x="16" y="2" width="3" height="17" fill="#2e4a7d"/></svg>
-        Angel Investment Calculator
+        <svg width="36" height="36" viewBox="0 0 20 20"><g fill="#c3bbaa"><rect x=".5" y=".5" width="3" height="3"/><rect x="4.5" y=".5" width="3" height="3"/><rect x="8.5" y=".5" width="3" height="3"/><rect x="12.5" y=".5" width="3" height="3"/><rect x="16.5" y=".5" width="3" height="3"/><rect x=".5" y="4.5" width="3" height="3"/><rect x="4.5" y="4.5" width="3" height="3"/><rect x="8.5" y="4.5" width="3" height="3"/><rect x="12.5" y="4.5" width="3" height="3"/><rect x="16.5" y="4.5" width="3" height="3"/><rect x=".5" y="8.5" width="3" height="3"/><rect x="4.5" y="8.5" width="3" height="3"/><rect x="8.5" y="8.5" width="3" height="3"/><rect x="12.5" y="8.5" width="3" height="3"/><rect x="16.5" y="8.5" width="3" height="3"/><rect x=".5" y="12.5" width="3" height="3"/><rect x="4.5" y="12.5" width="3" height="3"/><rect x="8.5" y="12.5" width="3" height="3"/><rect x="12.5" y="12.5" width="3" height="3"/><rect x="16.5" y="12.5" width="3" height="3"/><rect x=".5" y="16.5" width="3" height="3"/><rect x="4.5" y="16.5" width="3" height="3"/><rect x="8.5" y="16.5" width="3" height="3"/><rect x="12.5" y="16.5" width="3" height="3"/></g><rect x="16.5" y="16.5" width="3" height="3" fill="#2f4bff"/></svg>
+        <span>tiny<b>percent</b></span>
       </div>
-      <h1>See what your angel investment could become.</h1>
-      <p>Equity, dilution, pro-rata and exit outcomes.<br />Free. No account required.</p>
+      <h1>Your stake is tiny. <em>Will it compound or shrink?</em></h1>
+      <p>Dilution, follow-ons and exits for angel investors.<br />Free. No account required.</p>
     </div>
-    <div class="card" aria-hidden="true">
-      <!-- Width is ownership, height is valuation: narrower, taller, larger. -->
-      <div class="bars">
-        <div style="width:96px;height:36px;opacity:.45"></div>
-        <div style="width:77px;height:86px;opacity:.6"></div>
-        <div style="width:61px;height:160px;opacity:.78"></div>
-        <div style="width:49px;height:240px"></div>
-      </div>
-      <div class="label">Your stake by round</div>
+    <div aria-hidden="true">
+      <div class="grid" id="grid"></div>
+      <div class="label"><span>The company</span><span>You</span></div>
     </div>
   </div>
+  <script>
+    const grid = document.getElementById('grid')
+    for (let i = 0; i < 400; i++) {
+      const cell = document.createElement('i')
+      if (i === 377) cell.className = 'you'
+      grid.appendChild(cell)
+    }
+  </script>
 </body>
 </html>

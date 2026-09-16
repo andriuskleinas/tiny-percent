@@ -115,5 +115,79 @@
         "highCents": 51200000
       }
     ]
+  },
+  "M": {
+    "exitCents": 25000000000,
+    "carryPercent": 0.2,
+    "sitOut": {
+      "path": [
+        0.001,
+        0.0008,
+        0.00064,
+        0.0005120000000000001
+      ],
+      "valuesCents": [
+        500000,
+        1200000,
+        2560000,
+        5120000
+      ],
+      "investedCents": 500000,
+      "grossCents": 12800000
+    },
+    "proRata": {
+      "path": [
+        0.001,
+        0.001,
+        0.001,
+        0.001
+      ],
+      "chequesCents": [
+        500000,
+        300000,
+        800000,
+        2000000
+      ],
+      "investedCents": 3600000,
+      "grossCents": 25000000,
+      "netCents": 20720000
+    }
+  },
+  "N": {
+    "prevPostCents": 500000000,
+    "steps": [
+      {
+        "growth": 3.0,
+        "sold": 0.2,
+        "pool": 0.0,
+        "postMoneyCents": 1500000000,
+        "raisedCents": 300000000,
+        "stakeFactor": 2.4
+      },
+      {
+        "growth": 1.25,
+        "sold": 0.25,
+        "pool": 0.0,
+        "postMoneyCents": 625000000,
+        "raisedCents": 156250000,
+        "stakeFactor": 0.9375
+      },
+      {
+        "growth": 2.0,
+        "sold": 0.2,
+        "pool": 0.1,
+        "postMoneyCents": 1000000000,
+        "raisedCents": 200000000,
+        "stakeFactor": 1.4
+      },
+      {
+        "growth": 0.8,
+        "sold": 0.3,
+        "pool": 0.0,
+        "postMoneyCents": 400000000,
+        "raisedCents": 120000000,
+        "stakeFactor": 0.56
+      }
+    ]
   }
 }
