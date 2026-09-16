@@ -35,6 +35,9 @@ function waitlistInDev(): Plugin {
 export default defineConfig({
   plugins: [react(), tailwindcss(), waitlistInDev()],
   build: {
+    // Fonts are always separate files: an inlined data: font breaks the
+    // `font-src 'self'` Content-Security-Policy in vercel.json and public/_headers.
+    assetsInlineLimit: (file) => (/\.woff2?$/.test(file) ? false : undefined),
     rollupOptions: {
       // Privacy and Terms are separate pages, so each is plain HTML at its own URL.
       input: {

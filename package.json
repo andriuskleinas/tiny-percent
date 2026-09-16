@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build && vite build --ssr src/entry-server.tsx --outDir dist-ssr && node tools/prerender.mjs",
-    "deploy:cloudflare": "npm run build && npx --yes wrangler@4 pages deploy",
+    "deploy:cloudflare": "npm run build && npx --yes wrangler@4 deploy",
     "preview": "vite preview",
     "typecheck": "tsc -b",
     "lint": "oxlint",

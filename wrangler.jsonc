@@ -1,8 +1,14 @@
-// Cloudflare Pages: the static, prerendered site in dist/. Deploy with
-// `npm run deploy:cloudflare`. Response headers live in public/_headers.
-// The /api/waitlist function is Vercel-only and is not deployed here.
+// Cloudflare Workers static assets: the prerendered site in dist/, no Worker
+// code. Deploy with `npm run deploy:cloudflare`. Response headers live in
+// public/_headers. The /api/waitlist function is Vercel-only and is not
+// deployed here; the waiting list is switched off anyway.
 {
   "name": "tinypercent",
-  "pages_build_output_dir": "./dist",
-  "compatibility_date": "2026-09-01"
+  "compatibility_date": "2026-09-01",
+  "assets": {
+    "directory": "./dist",
+    // /privacy serves privacy.html.
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "single-page-application"
+  }
 }
