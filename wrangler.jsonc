@@ -1,5 +1,6 @@
 // Cloudflare Workers static assets: the prerendered site in dist/, no Worker
-// code. Deploy with `npm run deploy:cloudflare`. Response headers live in
+// code. Pushes to main deploy through GitHub Actions (.github/workflows/ci.yml);
+// `npm run deploy:cloudflare` still deploys from this machine. Response headers live in
 // public/_headers. The /api/waitlist function is Vercel-only and is not
 // deployed here; the waiting list is switched off anyway.
 {

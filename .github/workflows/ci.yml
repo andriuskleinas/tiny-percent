@@ -36,3 +36,33 @@ jobs:
       # regenerating it changes anything, the two implementations have drifted.
       - run: python3 tools/oracle.py --emit
       - run: git diff --exit-code tools/golden-cases.json
+
+  # Every push to main that passes both jobs goes live at tinypercent.com. Runs
+  # only in the private repository; the public portfolio copy never deploys.
+  # Needs the CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID repository secrets.
+  deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'andriuskleinas/startup-investment-calculator'
+    needs: [check, oracle]
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - if: env.CLOUDFLARE_API_TOKEN == ''
+        run: echo "::notice::CLOUDFLARE_API_TOKEN is not set, so nothing was deployed."
+      - if: env.CLOUDFLARE_API_TOKEN != ''
+        uses: actions/checkout@v5
+      - if: env.CLOUDFLARE_API_TOKEN != ''
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - if: env.CLOUDFLARE_API_TOKEN != ''
+        run: npm ci
+      - if: env.CLOUDFLARE_API_TOKEN != ''
+        run: npm run build
+      - if: env.CLOUDFLARE_API_TOKEN != ''
+        run: npx --yes wrangler@4 deploy
