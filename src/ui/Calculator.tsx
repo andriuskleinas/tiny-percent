@@ -12,6 +12,7 @@ import { EntryPanel } from './panels/EntryPanel'
 import { ExitCard } from './panels/ExitCard'
 import { RoundsPanel } from './panels/RoundsPanel'
 import { SummaryBar, SummaryPanel } from './panels/SummaryPanel'
+import { ShareButton } from './ShareButton'
 
 /**
  * The calculator section: your cheque and the rounds after it on the left, the
@@ -90,6 +91,7 @@ export function Calculator({ state, dispatch }: { state: AppState; dispatch: (ac
               <div className="flex flex-col gap-4 lg:sticky lg:top-20">
                 <ExitCard scenario={scenario} dispatch={dispatch} />
                 <SummaryPanel scenario={scenario} run={run} />
+                <ShareButton scenario={scenario} />
               </div>
             </aside>
           </div>

@@ -11,7 +11,7 @@ import { STARTING_POINT } from './state/presets'
 import { SITE } from './site'
 import { reducer } from './state/reducer'
 import type { Action } from './state/reducer'
-import { encodeScenario, scenarioFromLocation } from './state/url'
+import { scenarioFromLocation } from './state/url'
 import { Calculator } from './ui/Calculator'
 import { ErrorBoundary } from './ui/ErrorNotice'
 import { safeRun } from './ui/safeRun'
@@ -55,11 +55,13 @@ export default function App() {
     if (arrivedAt) scrollToSection(arrivedAt)
   }, [arrivedAt])
 
-  // Keep the address bar holding the current scenario, without filling the back
-  // button with an entry for every keystroke.
+  // A shared link has been read into the calculator by now, so drop it from the
+  // address: the address bar stays plain and "Copy link" is the way to share.
   useEffect(() => {
-    window.history.replaceState(null, '', `#s=${encodeScenario(state.scenario)}`)
-  }, [state.scenario])
+    if (window.location.hash.startsWith('#s=')) {
+      window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`)
+    }
+  }, [])
 
   return (
     <ErrorBoundary>

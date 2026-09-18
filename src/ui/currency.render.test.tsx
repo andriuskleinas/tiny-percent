@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it } from 'vitest'
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import App from '../App'
 import type { Scenario } from '../engine/types'
 import { CONVERTIBLE_LOAN, WORKED_EXAMPLE } from '../state/presets'
@@ -61,10 +61,13 @@ describe('every figure on the page is in the scenario’s currency', () => {
     expect(text).not.toContain('$')
   })
 
-  it('carries the change into the shared link', () => {
+  it('carries the change into the shared link', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true })
     open(WORKED_EXAMPLE)
     fireEvent.click(within(currencySwitch()).getByRole('radio', { name: 'Euro' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Copy link to this calculation' }))
     const expected: Scenario = { ...WORKED_EXAMPLE, currency: 'EUR' }
-    expect(window.location.hash).toBe(`#s=${encodeScenario(expected)}`)
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith(`http://localhost:3000/#s=${encodeScenario(expected)}`))
   })
 })

@@ -4,8 +4,6 @@ import { act, cleanup, fireEvent, render, screen, within } from '@testing-librar
 import App from '../App'
 import { SITE } from '../site'
 import { UpdatesSignup } from './Sections'
-import { STARTING_POINT } from '../state/presets'
-import { encodeScenario } from '../state/url'
 
 /**
  * The landing page around the calculator (PRD §7–§38). Every figure these
@@ -56,12 +54,11 @@ describe('the page structure', () => {
 })
 
 describe('navigation', () => {
-  it('scrolls to a section without touching the scenario in the address', () => {
+  it('scrolls to a section without putting anything in the address', () => {
     render(<App />)
-    const hash = window.location.hash
-    expect(hash).toMatch(/^#s=/)
+    expect(window.location.hash).toBe('')
     fireEvent.click(within(screen.getByRole('navigation', { name: 'Main' })).getByRole('button', { name: 'Use calculator' }))
-    expect(window.location.hash).toBe(hash)
+    expect(window.location.hash).toBe('')
     expect(scrolled.map((el) => el.id)).toContain('calculator')
   })
 
@@ -69,7 +66,7 @@ describe('navigation', () => {
     window.history.replaceState(null, '', '/#calculator')
     render(<App />)
     expect(scrolled.map((el) => el.id)).toContain('calculator')
-    expect(window.location.hash).toBe(`#s=${encodeScenario(STARTING_POINT)}`)
+    expect(screen.getByRole('region', { name: 'Your investment summary' })).toBeTruthy()
   })
 
   it('has only the logo and the calculator button, no menu links', () => {
