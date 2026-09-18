@@ -5,7 +5,7 @@ import App from '../App'
 import { setAnalyticsSink } from '../analytics/track'
 import type { AnalyticsEvent } from '../analytics/track'
 import { STARTING_POINT, WORKED_EXAMPLE } from '../state/presets'
-import { decodeScenario, encodeScenario } from '../state/url'
+import { decodeShared, encodeScenario, encodeShared, scenarioFromAddress } from '../state/url'
 
 /**
  * Sharing lives in a button, not the address bar: the page's address stays
@@ -19,7 +19,7 @@ function stubClipboard(writeText: (text: string) => Promise<void>) {
 }
 
 /** The scenario inside a copied link. */
-const scenarioIn = (link: string) => decodeScenario(link.split('#s=')[1] ?? '')
+const scenarioIn = (link: string) => decodeShared(link.split('/shared#')[1] ?? '')
 
 afterEach(() => {
   cleanup()
@@ -36,7 +36,16 @@ describe('the address bar', () => {
     expect(window.location.href).toBe('http://localhost:3000/')
   })
 
-  it('opens a shared link on its calculation, then drops the scenario from the address', () => {
+  it('opens a /shared link on its calculation, then goes back to the plain address', async () => {
+    window.history.replaceState(null, '', `/shared#${await encodeShared(WORKED_EXAMPLE)}`)
+    const shared = await scenarioFromAddress(window.location)
+    expect(shared).toEqual(WORKED_EXAMPLE)
+    render(<App shared={shared} />)
+    expect(window.location.href).toBe('http://localhost:3000/')
+    expect(screen.getByRole('region', { name: 'Follow on or sit out?' })).toBeTruthy()
+  })
+
+  it('still opens a link in the older #s= style, then drops it from the address', () => {
     window.history.replaceState(null, '', `/#s=${encodeScenario(WORKED_EXAMPLE)}`)
     render(<App />)
     expect(window.location.href).toBe('http://localhost:3000/')
@@ -55,8 +64,8 @@ describe('copy link', () => {
     fireEvent.click(button())
     await waitFor(() => expect(screen.getByRole('status').textContent).toBe('Link copied'))
     const link = writeText.mock.calls[0]?.[0] as string
-    expect(link.startsWith('http://localhost:3000/#s=')).toBe(true)
-    expect(scenarioIn(link)).toEqual(STARTING_POINT)
+    expect(link.startsWith('http://localhost:3000/shared#')).toBe(true)
+    expect(await scenarioIn(link)).toEqual(STARTING_POINT)
     expect(window.location.hash).toBe('')
     expect(events.map((e) => e.name)).toEqual(expect.arrayContaining(['share_clicked', 'calculation_link_copied']))
   })
@@ -66,6 +75,6 @@ describe('copy link', () => {
     render(<App />)
     fireEvent.click(button())
     const field = (await screen.findByLabelText('Copy this link:')) as HTMLInputElement
-    expect(scenarioIn(field.value)).toEqual(STARTING_POINT)
+    expect(await scenarioIn(field.value)).toEqual(STARTING_POINT)
   })
 })

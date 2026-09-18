@@ -122,7 +122,7 @@ function toBase64Url(bytes: Uint8Array): string {
   return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
 }
 
-function fromBase64Url(text: string): Uint8Array | undefined {
+function fromBase64Url(text: string): Uint8Array<ArrayBuffer> | undefined {
   if (!/^[A-Za-z0-9_-]+$/.test(text)) return undefined
   const padded = text.replace(/-/g, '+').replace(/_/g, '/')
   try {
@@ -139,7 +139,10 @@ export function encodeScenario(scenario: Scenario): string {
 
 export function decodeScenario(encoded: string): Scenario | undefined {
   const bytes = fromBase64Url(encoded)
-  if (!bytes) return undefined
+  return bytes ? decodeJson(bytes) : undefined
+}
+
+function decodeJson(bytes: Uint8Array): Scenario | undefined {
   let parsed: unknown
   try {
     // The reviver drops __proto__ so a crafted link cannot reach Object.prototype.
@@ -152,12 +155,87 @@ export function decodeScenario(encoded: string): Scenario | undefined {
   return isScenario(parsed) ? parsed : undefined
 }
 
+/** Links made before `/shared`: the scenario as plain base64 JSON after `#s=`. */
 const PREFIX = '#s='
 
 export function scenarioFromLocation(hash: string): Scenario | undefined {
   return hash.startsWith(PREFIX) ? decodeScenario(hash.slice(PREFIX.length)) : undefined
 }
 
-export function linkFor(scenario: Scenario, base: string): string {
-  return `${base.split('#')[0] ?? base}${PREFIX}${encodeScenario(scenario)}`
+/**
+ * Shared links look like `/shared#<code>`. The code is the scenario's JSON,
+ * compressed and base64url-encoded, and stays after the `#` so it is never sent
+ * to the server.
+ */
+export const SHARED_PATH = '/shared'
+
+export function isSharedPath(pathname: string): boolean {
+  return pathname === SHARED_PATH || pathname === `${SHARED_PATH}/`
+}
+
+/** True while the address still carries a shared calculation, in either style. */
+export function carriesScenario(location: { pathname: string; hash: string }): boolean {
+  return location.hash.startsWith(PREFIX) || (isSharedPath(location.pathname) && location.hash.length > 1)
+}
+
+/** A real scenario is a few kilobytes; anything that inflates past this is refused. */
+const MAX_INFLATED_BYTES = 64 * 1024
+
+async function readAll(stream: ReadableStream<Uint8Array>, limit: number): Promise<Uint8Array | undefined> {
+  const reader = stream.getReader()
+  const chunks: Uint8Array[] = []
+  let size = 0
+  for (;;) {
+    const { done, value } = await reader.read()
+    if (done) break
+    size += value.byteLength
+    if (size > limit) {
+      await reader.cancel()
+      return undefined
+    }
+    chunks.push(value)
+  }
+  const out = new Uint8Array(size)
+  let offset = 0
+  for (const chunk of chunks) {
+    out.set(chunk, offset)
+    offset += chunk.byteLength
+  }
+  return out
+}
+
+function through(bytes: Uint8Array<ArrayBuffer>, transform: CompressionStream | DecompressionStream): ReadableStream<Uint8Array> {
+  return new ReadableStream<BufferSource>({
+    start(controller) {
+      controller.enqueue(bytes)
+      controller.close()
+    },
+  }).pipeThrough(transform)
+}
+
+export async function encodeShared(scenario: Scenario): Promise<string> {
+  const json = new TextEncoder().encode(JSON.stringify(scenario))
+  const packed = await readAll(through(json, new CompressionStream('deflate-raw')), Number.MAX_SAFE_INTEGER)
+  return toBase64Url(packed ?? new Uint8Array())
+}
+
+export async function decodeShared(encoded: string): Promise<Scenario | undefined> {
+  const bytes = fromBase64Url(encoded)
+  if (!bytes) return undefined
+  try {
+    const json = await readAll(through(bytes, new DecompressionStream('deflate-raw')), MAX_INFLATED_BYTES)
+    return json ? decodeJson(json) : undefined
+  } catch {
+    return undefined
+  }
+}
+
+/** The shared calculation in the address, whichever style of link brought it. */
+export async function scenarioFromAddress(location: { pathname: string; hash: string }): Promise<Scenario | undefined> {
+  if (location.hash.startsWith(PREFIX)) return scenarioFromLocation(location.hash)
+  return isSharedPath(location.pathname) ? decodeShared(location.hash.slice(1)) : undefined
+}
+
+export async function sharedLink(scenario: Scenario, origin: string): Promise<string> {
+  return `${origin}${SHARED_PATH}#${await encodeShared(scenario)}`
 }

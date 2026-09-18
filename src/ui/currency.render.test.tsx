@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-li
 import App from '../App'
 import type { Scenario } from '../engine/types'
 import { CONVERTIBLE_LOAN, WORKED_EXAMPLE } from '../state/presets'
-import { encodeScenario } from '../state/url'
+import { decodeShared, encodeScenario } from '../state/url'
 
 /**
  * Regression guard. Scenarios carry a currency, but every figure used to be
@@ -68,6 +68,8 @@ describe('every figure on the page is in the scenario’s currency', () => {
     fireEvent.click(within(currencySwitch()).getByRole('radio', { name: 'Euro' }))
     fireEvent.click(screen.getByRole('button', { name: 'Copy link to this calculation' }))
     const expected: Scenario = { ...WORKED_EXAMPLE, currency: 'EUR' }
-    await waitFor(() => expect(writeText).toHaveBeenCalledWith(`http://localhost:3000/#s=${encodeScenario(expected)}`))
+    await waitFor(() => expect(writeText).toHaveBeenCalled())
+    const link = writeText.mock.calls[0]?.[0] as string
+    expect(await decodeShared(link.split('/shared#')[1] ?? '')).toEqual(expected)
   })
 })

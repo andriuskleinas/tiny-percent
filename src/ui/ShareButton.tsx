@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { track } from '../analytics/track'
 import type { Scenario } from '../engine/types'
 import { SITE } from '../site'
-import { linkFor } from '../state/url'
+import { sharedLink } from '../state/url'
 import { Button } from './controls'
 
 type Status = 'idle' | 'copied' | 'manual'
@@ -21,6 +21,18 @@ export function ShareButton({ scenario }: { scenario: Scenario }) {
   const [link, setLink] = useState('')
   const field = useRef<HTMLInputElement>(null)
 
+  // Compressing is asynchronous, so the link is made ahead of the click: the
+  // clipboard and share sheet only work while the click is still fresh.
+  useEffect(() => {
+    let current = true
+    void sharedLink(scenario, window.location.origin).then((next) => {
+      if (current) setLink(next)
+    })
+    return () => {
+      current = false
+    }
+  }, [scenario])
+
   useEffect(() => {
     if (status !== 'copied') return undefined
     const timer = window.setTimeout(() => setStatus('idle'), 2000)
@@ -33,7 +45,7 @@ export function ShareButton({ scenario }: { scenario: Scenario }) {
 
   const share = async () => {
     track({ name: 'share_clicked' })
-    const url = linkFor(scenario, `${window.location.origin}${window.location.pathname}`)
+    const url = link || (await sharedLink(scenario, window.location.origin))
     setLink(url)
     if (prefersShareSheet()) {
       try {

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { toCents } from '../engine/money'
 import { runScenario } from '../engine/scenario'
 import { WORKED_EXAMPLE, blankScenario } from './presets'
-import { decodeScenario, encodeScenario } from './url'
+import { decodeScenario, decodeShared, encodeScenario, encodeShared, scenarioFromAddress } from './url'
 
 describe('a shared link carries the exact scenario', () => {
   it('round-trips the worked example unchanged', () => {
@@ -154,5 +154,33 @@ describe('a link shared before the redesign', () => {
     expect(run.exit.highCents).toBe(toCents(250_000))
     expect(run.feesHigh.netCents).toBe(toCents(207_200))
     expect(run.feesHigh.netMultiple).toBeCloseTo(5.7556, 4)
+  })
+})
+
+describe('a /shared link', () => {
+  it('round-trips the scenario, compressed well below the older format', async () => {
+    const code = await encodeShared(WORKED_EXAMPLE)
+    expect(await decodeShared(code)).toEqual(WORKED_EXAMPLE)
+    expect(code.length).toBeLessThan(encodeScenario(WORKED_EXAMPLE).length / 2)
+  })
+
+  it('refuses a code that is not compressed data, or not a scenario once unpacked', async () => {
+    expect(await decodeShared('not-a-scenario')).toBeUndefined()
+    expect(await decodeShared('')).toBeUndefined()
+    expect(await decodeShared(encodeScenario(WORKED_EXAMPLE))).toBeUndefined()
+  })
+
+  it('refuses a code that unpacks to something far bigger than any scenario', async () => {
+    const huge = new TextEncoder().encode(' '.repeat(200_000))
+    const packed = await new Response(new Response(huge).body!.pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer()
+    const code = btoa(String.fromCharCode(...new Uint8Array(packed))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+    expect(await decodeShared(code)).toBeUndefined()
+  })
+
+  it('is read from /shared, while the older #s= style still works anywhere', async () => {
+    const code = await encodeShared(WORKED_EXAMPLE)
+    expect(await scenarioFromAddress({ pathname: '/shared', hash: `#${code}` })).toEqual(WORKED_EXAMPLE)
+    expect(await scenarioFromAddress({ pathname: '/', hash: `#${code}` })).toBeUndefined()
+    expect(await scenarioFromAddress({ pathname: '/', hash: `#s=${encodeScenario(WORKED_EXAMPLE)}` })).toEqual(WORKED_EXAMPLE)
   })
 })

@@ -11,7 +11,7 @@ import { STARTING_POINT } from './state/presets'
 import { SITE } from './site'
 import { reducer } from './state/reducer'
 import type { Action } from './state/reducer'
-import { scenarioFromLocation } from './state/url'
+import { carriesScenario, scenarioFromLocation } from './state/url'
 import { Calculator } from './ui/Calculator'
 import { ErrorBoundary } from './ui/ErrorNotice'
 import { safeRun } from './ui/safeRun'
@@ -21,10 +21,10 @@ import { safeRun } from './ui/safeRun'
  * as well-formed, so a link carrying a structurally valid but impossible deal
  * falls back rather than opening onto an error.
  */
-function initialScenario(): Scenario {
+function initialScenario(fromLink: Scenario | undefined): Scenario {
   // At build time there is no address: the page is prerendered with the default.
   if (typeof window === 'undefined') return STARTING_POINT
-  const shared = scenarioFromLocation(window.location.hash)
+  const shared = fromLink ?? scenarioFromLocation(window.location.hash)
   return shared && safeRun(shared).run ? shared : STARTING_POINT
 }
 
@@ -34,8 +34,9 @@ function sectionFromLocation(hash: string): string | undefined {
   return /^[a-z][a-z-]*$/.test(id) ? id : undefined
 }
 
-export default function App() {
-  const [state, dispatchRaw] = useReducer(appReducer, undefined, () => initialAppState(initialScenario()))
+/** `shared` is a calculation unpacked from a `/shared#…` link before the first render. */
+export default function App({ shared }: { shared?: Scenario | undefined } = {}) {
+  const [state, dispatchRaw] = useReducer(appReducer, undefined, () => initialAppState(initialScenario(shared)))
 
   // Every calculator change passes through here once, so its funnel events are
   // worked out in one place from the scenario before and after it. Each change
@@ -58,9 +59,7 @@ export default function App() {
   // A shared link has been read into the calculator by now, so drop it from the
   // address: the address bar stays plain and "Copy link" is the way to share.
   useEffect(() => {
-    if (window.location.hash.startsWith('#s=')) {
-      window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`)
-    }
+    if (carriesScenario(window.location)) window.history.replaceState(null, '', `/${window.location.search}`)
   }, [])
 
   return (
