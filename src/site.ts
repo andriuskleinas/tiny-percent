@@ -7,9 +7,8 @@ export const SITE = {
   name: 'TinyPercent',
   /**
    * Production origin, no trailing slash.
-   * TODO(domain): switch to https://tinypercent.com once the domain points at Vercel.
    */
-  url: 'https://startup-investment-calculator.vercel.app',
+  url: 'https://tinypercent.com',
   title: 'TinyPercent — Angel Investment Calculator for Dilution & Follow-ons',
   description:
     'Free angel investment calculator. See whether your startup stake compounds or shrinks as the company raises, what follow-on and pro-rata cheques do, and what your equity could return at exit.',
