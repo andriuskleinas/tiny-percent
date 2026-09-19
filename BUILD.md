@@ -520,3 +520,28 @@ light theme; the new text uses only existing theme tokens.
 | Tests | 367 across 29 files |
 | Oracle assertions | 83 across 18 golden cases |
 | Lint warnings | 2, both pre-existing |
+
+---
+
+## Failure view: "How it could end" · 2026-09-19 · DONE
+
+One exit on a slider hides the most important fact about angel investing: most
+companies fail and a few pay for the rest. The calculator now shows the deal at
+four outcomes, side by side.
+
+| | Done |
+|---|---|
+| Endings | Fails (€0), returns its capital (the total raised, so the preference stack hands back the cheque), grows 10× and 100× from the entry post-money, or a SAFE's cap. `engine/endings.ts` runs each through `outcomesAt`, so a row always agrees with the slider set to that price. |
+| Power law | "One company that grows 100× … covers N other cheques like this one that fail", with `N = ⌊net multiple⌋ − 1` taken from the low end of any range. Arithmetic on the user's numbers only; no outside statistics. |
+| UI | `ui/panels/EndingsPanel.tsx` after the input grid: a table from `sm` up, cards on a phone, "Use this exit" to move the slider, a `powerLaw` glossary term. |
+| Oracle | Golden case Q: the €5k example ends at €0, €5,000, €5,000–€25,600 and €256,000 (41.2× and 40 cheques covered after 20% carry). It reuses case L's ledger-checked ownership and the exit-band and fee formulas; it adds no second model of its own. |
+
+The example makes the point the section exists for: a company that grows 10×
+after three rounds only guarantees the angel their cheque back, because at €50M
+the €32M it raised sits ahead of common shareholders.
+
+| | |
+|---|---|
+| Tests | 383 across 31 files |
+| Oracle assertions | 93 across 19 golden cases |
+| Lint warnings | 2, both pre-existing |

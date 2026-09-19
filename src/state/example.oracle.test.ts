@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
+import { endings } from '../engine/endings'
 import { strategyPaths } from '../engine/paths'
 import { outcomesAt, runScenario } from '../engine/scenario'
 import { EXAMPLE, EXIT_PRESETS_CENTS, HERO_EXAMPLE } from './presets'
@@ -12,7 +13,24 @@ import { EXAMPLE, EXIT_PRESETS_CENTS, HERO_EXAMPLE } from './presets'
  * against an independent share ledger.
  */
 
+interface QRow {
+  kind: string
+  valueCents: number
+  regime: string
+  lowCents: number
+  highCents: number
+  netLowCents: number
+  netHighCents: number
+  multipleLow: number
+  multipleHigh: number
+}
+
 interface Fixture {
+  Q: {
+    entryPostCents: number
+    totalRaisedCents: number
+    byCarry: Array<{ carryPercent: number; covers: { grows10: number; grows100: number }; rows: QRow[] }>
+  }
   L: {
     path: number[]
     finalOwnership: number
@@ -28,7 +46,7 @@ interface Fixture {
   }
 }
 
-const { L, M } = JSON.parse(
+const { L, M, Q } = JSON.parse(
   readFileSync(fileURLToPath(new URL('../../tools/golden-cases.json', import.meta.url)), 'utf8'),
 ) as Fixture
 
@@ -88,5 +106,27 @@ describe('the hero tells the same example from a Pre-seed cheque', () => {
     const unnamed = (s: typeof EXAMPLE) => ({ ...s, rounds: s.rounds.map(({ id: _id, label: _label, ...r }) => r) })
     expect(unnamed(HERO_EXAMPLE)).toEqual(unnamed(EXAMPLE))
     runScenario(HERO_EXAMPLE).rounds.forEach((round, i) => expect(round.ownershipAfter).toBeCloseTo(L.path[i] as number, PLACES))
+  })
+})
+
+describe('the four endings of the €5,000 example agree with the Python oracle', () => {
+  it.each(Q.byCarry.map((c) => [c.carryPercent, c] as const))('at %s carry', (carryPercent, expected) => {
+    const scenario = { ...EXAMPLE, fees: { ...EXAMPLE.fees, carry: { percent: carryPercent, basis: 'per_deal' as const } } }
+    const result = endings(scenario, runScenario(scenario))
+    expect(result?.entryPostCents).toBe(Q.entryPostCents)
+    expect(scenario.exit.totalRaisedCents).toBe(Q.totalRaisedCents)
+    expect(result?.rows.map((r) => r.kind)).toEqual(expected.rows.map((r) => r.kind))
+    result?.rows.forEach((row, i) => {
+      const want = expected.rows[i] as QRow
+      expect(row.valueCents).toBe(want.valueCents)
+      expect(row.outcome.exit.regime).toBe(want.regime)
+      expect(row.outcome.exit.lowCents).toBe(want.lowCents)
+      expect(row.outcome.exit.highCents).toBe(want.highCents)
+      expect(row.outcome.feesLow.netCents).toBe(want.netLowCents)
+      expect(row.outcome.feesHigh.netCents).toBe(want.netHighCents)
+      expect(row.outcome.feesLow.netMultiple).toBeCloseTo(want.multipleLow, 9)
+      expect(row.outcome.feesHigh.netMultiple).toBeCloseTo(want.multipleHigh, 9)
+    })
+    expect(result?.covers).toEqual(expected.covers)
   })
 })

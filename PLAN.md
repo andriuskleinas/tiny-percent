@@ -217,6 +217,13 @@ no cross-deal netting, which is the syndicate norm and the worse deal.
 cash flows. Solve NPV = 0 by bisection with Newton refinement, returning undefined
 rather than a garbage number when signs never change.
 
+
+**Four endings (2026-09-19).** Beside the single exit, the calculator shows the
+deal at four outcomes: the company fails, sells for what it raised, or grows 10×
+or 100× from the entry post-money (a SAFE's cap). Each is a full engine run,
+and a line of arithmetic says how many failed cheques like this one a single win
+pays back. No outside return statistics are quoted.
+
 ---
 
 ## 5. Data model

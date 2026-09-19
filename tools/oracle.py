@@ -194,6 +194,37 @@ assert n_steps[1]["factor"] < 1, "an up round that sells too much must lose valu
 print("N  stake factor g(1-s-pool) ... " + "  ".join(
     f"x{r['growth']:g}/{r['sold']:.0%}/{r['pool']:.0%}->{r['factor']:.4f}" for r in n_steps))
 
+# Q: four ways the EUR 5k example could end. The company fails, sells for
+# exactly what it raised, or grows 10x or 100x from the post-money the angel
+# invested at. The company's multiple is not the angel's: dilution, the
+# preference stack and carry all sit in between. "covers" is how many other
+# failed cheques one such win pays back, from the low end of any range.
+import math
+q_post = 5e6
+q_values = [("fails", 0.0), ("capital", l_raised), ("grows10", 10 * q_post), ("grows100", 100 * q_post)]
+q_runs = {}
+for carry in (0.0, 0.20):
+    rows = []
+    for kind, value in q_values:
+        lo, hi, regime = exit_band(l_own, 5_000, value, l_raised) if value > 0 else (0.0, 0.0, "downside")
+        f_lo, f_hi = fees(lo, 5_000, 0.0, carry), fees(hi, 5_000, 0.0, carry)
+        rows.append(dict(kind=kind, value=value, regime=regime, low=lo, high=hi,
+                         net_low=f_lo["net"], net_high=f_hi["net"], x_low=f_lo["net_x"], x_high=f_hi["net_x"]))
+    covers = {r["kind"]: max(0, math.floor(r["x_low"] + 1e-9) - 1) for r in rows if r["kind"].startswith("grows")}
+    q_runs[carry] = dict(rows=rows, covers=covers)
+q0, q20 = q_runs[0.0]["rows"], q_runs[0.20]["rows"]
+eq("Q fails", q0[0]["high"], 0); eq("Q capital returns the cheque", q0[1]["low"], 5_000)
+eq("Q 10x low", q0[2]["low"], 5_000); eq("Q 10x high", q0[2]["high"], 25_600)
+eq("Q 100x gross", q0[3]["high"], 256_000); eq("Q 100x multiple", q0[3]["x_high"], 51.2)
+eq("Q 100x net after 20% carry", q20[3]["net_high"], 205_800)
+eq("Q covers at 100x, no carry", q_runs[0.0]["covers"]["grows100"], 50)
+eq("Q covers at 100x, 20% carry", q_runs[0.20]["covers"]["grows100"], 40)
+eq("Q covers at 10x", q_runs[0.20]["covers"]["grows10"], 0)
+assert [r["regime"] for r in q0] == ["downside", "downside", "uncertain", "clean"]
+print("Q  four endings ............... " + "  ".join(
+    f"{r['kind']}:{r['low']:,.0f}-{r['high']:,.0f}" for r in q0) +
+    f"   covers {q_runs[0.20]['covers']} at 20% carry")
+
 # ---------- convertibles: SAFEs and convertible notes ----------
 # A SAFE or note converts at the next priced round at the best of three prices:
 # the cap, the round price less the discount, and the round price itself.
@@ -395,6 +426,14 @@ def emit_fixture(path):
               "steps": [{"growth": r["growth"], "sold": r["sold"], "pool": r["pool"],
                          "postMoneyCents": cents(r["post"]), "raisedCents": cents(r["raised"]),
                          "stakeFactor": r["factor"]} for r in n_steps]},
+        "Q": {"entryPostCents": cents(q_post), "totalRaisedCents": cents(l_raised),
+              "byCarry": [{"carryPercent": carry,
+                           "covers": run["covers"],
+                           "rows": [{"kind": r["kind"], "valueCents": cents(r["value"]), "regime": r["regime"],
+                                     "lowCents": cents(r["low"]), "highCents": cents(r["high"]),
+                                     "netLowCents": cents(r["net_low"]), "netHighCents": cents(r["net_high"]),
+                                     "multipleLow": r["x_low"], "multipleHigh": r["x_high"]} for r in run["rows"]]}
+                          for carry, run in q_runs.items()]},
         "convertibles": {name: {"amountCents": cents(c["amount"]), "capCents": cents(c["cap"]),
                                 "capBasis": c["basis"], "raisedAtCapCents": cents(c["amount"] + c["others"]),
                                 "discount": c["discount"], "interestRate": c["rate"], "years": c["years"],
@@ -416,7 +455,7 @@ if "--emit" in sys.argv:
 
 print()
 print("=" * 72)
-print(f"{checks} assertions across 18 golden cases and 4 visuals")
+print(f"{checks} assertions across 19 golden cases and 4 visuals")
 print("RESULT:", "ALL PASS — two independent models agree" if not fails else f"{len(fails)} FAILURES")
 for f_ in fails: print("  FAIL", f_)
 print("=" * 72)

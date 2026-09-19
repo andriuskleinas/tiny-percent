@@ -190,6 +190,118 @@
       }
     ]
   },
+  "Q": {
+    "entryPostCents": 500000000,
+    "totalRaisedCents": 3200000000,
+    "byCarry": [
+      {
+        "carryPercent": 0.0,
+        "covers": {
+          "grows10": 0,
+          "grows100": 50
+        },
+        "rows": [
+          {
+            "kind": "fails",
+            "valueCents": 0,
+            "regime": "downside",
+            "lowCents": 0,
+            "highCents": 0,
+            "netLowCents": 0,
+            "netHighCents": 0,
+            "multipleLow": 0.0,
+            "multipleHigh": 0.0
+          },
+          {
+            "kind": "capital",
+            "valueCents": 3200000000,
+            "regime": "downside",
+            "lowCents": 500000,
+            "highCents": 500000,
+            "netLowCents": 500000,
+            "netHighCents": 500000,
+            "multipleLow": 1.0,
+            "multipleHigh": 1.0
+          },
+          {
+            "kind": "grows10",
+            "valueCents": 5000000000,
+            "regime": "uncertain",
+            "lowCents": 500000,
+            "highCents": 2560000,
+            "netLowCents": 500000,
+            "netHighCents": 2560000,
+            "multipleLow": 1.0,
+            "multipleHigh": 5.120000000000001
+          },
+          {
+            "kind": "grows100",
+            "valueCents": 50000000000,
+            "regime": "clean",
+            "lowCents": 25600000,
+            "highCents": 25600000,
+            "netLowCents": 25600000,
+            "netHighCents": 25600000,
+            "multipleLow": 51.2,
+            "multipleHigh": 51.2
+          }
+        ]
+      },
+      {
+        "carryPercent": 0.2,
+        "covers": {
+          "grows10": 0,
+          "grows100": 40
+        },
+        "rows": [
+          {
+            "kind": "fails",
+            "valueCents": 0,
+            "regime": "downside",
+            "lowCents": 0,
+            "highCents": 0,
+            "netLowCents": 0,
+            "netHighCents": 0,
+            "multipleLow": 0.0,
+            "multipleHigh": 0.0
+          },
+          {
+            "kind": "capital",
+            "valueCents": 3200000000,
+            "regime": "downside",
+            "lowCents": 500000,
+            "highCents": 500000,
+            "netLowCents": 500000,
+            "netHighCents": 500000,
+            "multipleLow": 1.0,
+            "multipleHigh": 1.0
+          },
+          {
+            "kind": "grows10",
+            "valueCents": 5000000000,
+            "regime": "uncertain",
+            "lowCents": 500000,
+            "highCents": 2560000,
+            "netLowCents": 500000,
+            "netHighCents": 2148000,
+            "multipleLow": 1.0,
+            "multipleHigh": 4.296000000000001
+          },
+          {
+            "kind": "grows100",
+            "valueCents": 50000000000,
+            "regime": "clean",
+            "lowCents": 25600000,
+            "highCents": 25600000,
+            "netLowCents": 20580000,
+            "netHighCents": 20580000,
+            "multipleLow": 41.160000000000004,
+            "multipleHigh": 41.160000000000004
+          }
+        ]
+      }
+    ]
+  },
   "convertibles": {
     "E": {
       "amountCents": 10000000,
