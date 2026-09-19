@@ -41,7 +41,8 @@ export function FollowOnDecision({
   const { money } = useMoney()
   const name = roundName(round)
   const cheque = round.participation
-  const before = state.ownershipBefore
+  // Where a SAFE converts, a cheque adds to the converted stake, not the stake at the cap.
+  const before = state.heldBefore
   const held = before > 0
   const titleId = useId()
   const amountId = useId()

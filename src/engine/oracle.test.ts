@@ -5,6 +5,8 @@ import { entryOwnership, ownAfter, postMoney, proRata, stakeValue } from './owne
 import type { RoundTerms } from './ownership'
 import { exitProceeds } from './exit'
 import { applyFees } from './fees'
+import { runScenario } from './scenario'
+import type { Round, Scenario } from './types'
 
 /**
  * The engine is checked against `tools/oracle.py`, which implements the same
@@ -20,6 +22,7 @@ interface Fixture {
   seedRound: { preMoneyCents: number; raisedCents: number }
   seriesB: { preMoneyCents: number; raisedCents: number }
   seriesBPool: number
+  convertibles: Record<string, ConvertibleCase>
   entryCents: number
   A: { ownership: number; postMoneyCents: number }
   B: { ownership: number; valueCents: number; postMoneyCents: number }
@@ -58,6 +61,24 @@ interface Fixture {
     grossMultiple: number
     netMultiple: number
   }
+}
+
+interface ConvertibleCase {
+  amountCents: number
+  capCents: number
+  capBasis: 'pre' | 'post'
+  raisedAtCapCents: number
+  discount: number
+  interestRate: number
+  years: number
+  interestMode: 'simple' | 'compound'
+  preMoneyCents: number
+  raisedCents: number
+  pool: number
+  followOnCents: number
+  convertingCents: number
+  route: 'cap' | 'discount' | 'round_price'
+  ownership: number
 }
 
 const fixture = JSON.parse(
@@ -148,5 +169,68 @@ describe('the engine agrees with the Python oracle', () => {
     expect(result.outlayCents).toBe(fixture.feeDrag.outlayCents)
     expect(result.grossMultiple).toBeCloseTo(fixture.feeDrag.grossMultiple, 9)
     expect(result.netMultiple).toBeCloseTo(fixture.feeDrag.netMultiple, 9)
+  })
+})
+
+/**
+ * A SAFE or note entry and the priced round it converts in, built from a
+ * fixture case. The note's years run between the two round dates, so the dates
+ * are chosen to give exactly the case's term under Actual/365.
+ */
+function convertibleScenario(c: ConvertibleCase): Scenario {
+  const start = Date.UTC(2021, 0, 1)
+  const end = new Date(start + Math.round(c.years * 365) * 86_400_000 + (c.years > 0 ? 0 : 86_400_000))
+  const NO_FEE = { rule: 'percent' as const, percent: 0 }
+  const rounds: Round[] = [
+    {
+      id: 'safe',
+      label: 'Pre-seed',
+      date: '2021-01-01',
+      valuationCents: c.capCents,
+      valuationBasis: c.capBasis,
+      raisedCents: c.raisedAtCapCents,
+      participation: {
+        type: c.interestRate > 0 ? 'cla' : 'safe',
+        amountCents: c.amountCents,
+        entryFee: NO_FEE,
+        discount: c.discount,
+        interestRate: c.interestRate,
+        interestMode: c.interestMode,
+      },
+    },
+    {
+      id: 'seed',
+      label: 'Seed',
+      date: end.toISOString().slice(0, 10),
+      valuationCents: c.preMoneyCents,
+      valuationBasis: 'pre',
+      raisedCents: c.raisedCents,
+      newOptionPool: c.pool || undefined,
+      participation: c.followOnCents > 0 ? { type: 'equity', amountCents: c.followOnCents, entryFee: NO_FEE } : undefined,
+    },
+  ]
+  return {
+    version: 3,
+    currency: 'USD',
+    rounds,
+    fees: { carry: { percent: 0, basis: 'per_deal' } },
+    exit: { date: '2030-01-01', valueCents: c.preMoneyCents * 10, totalRaisedCents: c.raisedCents },
+  }
+}
+
+describe('SAFEs and notes agree with the Python oracle', () => {
+  it('covers every case the oracle emits', () => {
+    expect(Object.keys(fixture.convertibles).sort()).toEqual(['E', 'E2', 'F', 'F2', 'G', 'H', 'P', 'P2'])
+  })
+
+  it.each(Object.entries(fixture.convertibles))('%s — converts by the same route to the same stake', (_name, c) => {
+    const run = runScenario(convertibleScenario(c))
+    const converted = run.rounds[1]
+    expect(converted?.conversion?.route).toBe(c.route)
+    expect(converted?.conversion?.convertingCents).toBe(c.convertingCents)
+    expect(run.finalOwnership).toBeCloseTo(c.ownership, PLACES)
+    expect(run.entry).toEqual({ kind: 'converted', estimate: c.capBasis === 'pre' })
+    // Interest converts, but it is never money you paid.
+    expect(run.totalInvestedCents).toBe(c.amountCents + c.followOnCents)
   })
 })

@@ -42,7 +42,7 @@ function deal(overrides: Partial<Scenario> = {}): Scenario {
     },
   ]
   return {
-    version: 2,
+    version: 3,
     currency: 'USD',
     rounds,
     fees: { carry: { percent: 0.2, basis: 'per_deal' } },
@@ -103,12 +103,25 @@ describe('pro-rata with a new option pool', () => {
 describe('the fees a synthetic cheque pays', () => {
   it('uses the round’s own cheque terms when there are some, the entry’s otherwise', () => {
     const rounds = deal().rounds.map((r, i) =>
-      i === 0 && r.participation ? { ...r, participation: { ...r.participation, type: 'safe' as const, entryFee: ENTRY_FEE } } : r,
+      i === 0 && r.participation ? { ...r, participation: { ...r.participation, entryFee: ENTRY_FEE } } : r,
     )
     const paths = strategyPaths(deal({ rounds }))
     const [, b, c] = paths.proRata.scenario.rounds
     expect(b?.participation).toEqual({ type: 'equity', amountCents: toCents(30_000), entryFee: NO_FEE })
-    expect(c?.participation).toEqual({ type: 'safe', amountCents: toCents(60_000), entryFee: ENTRY_FEE })
+    expect(c?.participation).toEqual({ type: 'equity', amountCents: toCents(60_000), entryFee: ENTRY_FEE })
+  })
+
+  it('buys priced shares after a SAFE entry, and quotes pro-rata on the converted stake', () => {
+    const rounds = deal().rounds.map((r, i) =>
+      i === 0 && r.participation ? { ...r, participation: { ...r.participation, type: 'safe' as const, discount: 0.2 } } : r,
+    )
+    const paths = strategyPaths(deal({ rounds }))
+    const [, b] = paths.proRata.scenario.rounds
+    expect(b?.participation?.type).toBe('equity')
+    const converted = paths.proRata.run.rounds[1]
+    expect(converted?.conversion).toBeDefined()
+    expect(b?.participation?.amountCents).toBe(converted?.proRataCents)
+    expect(converted?.ownershipAfter).toBeCloseTo(converted?.heldBefore ?? 0, 12)
   })
 })
 

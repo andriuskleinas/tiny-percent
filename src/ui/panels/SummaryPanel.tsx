@@ -32,7 +32,7 @@ export function SummaryPanel({ scenario, run }: { scenario: Scenario; run: Scena
   const rows: Array<[string, string]> = ready
     ? [
         [`Initial investment${entry ? ` (${roundName(entry.round)})` : ''}`, money(initialCents)],
-        ['Initial ownership', ownership(entry?.ownershipAfter ?? 0)],
+        [run.entry.kind === 'priced' ? 'Initial ownership' : 'Initial ownership, at the cap', ownership(entry?.ownershipAfter ?? 0)],
         ['Follow-on investments', money(followOnCents)],
         ['Total invested', money(run.totalInvestedCents)],
         ['Final ownership', ownership(run.finalOwnership)],

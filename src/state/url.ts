@@ -30,6 +30,11 @@ function isFraction(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1
 }
 
+/** A 100% discount would make the SAFE free shares, so it stops short of 1. */
+function isDiscount(value: unknown): value is number {
+  return isFraction(value) && value < 1
+}
+
 function isDate(value: unknown): value is string {
   return typeof value === 'string' && !Number.isNaN(Date.parse(value))
 }
@@ -56,7 +61,10 @@ function isInstrument(value: unknown): value is Instrument {
   return (
     INSTRUMENTS.includes(value['type'] as InstrumentType) &&
     isAmount(value['amountCents']) &&
-    isEntryFee(value['entryFee'])
+    isEntryFee(value['entryFee']) &&
+    optional(value['discount'], isDiscount) &&
+    optional(value['interestRate'], isFraction) &&
+    (value['interestMode'] === undefined || value['interestMode'] === 'simple' || value['interestMode'] === 'compound')
   )
 }
 
@@ -100,9 +108,29 @@ function isExit(value: unknown): value is ExitEvent {
   )
 }
 
+/**
+ * Version 2 links were shared when SAFE and note were labels that bought
+ * `amount / post-money` like shares. Reading them as version 3 would convert
+ * them at the next round and change the numbers the sender saw, so their
+ * cheques become priced shares, which is exactly what version 2 computed.
+ * Anything else passes through for `isScenario` to judge.
+ */
+export function migrate(value: unknown): unknown {
+  if (!isObject(value) || value['version'] !== 2 || !Array.isArray(value['rounds'])) return value
+  return {
+    ...value,
+    version: 3,
+    rounds: value['rounds'].map((round: unknown) => {
+      if (!isObject(round) || !isObject(round['participation'])) return round
+      const { type: _type, discount: _d, interestRate: _r, interestMode: _m, ...rest } = round['participation']
+      return { ...round, participation: { ...rest, type: 'equity' } }
+    }),
+  }
+}
+
 export function isScenario(value: unknown): value is Scenario {
   if (!isObject(value)) return false
-  if (value['version'] !== 2) return false
+  if (value['version'] !== 3) return false
   if (!CURRENCIES.includes(value['currency'] as Currency)) return false
   const rounds = value['rounds']
   if (!Array.isArray(rounds) || rounds.length === 0 || rounds.length > 30) return false
@@ -152,7 +180,8 @@ function decodeJson(bytes: Uint8Array): Scenario | undefined {
   } catch {
     return undefined
   }
-  return isScenario(parsed) ? parsed : undefined
+  const migrated = migrate(parsed)
+  return isScenario(migrated) ? migrated : undefined
 }
 
 /** Links made before `/shared`: the scenario as plain base64 JSON after `#s=`. */

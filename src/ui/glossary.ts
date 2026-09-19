@@ -67,6 +67,22 @@ export const GLOSSARY = {
     question: 'What is a management fee?',
     body: 'A yearly fee some funds and SPVs charge on the capital invested. It is paid on top of your investment.',
   },
+  instrument: {
+    question: 'Shares, SAFE or convertible note?',
+    body: 'Shares are priced now: your cheque divided by the post-money valuation. A SAFE or a convertible note buys no shares yet. It converts at the next priced round, at the better of its valuation cap and its discount, so your ownership is only fixed then.',
+  },
+  valuationCap: {
+    question: 'What is a valuation cap?',
+    body: 'The highest valuation your SAFE or note can convert at. If the next round prices the company above the cap, you convert as if it were priced at the cap and get more shares than the new investors do for the same money. A post-money cap fixes your percentage before the round; a pre-money cap also depends on the other SAFEs converting with you.',
+  },
+  discount: {
+    question: 'What is a discount?',
+    body: 'A percentage off the price the next round pays per share, commonly 10–25%. You convert at whichever is better for you, the cap or the discount, never both.',
+  },
+  interest: {
+    question: 'What is interest on a convertible note?',
+    body: 'A note is a loan, so it earns interest until it converts, usually 4–8% a year. The interest converts into shares too, but it is not money you paid, so your multiple is measured against your cheque alone. Simple interest is charged on the loan only; compounding is also charged on interest already added.',
+  },
 } satisfies Record<string, Term>
 
 export type TermKey = keyof typeof GLOSSARY

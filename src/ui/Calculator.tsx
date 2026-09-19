@@ -76,7 +76,14 @@ export function Calculator({ state, dispatch }: { state: AppState; dispatch: (ac
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
             <div className="flex min-w-0 flex-col gap-6">
               {error ? <ErrorNotice message={error.message} /> : null}
-              {entry ? <EntryPanel round={entry} currency={scenario.currency} state={entryState} dispatch={dispatch} /> : null}
+              {entry ? <EntryPanel
+                  round={entry}
+                  currency={scenario.currency}
+                  state={entryState}
+                  status={error ? undefined : run.entry}
+                  converted={error ? undefined : run.rounds.find((r) => r.conversion)}
+                  dispatch={dispatch}
+                /> : null}
               <RoundsPanel
                 rounds={scenario.rounds.slice(1)}
                 names={scenario.rounds.map((r) => r.label)}

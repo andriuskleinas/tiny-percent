@@ -15,7 +15,7 @@ export const EXIT_PRESETS_CENTS: readonly number[] = [
  * to add. No fees — a direct investment is the simplest honest default.
  */
 export const STARTING_POINT: Scenario = {
-  version: 2,
+  version: 3,
   currency: 'EUR',
   rounds: [
     {
@@ -43,7 +43,7 @@ export const STARTING_POINT: Scenario = {
  * 0.10%, 0.08%, 0.064%, 0.0512%. Held to golden case L in `tools/oracle.py`.
  */
 export const EXAMPLE: Scenario = {
-  version: 2,
+  version: 3,
   currency: 'EUR',
   rounds: [
     STARTING_POINT.rounds[0] as Scenario['rounds'][number],
@@ -99,7 +99,7 @@ export function blankScenario(currency: Currency, today: Date = new Date()): Sce
   const date = today.toISOString().slice(0, 10)
   const exitYear = today.getUTCFullYear() + 7
   return {
-    version: 2,
+    version: 3,
     currency,
     rounds: [
       {
@@ -122,7 +122,7 @@ export function blankScenario(currency: Currency, today: Date = new Date()): Sce
  * Python oracle's golden cases A–K are stated in these numbers.
  */
 export const WORKED_EXAMPLE: Scenario = {
-  version: 2,
+  version: 3,
   currency: 'USD',
   rounds: [
     {
@@ -165,9 +165,9 @@ export const WORKED_EXAMPLE: Scenario = {
   },
 }
 
-/** A SAFE at pre-seed, then a priced Seed and a follow-on at Series A. */
+/** A post-money SAFE with a $5M cap and a 20% discount, converting at a priced Seed, then a follow-on at Series A. */
 export const SAFE_AT_A_CAP: Scenario = {
-  version: 2,
+  version: 3,
   currency: 'USD',
   rounds: [
     {
@@ -181,6 +181,7 @@ export const SAFE_AT_A_CAP: Scenario = {
         type: 'safe',
         amountCents: toCents(100_000),
         entryFee: { rule: 'greater_of', percent: 0.02, fixedCents: toCents(2_500) },
+        discount: 0.2,
       },
     },
     {
@@ -216,9 +217,9 @@ export const SAFE_AT_A_CAP: Scenario = {
   },
 }
 
-/** A convertible loan, entering in euros. */
+/** A convertible note at 8% simple interest and a 20% discount, entering in euros. */
 export const CONVERTIBLE_LOAN: Scenario = {
-  version: 2,
+  version: 3,
   currency: 'EUR',
   rounds: [
     {
@@ -232,6 +233,8 @@ export const CONVERTIBLE_LOAN: Scenario = {
         type: 'cla',
         amountCents: toCents(50_000),
         entryFee: { rule: 'percent', percent: 0.02 },
+        discount: 0.2,
+        interestRate: 0.08,
       },
     },
     {

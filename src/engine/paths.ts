@@ -1,3 +1,4 @@
+import { convertAt, isConvertible } from './convert'
 import { ownAfter, proRata } from './ownership'
 import { roundTerms, runScenario } from './scenario'
 import type { ScenarioResult } from './scenario'
@@ -66,10 +67,17 @@ export function strategyPaths(scenario: Scenario): StrategyPaths {
 
   // Pro-rata depends on the position held going into each round, so walk the
   // rounds in the engine's own date order and price each cheque as we go.
+  // A SAFE or note entry converts in the round after it, so that round's
+  // pro-rata is quoted on the converted stake, exactly as the engine does.
   const cheques = new Map<string, number>()
+  const ordered = [...scenario.rounds].sort((a, b) => Date.parse(a.date) - Date.parse(b.date))
+  const entryIndex = ordered.findIndex((r) => r.id === entryId)
+  const entryCheque = entry?.participation
+  const convertible = entryCheque !== undefined && isConvertible(entryCheque.type) && entryCheque.amountCents > 0
   let held = 0
-  for (const round of [...scenario.rounds].sort((a, b) => Date.parse(a.date) - Date.parse(b.date))) {
+  for (const [index, round] of ordered.entries()) {
     const terms = roundTerms(round)
+    if (convertible && entry !== undefined && index === entryIndex + 1) held = convertAt(entry, entryCheque, round, terms).stake
     const cheque = round.id === entryId ? (round.participation?.amountCents ?? 0) : held > 0 ? proRata(held, terms) : 0
     cheques.set(round.id, cheque)
     held = ownAfter(held, terms, cheque)
@@ -79,7 +87,7 @@ export function strategyPaths(scenario: Scenario): StrategyPaths {
     const amountCents = cheques.get(round.id) ?? 0
     if (amountCents <= 0) return undefined
     const terms = round.participation ?? entry?.participation
-    return { type: terms?.type ?? 'equity', entryFee: terms?.entryFee ?? { rule: 'percent', percent: 0 }, amountCents }
+    return { type: 'equity', entryFee: terms?.entryFee ?? { rule: 'percent', percent: 0 }, amountCents }
   }
   const proRataScenario: Scenario = { ...scenario, rounds: scenario.rounds.map((r) => ({ ...r, participation: chequeFor(r) })) }
 

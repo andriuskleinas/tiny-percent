@@ -22,6 +22,9 @@ describe('a shared link carries the exact scenario', () => {
                 type: 'cla' as const,
                 amountCents: toCents(50_000),
                 entryFee: { rule: 'greater_of' as const, percent: 0.02, fixedCents: toCents(2_500) },
+                discount: 0.2,
+                interestRate: 0.08,
+                interestMode: 'compound' as const,
               },
             }
           : { participation: { type: 'equity' as const, amountCents: toCents(12_345), entryFee: { rule: 'fixed' as const, fixedCents: toCents(500) } } }),
@@ -83,7 +86,7 @@ describe('a link that is malformed or hostile is refused, never trusted', () => 
   })
 
   const broken: Array<[string, unknown]> = [
-    ['a future version', { ...WORKED_EXAMPLE, version: 3 }],
+    ['a future version', { ...WORKED_EXAMPLE, version: 4 }],
     ['an unknown currency', { ...WORKED_EXAMPLE, currency: 'GBP' }],
     [
       'an unknown instrument',
@@ -93,6 +96,20 @@ describe('a link that is malformed or hostile is refused, never trusted', () => 
       },
     ],
     ['no rounds', { ...WORKED_EXAMPLE, rounds: [] }],
+    [
+      'a 100% discount',
+      {
+        ...WORKED_EXAMPLE,
+        rounds: [{ ...WORKED_EXAMPLE.rounds[0], participation: { ...WORKED_EXAMPLE.rounds[0]?.participation, type: 'safe', discount: 1 } }],
+      },
+    ],
+    [
+      'an unknown interest mode',
+      {
+        ...WORKED_EXAMPLE,
+        rounds: [{ ...WORKED_EXAMPLE.rounds[0], participation: { ...WORKED_EXAMPLE.rounds[0]?.participation, type: 'cla', interestMode: 'daily' } }],
+      },
+    ],
     [
       'a round that skips the entry',
       { ...WORKED_EXAMPLE, rounds: [{ ...WORKED_EXAMPLE.rounds[0], participation: undefined }, ...WORKED_EXAMPLE.rounds.slice(1)] },
@@ -182,5 +199,34 @@ describe('a /shared link', () => {
     expect(await scenarioFromAddress({ pathname: '/shared', hash: `#${code}` })).toEqual(WORKED_EXAMPLE)
     expect(await scenarioFromAddress({ pathname: '/', hash: `#${code}` })).toBeUndefined()
     expect(await scenarioFromAddress({ pathname: '/', hash: `#s=${encodeScenario(WORKED_EXAMPLE)}` })).toEqual(WORKED_EXAMPLE)
+  })
+})
+
+describe('a link shared before SAFEs converted', () => {
+  // Version 2 priced a SAFE or note like shares at its own round. Those links
+  // must keep showing the numbers they were shared with.
+  const safeEntry = {
+    ...WORKED_EXAMPLE,
+    version: 2,
+    rounds: WORKED_EXAMPLE.rounds.map((r, i) =>
+      i === 0 && r.participation ? { ...r, participation: { ...r.participation, type: 'safe' } } : r,
+    ),
+  }
+
+  it('opens as version 3 with the SAFE read as priced shares', () => {
+    const loaded = decodeScenario(encodeScenario(safeEntry as never))
+    expect(loaded?.version).toBe(3)
+    expect(loaded?.rounds[0]?.participation?.type).toBe('equity')
+  })
+
+  it('keeps every number it was shared with', () => {
+    const loaded = decodeScenario(encodeScenario(safeEntry as never))
+    if (!loaded) throw new Error('the link did not open')
+    const before = runScenario({ ...WORKED_EXAMPLE }).rounds.map((r) => r.ownershipAfter)
+    expect(runScenario(loaded).rounds.map((r) => r.ownershipAfter)).toEqual(before)
+  })
+
+  it('still refuses a version 2 link that is broken', () => {
+    expect(decodeScenario(encodeScenario({ ...safeEntry, currency: 'GBP' } as never))).toBeUndefined()
   })
 })

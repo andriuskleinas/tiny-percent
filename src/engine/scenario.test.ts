@@ -38,7 +38,7 @@ function deal(overrides: Partial<Scenario> = {}): Scenario {
     },
   ]
   return {
-    version: 2,
+    version: 3,
     currency: 'USD',
     rounds,
     fees: { carry: { percent: 0.2, basis: 'per_deal' } },

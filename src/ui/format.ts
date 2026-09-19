@@ -3,7 +3,8 @@
  * fractions and never sees a formatted string.
  */
 import { toCents, toMajor } from '../engine/money'
-import type { Round } from '../engine/types'
+import type { ConversionRoute } from '../engine/convert'
+import type { InstrumentType, Round } from '../engine/types'
 
 export function money(cents: number, currency: string = 'USD'): string {
   return new Intl.NumberFormat('en-US', {
@@ -113,4 +114,16 @@ export function ownership(fraction: number): string {
 /** A round's name for headings and tables. A custom name can be blank mid-edit. */
 export function roundName(round: Round): string {
   return round.label.trim() || 'Untitled round'
+}
+
+/** What an instrument is called in running text. */
+export function instrumentName(type: InstrumentType): string {
+  return type === 'safe' ? 'SAFE' : type === 'cla' ? 'note' : 'shares'
+}
+
+/** Which price a SAFE or note converted at, as a phrase: "the cap", "the 20% discount". */
+export function conversionRoute(route: ConversionRoute, discount: number | undefined): string {
+  if (route === 'cap') return 'the cap'
+  if (route === 'discount') return `the ${Number(((discount ?? 0) * 100).toFixed(2))}% discount`
+  return 'the round price'
 }

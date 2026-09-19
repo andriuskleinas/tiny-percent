@@ -175,6 +175,16 @@ company dies. A CLA at maturity means repay, extend, or convert at a default
 valuation. Model all three as a selector on the exit screen. An unconverted loan
 is repaid ahead of every equity holder.
 
+### 3.5 What ships today (2026-09-19)
+
+SAFEs and convertible notes are modelled for the entry cheque only: a cap (post-
+or pre-money, the latter an estimate), a discount, and simple or compounding
+interest for a note. Conversion happens at the round dated next after the entry.
+The best final ownership wins rather than the lowest effective valuation, because
+a new pool in the conversion round dilutes the cap route but not the price
+routes; see BUILD.md. KISS, ASA, uncapped SAFEs and loan maturity outcomes are
+not modelled.
+
 ---
 
 ## 4. Exit and fees

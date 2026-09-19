@@ -479,3 +479,44 @@ paragraph ("uses no analytics") stays true.
 |---|---|
 | Tests | 250 across 23 files |
 | Checked in the browser | the §40 journey in development logs each event in order, once |
+
+---
+
+## SAFEs and convertible notes · 2026-09-19 · DONE
+
+The entry cheque can be priced shares, a SAFE or a convertible note. Before this,
+the type was a label and every cheque bought `amount / post-money` at its own
+round, so a SAFE's discount, a priced round below the cap, and a note's interest
+were all ignored, and every later number inherited the error.
+
+| | Done |
+|---|---|
+| Oracle | Cases E, E2, F, F2, G, H, P, P2: post- and pre-money caps, simple and compounding notes, discount wins, round price wins, and a conversion round with a new pool and a follow-on. Each is checked against a share ledger that solves the converting shares as a fixed point. |
+| Engine | `engine/convert.ts`. The entry round's valuation is the cap, its basis the cap's basis, and its amount raised everyone investing on those terms. It converts at the round dated next after the entry (not the earliest round, since rounds can be dated before it). `runScenario` returns `entry: priced | converted | pending`, an estimate flag, and `conversion` on the converting round. |
+| Money | Interest converts but is never counted as invested; multiple and IRR use the cheque. |
+| UI | "What you are buying" picker; cap, discount and interest fields; the result card says where and at which price it converts, or that it has not yet; notes in the round table; four glossary terms. |
+| Links | Version 3. A version 2 link's SAFE or note opens as priced shares, which is exactly what version 2 computed, so shared numbers do not change. |
+
+**The derivation that changed the plan.** PLAN §3.1 picks the lowest effective
+valuation, `min(cap·V/P, V(1−d))`. That is right only without a new option pool.
+The cap route fixes a share of the capitalisation before the round (the
+post-money SAFE excludes the pool top-up), so the pool dilutes it:
+`conv / cap × (P/V − pool)`. The discount and round-price routes buy fully
+diluted shares at a price that already has the pool inside the pre-money, so it
+does not: `conv / ((1 − d)·V)`. The engine therefore takes the best final
+ownership. With no pool the two rules agree, so cases E and F are unchanged.
+
+**Pro-rata at the conversion round** is quoted on the stake just before the new
+money, `ownership / (P/V − pool)`, the same "hold your position" rule as every
+other round. After a discount conversion that stake is larger than the
+post-round ownership, so the cheque is larger than the converted percentage of
+the raise.
+
+**Not checked:** dark mode in the browser, because the preview pane forces the
+light theme; the new text uses only existing theme tokens.
+
+| | |
+|---|---|
+| Tests | 367 across 29 files |
+| Oracle assertions | 83 across 18 golden cases |
+| Lint warnings | 2, both pre-existing |

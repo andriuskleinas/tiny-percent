@@ -9,14 +9,26 @@
 
 export type Currency = 'USD' | 'EUR'
 
-/** A label only — every instrument converts identically at the round's valuation. */
+/**
+ * Priced shares, a SAFE, or a convertible loan note. Only the entry cheque can be
+ * a SAFE or note; later rounds are priced, and a cheque into one buys shares
+ * whatever its type says. See `convert.ts` for how a SAFE or note converts.
+ */
 export type InstrumentType = 'equity' | 'safe' | 'cla'
+
+export type InterestMode = 'simple' | 'compound'
 
 /** A cheque written into a round. Present on `Round.participation`. */
 export interface Instrument {
   type: InstrumentType
   amountCents: number
   entryFee: EntryFeeTerms
+  /** SAFE or note: 0..1 off the price of the round it converts in. */
+  discount?: number | undefined
+  /** Note only: 0..1 a year, accrued from the entry date to conversion. */
+  interestRate?: number | undefined
+  /** Note only. Defaults to simple. */
+  interestMode?: InterestMode | undefined
 }
 
 /** The names offered in the round picker. Any other non-empty name is a custom round. */
@@ -30,7 +42,11 @@ export interface Round {
   /** ISO 8601 date. */
   date: string
   raisedCents: number
-  /** Meaning depends on `valuationBasis`. */
+  /**
+   * Meaning depends on `valuationBasis`. When the entry is a SAFE or note, this is
+   * its valuation cap, the basis is the cap's basis, and `raisedCents` is everyone
+   * investing on those terms, you included.
+   */
   valuationCents: number
   valuationBasis: 'pre' | 'post'
   /** New option pool created in this round, 0..1 of post-money. */
@@ -56,7 +72,7 @@ export interface ExitEvent {
 
 export interface Scenario {
   /** Bump to migrate links shared under an older shape. */
-  version: 2
+  version: 3
   /**
    * The one currency every amount in the scenario is in. There is deliberately
    * no per-round currency: mixing them needs exchange rates, and without them

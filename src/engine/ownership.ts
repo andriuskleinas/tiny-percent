@@ -50,7 +50,7 @@ export function postMoney(terms: RoundTerms): number {
  * What one unit of existing ownership is worth after the round, before any new
  * cheque. This is `P / V - t` from the plan, and it is the whole of dilution.
  */
-function dilutionFactor(terms: RoundTerms): number {
+export function dilutionFactor(terms: RoundTerms): number {
   const pool = terms.newOptionPool ?? 0
   const limit = terms.preMoney / postMoney(terms)
   if (pool >= limit) throw new PoolTooLargeError(pool, limit)

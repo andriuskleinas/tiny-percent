@@ -1,7 +1,8 @@
 import { useMoney } from '../currency'
 import type { RoundState } from '../../engine/scenario'
 import { InfoTip } from '../controls'
-import { multiple, ownership, percent, roundName } from '../format'
+import { isConvertible } from '../../engine/convert'
+import { conversionRoute, instrumentName, multiple, ownership, percent, roundName } from '../format'
 
 /** The hypothetical sale at the end of the table, at the exit valuation on the slider. */
 export interface ExitRow {
@@ -31,6 +32,17 @@ export function DilutionTable({ states, exit }: { states: RoundState[]; exit?: E
   const net = exit && exit.netHighCents !== exit.grossHighCents ? range(money(exit.netLowCents), money(exit.netHighCents)) : undefined
   const exitName = exit ? `Exit at ${compactMoney(exit.valueCents)}` : ''
   const rows = states.filter((s) => s.ownershipAfter > 0 || s.investedCents > 0)
+
+  // The SAFE or note behind the entry, if it is one. Its first row is a stake at
+  // the cap, and the round after it is where the stake is actually fixed.
+  const entryCheque = rows.find((s) => s.ownershipBefore === 0 && s.investedCents > 0)?.round.participation
+  const convertibleEntry = entryCheque && isConvertible(entryCheque.type) ? entryCheque : undefined
+  const note = (s: RoundState): string | undefined => {
+    if (!convertibleEntry) return undefined
+    if (s.conversion) return `${instrumentName(convertibleEntry.type)} converts at ${conversionRoute(s.conversion.route, convertibleEntry.discount)}`
+    if (s.ownershipBefore === 0 && s.round.participation === convertibleEntry) return `${instrumentName(convertibleEntry.type)}, at the cap`
+    return undefined
+  }
 
   const change = (s: RoundState) => {
     if (s.ownershipBefore === 0) return 'entry'
@@ -63,6 +75,7 @@ export function DilutionTable({ states, exit }: { states: RoundState[]; exit?: E
               <th scope="row" className="py-2 pr-3 text-left font-sans font-medium text-ink">
                 {roundName(s.round)}
                 <span className="ml-2 font-mono text-[11px] font-normal text-ink-faint">{s.round.date.slice(0, 4)}</span>
+                {note(s) ? <span className="block text-[11px] font-normal text-ink-faint">{note(s)}</span> : null}
               </th>
               <td className="px-3 py-2 text-right text-ink-soft">{money(s.postMoneyCents)}</td>
               <td className="px-3 py-2 text-right text-ink-soft">{s.investedCents > 0 ? money(s.investedCents) : '—'}</td>
@@ -101,6 +114,7 @@ export function DilutionTable({ states, exit }: { states: RoundState[]; exit?: E
               {roundName(s.round)}
               <span className="font-mono text-xs font-normal text-ink-faint">{change(s)}</span>
             </p>
+            {note(s) ? <p className="text-xs text-ink-faint">{note(s)}</p> : null}
             <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
               <dt className="text-ink-faint">Valuation</dt>
               <dd className="text-right font-mono tabular-nums text-ink-soft">{money(s.postMoneyCents)}</dd>
@@ -140,6 +154,9 @@ export function DilutionTable({ states, exit }: { states: RoundState[]; exit?: E
       </ol>
       <p className="mt-2 text-xs text-ink-faint">
         Paper value is implied by each round&rsquo;s valuation. It is not a price you could necessarily sell at.
+        {convertibleEntry
+          ? ` Your ${instrumentName(convertibleEntry.type)} is shown at its cap until it converts, so your ownership can go up in the round where it does.`
+          : ''}
         {exit
           ? ` The exit row is a hypothetical sale at the exit valuation you chose. Its Change column shows your multiple on everything you invested${exit.carryPercent > 0 ? ', after carry' : ''}.${exit.preferences ? ' Near the capital raised, liquidation preferences decide where in the range you land.' : ''}`
           : ''}

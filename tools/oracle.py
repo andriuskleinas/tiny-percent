@@ -194,6 +194,90 @@ assert n_steps[1]["factor"] < 1, "an up round that sells too much must lose valu
 print("N  stake factor g(1-s-pool) ... " + "  ".join(
     f"x{r['growth']:g}/{r['sold']:.0%}/{r['pool']:.0%}->{r['factor']:.4f}" for r in n_steps))
 
+# ---------- convertibles: SAFEs and convertible notes ----------
+# A SAFE or note converts at the next priced round at the best of three prices:
+# the cap, the round price less the discount, and the round price itself.
+# The cap route fixes a share of the capitalisation before the round, so a new
+# pool in that round dilutes it. The two price routes buy fully diluted shares
+# at a price that already has the pool inside the pre-money, so it does not.
+# That is why the engine picks the best final ownership rather than the lowest
+# "effective valuation": the two agree only when there is no pool.
+def accrue(principal, rate, years, mode="simple"):
+    return principal * (1 + rate * years) if mode == "simple" else principal * (1 + rate) ** years
+
+def convert_routes(conv, cap_post, discount, pre, raised, pool=0.0):
+    V = pre + raised
+    routes = []
+    if cap_post:  routes.append(("cap", conv / cap_post * (pre / V - pool)))
+    if discount:  routes.append(("discount", conv / ((1 - discount) * V)))
+    routes.append(("round_price", conv / V))
+    best = routes[0]
+    for r in routes[1:]:
+        if r[1] > best[1]: best = r          # ties stay with the earlier route
+    return best
+
+def ledger_convert(L, pre, raised, conv, cap_post=None, discount=0.0, pool=0.0, angel_invests=0.0):
+    """Share ledger with the converting shares S solved as a fixed point: the
+    round price counts S in the pre-money, and S depends on that price."""
+    V = pre + raised
+    T, u = L.total, L.unallocated_pool
+    S = 0.0
+    for _ in range(500):
+        D = (T + S - u) / (1 - pool * V / pre)
+        p = pre / D
+        prices = [p, p * (1 - discount)]
+        if cap_post: prices.append(cap_post / (T + S))   # post-money SAFE capitalisation, pool increase excluded
+        S = conv / min(prices)
+    D = (T + S - u) / (1 - pool * V / pre)
+    p = pre / D
+    L.total = D * V / pre
+    L.unallocated_pool = pool * L.total
+    L.angel += S + angel_invests / p
+    return L.own()
+
+def ledger_pre_cap(L, pre, raised, conv, cap, others):
+    # Conversion price is the cap over the pre-conversion share count, so
+    # everything converting alongside dilutes everything else.
+    price = cap / L.total
+    L.angel += conv / price
+    L.total += (conv + others) / price
+    L.priced_round(pre, raised)
+    return L.own()
+
+conv_cases = {}
+def conv_case(name, amount, cap, pre, raised, discount=0.0, pool=0.0, follow=0.0,
+              rate=0.0, years=0.0, mode="simple", basis="post", others=0.0):
+    conv = accrue(amount, rate, years, mode)
+    cap_post = cap if basis == "post" else cap + conv + others
+    route, own = convert_routes(conv, cap_post, discount, pre, raised, pool)
+    V = pre + raised
+    final = own + follow / V
+    if basis == "post":
+        led = ledger_convert(Ledger(), pre, raised, conv, cap_post, discount, pool, follow)
+    else:
+        led = ledger_pre_cap(Ledger(), pre, raised, conv, cap, others)
+    eq(f"{name} ledger agrees", led, final)
+    conv_cases[name] = dict(amount=amount, cap=cap, basis=basis, others=others, discount=discount,
+                            rate=rate, years=years, mode=mode, pre=pre, raised=raised, pool=pool,
+                            follow=follow, converting=conv, route=route, ownership=final)
+    print(f"{name:<3}{route:<12} converts {conv:>9,.0f} ........ {final:.4%}  [ledger {led:.4%}]")
+    return final
+
+eq("E post-money SAFE", conv_case("E", 100_000, 5e6, 8e6, 2e6), 0.016)
+eq("E2 pre-money cap", conv_case("E2", 100_000, 5e6, 8e6, 2e6, basis="pre", others=400_000),
+   100_000 / 5_500_000 * 0.8)
+eq("F note, 8% simple, 2y", conv_case("F", 50_000, 5e6, 8e6, 2e6, discount=0.20, rate=0.08, years=2), 0.00928)
+eq("F converting", conv_cases["F"]["converting"], 58_000)
+eq("F2 note, compounding", conv_case("F2", 50_000, 5e6, 8e6, 2e6, rate=0.08, years=2, mode="compound"),
+   58_320 / 5e6 * 0.8)
+eq("G discount wins", conv_case("G", 100_000, 10e6, 6e6, 2e6, discount=0.20), 0.015625)
+eq("H round price wins", conv_case("H", 100_000, 10e6, 6e6, 2e6), 0.0125)
+eq("P cap, pool and follow-on", conv_case("P", 100_000, 5e6, 8e6, 2e6, discount=0.20, pool=0.10, follow=20_000),
+   0.014 + 0.002)
+eq("P2 discount under a pool", conv_case("P2", 100_000, 10e6, 6e6, 2e6, discount=0.20, pool=0.10), 0.015625)
+assert conv_cases["G"]["route"] == "discount" and conv_cases["H"]["route"] == "round_price"
+assert conv_cases["P"]["route"] == "cap" and conv_cases["P2"]["route"] == "discount"
+
 print()
 print("=" * 72)
 print("CLAIMS MADE IN THE FOUR VISUALS")
@@ -311,6 +395,14 @@ def emit_fixture(path):
               "steps": [{"growth": r["growth"], "sold": r["sold"], "pool": r["pool"],
                          "postMoneyCents": cents(r["post"]), "raisedCents": cents(r["raised"]),
                          "stakeFactor": r["factor"]} for r in n_steps]},
+        "convertibles": {name: {"amountCents": cents(c["amount"]), "capCents": cents(c["cap"]),
+                                "capBasis": c["basis"], "raisedAtCapCents": cents(c["amount"] + c["others"]),
+                                "discount": c["discount"], "interestRate": c["rate"], "years": c["years"],
+                                "interestMode": c["mode"], "preMoneyCents": cents(c["pre"]),
+                                "raisedCents": cents(c["raised"]), "pool": c["pool"],
+                                "followOnCents": cents(c["follow"]), "convertingCents": cents(c["converting"]),
+                                "route": c["route"], "ownership": c["ownership"]}
+                         for name, c in conv_cases.items()},
     }
     with open(path, "w") as fh:
         json.dump(fixture, fh, indent=2)
@@ -324,7 +416,7 @@ if "--emit" in sys.argv:
 
 print()
 print("=" * 72)
-print(f"{checks} assertions across 10 golden cases and 4 visuals")
+print(f"{checks} assertions across 18 golden cases and 4 visuals")
 print("RESULT:", "ALL PASS — two independent models agree" if not fails else f"{len(fails)} FAILURES")
 for f_ in fails: print("  FAIL", f_)
 print("=" * 72)

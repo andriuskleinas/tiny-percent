@@ -1,3 +1,5 @@
+import { convertAt, isConvertible } from './convert'
+import type { Conversion } from './convert'
 import { applyFees, entryFeeFor } from './fees'
 import type { ChequeCost, FeeResult } from './fees'
 import { exitProceeds } from './exit'
@@ -13,9 +15,10 @@ import type { Round, Scenario } from './types'
  * screens need the shape of the journey and not only its destination.
  *
  * `rounds[0]` is the entry — there is no separate top-level entry field, since
- * an angel's first cheque is just the first round they wrote one into. Every
- * instrument (SAFE, CLA, priced equity) converts identically, at the round's
- * own valuation, so there is one formula for every cheque: `amount / post-money`.
+ * an angel's first cheque is just the first round they wrote one into. A priced
+ * cheque buys `amount / post-money`. A SAFE or note entry shows its stake at the
+ * cap until the next round, where it converts (see `convert.ts`); if no round
+ * follows, the stake at the cap is the answer and the result says so.
  *
  * When the exit is inside the uncertain band, fees and returns are computed
  * twice, once against each bound, rather than against an invented midpoint.
@@ -25,7 +28,15 @@ export interface RoundState {
   round: Round
   postMoneyCents: number
   ownershipBefore: number
+  /**
+   * The stake this round's new money dilutes and a cheque adds to. Equal to
+   * `ownershipBefore` except where a SAFE or note converts, when it is the
+   * converted stake rather than the stake at the cap.
+   */
+  heldBefore: number
   ownershipAfter: number
+  /** Present on the round where the entry SAFE or note converts. */
+  conversion?: Conversion | undefined
   /** What the angel actually put in at this round. */
   investedCents: number
   /** The entry fee on that cheque, paid on top of it. */
@@ -35,7 +46,18 @@ export interface RoundState {
   stakeValueCents: number
 }
 
+/**
+ * How the entry cheque stands: priced shares, a SAFE or note that has converted,
+ * or one still waiting for a priced round.
+ */
+export interface EntryStatus {
+  kind: 'priced' | 'converted' | 'pending'
+  /** A pre-money cap, whose answer depends on SAFEs the angel cannot see. */
+  estimate: boolean
+}
+
 export interface ScenarioResult {
+  entry: EntryStatus
   rounds: RoundState[]
   finalOwnership: number
   totalInvestedCents: number
@@ -81,13 +103,22 @@ export function runScenario(scenario: Scenario): ScenarioResult {
   const cheques: ChequeCost[] = []
   const flows: CashFlow[] = []
   let ownership = 0
+  // The entry is `rounds[0]` by definition, which is not always the earliest
+  // date: a round can be added before it. A SAFE or note converts in the
+  // round dated next after the entry.
+  const entryRound = scenario.rounds[0] ?? first
+  const entryIndex = ordered.indexOf(entryRound)
+  const entryCheque = entryRound.participation
+  const convertible = entryCheque !== undefined && isConvertible(entryCheque.type) && entryCheque.amountCents > 0
 
-  for (const round of ordered) {
+  for (const [index, round] of ordered.entries()) {
     const terms = roundTerms(round)
     const before = ownership
+    const conversion = convertible && index === entryIndex + 1 ? convertAt(entryRound, entryCheque, round, terms) : undefined
+    const held = conversion?.stake ?? before
     const cheque = round.participation
     const invested = cheque?.amountCents ?? 0
-    ownership = ownAfter(before, terms, invested)
+    ownership = ownAfter(held, terms, invested)
 
     const entryFee = cheque !== undefined && invested > 0 ? entryFeeFor(invested, cheque.entryFee) : 0
     if (cheque !== undefined && invested > 0) {
@@ -99,10 +130,12 @@ export function runScenario(scenario: Scenario): ScenarioResult {
       round,
       postMoneyCents: postMoney(terms),
       ownershipBefore: before,
+      heldBefore: held,
       ownershipAfter: ownership,
+      conversion,
       investedCents: invested,
       entryFeeCents: entryFee,
-      proRataCents: before > 0 ? proRata(before, terms) : 0,
+      proRataCents: held > 0 ? proRata(held, terms) : 0,
       stakeValueCents: stakeValue(ownership, postMoney(terms)),
     })
   }
@@ -123,7 +156,13 @@ export function runScenario(scenario: Scenario): ScenarioResult {
   const returnAt = (net: number): number | undefined =>
     irr([...flows, { date: scenario.exit.date, amountCents: net }])
 
+  const entry: EntryStatus = {
+    kind: !convertible ? 'priced' : entryIndex + 1 < ordered.length ? 'converted' : 'pending',
+    estimate: convertible && entryRound.valuationBasis === 'pre',
+  }
+
   return {
+    entry,
     rounds: states,
     finalOwnership: ownership,
     totalInvestedCents: totalInvested,
