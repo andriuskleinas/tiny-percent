@@ -41,7 +41,7 @@ jobs:
   # only in the private repository; the public portfolio copy never deploys.
   # Needs the CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID repository secrets.
   deploy:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'andriuskleinas/startup-investment-calculator'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'andriuskleinas/tiny-percent-private'
     needs: [check, oracle]
     runs-on: ubuntu-latest
     concurrency:
