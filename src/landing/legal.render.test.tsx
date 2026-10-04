@@ -13,7 +13,7 @@ describe('the privacy page', () => {
     const text = document.body.textContent ?? ''
     expect(text).toMatch(/no cookies/i)
     expect(text).toMatch(/runs in your browser/i)
-    expect(text).toMatch(/Vercel/)
+    expect(text).toMatch(/Cloudflare/)
     expect(text).not.toMatch(/waiting list/i)
   })
 

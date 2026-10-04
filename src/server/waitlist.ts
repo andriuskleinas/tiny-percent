@@ -1,7 +1,7 @@
 /**
  * The waiting-list endpoint, as a plain function from a Request to a Response so
- * it runs the same on Vercel (`api/waitlist.ts`), in the Vite dev server and in
- * tests. It checks what the form sent and passes it to a Google Apps Script web
+ * it runs the same in the Vite dev server, in tests and in any host that speaks
+ * Request/Response. It checks what the form sent and passes it to a Google Apps Script web
  * app that appends a row to a spreadsheet (`tools/waitlist-apps-script.gs`).
  *
  * The script's address and shared secret live only in server environment

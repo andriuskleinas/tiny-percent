@@ -12,10 +12,10 @@
  *        Execute as: Me
  *        Who has access: Anyone
  *      Authorise when asked, then copy the Web app URL ending in /exec.
- *   5. In Vercel -> Project -> Settings -> Environment Variables, add
+ *   5. Give the server that runs src/server/waitlist.ts these environment variables:
  *        WAITLIST_SCRIPT_URL = the /exec URL
  *        WAITLIST_SECRET     = the same string as SECRET below
- *      then redeploy. For local testing put the same two lines in .env.local.
+ *      For local testing put the same two lines in .env.local.
  *
  * "Anyone" can reach the URL, but only a request carrying SECRET writes a row,
  * and only the site's server knows it. After editing this script, publish a new

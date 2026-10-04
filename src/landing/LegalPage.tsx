@@ -42,11 +42,11 @@ function Privacy() {
       </p>
       <H2>Hosting</H2>
       <p>
-        The site is hosted by Vercel. When your browser loads a page, Vercel processes the technical information
-        any web request carries — such as your IP address, browser type, the time and the address requested — to
-        deliver and protect the site. See{' '}
-        <a className="text-accent underline" href="https://vercel.com/legal/privacy-policy">
-          Vercel’s privacy policy
+        The site is hosted by Cloudflare. When your browser loads a page, Cloudflare processes the technical
+        information any web request carries — such as your IP address, browser type, the time and the address
+        requested — to deliver and protect the site. See{' '}
+        <a className="text-accent underline" href="https://www.cloudflare.com/privacypolicy/">
+          Cloudflare’s privacy policy
         </a>
         .
       </p>
@@ -61,7 +61,7 @@ function Privacy() {
       <H2>Waiting list</H2>
       <p>
         If you join the waiting list, we collect your first name, surname and email address. Your browser sends them
-        to this site’s server, hosted by Vercel, which stores them in a Google Sheets spreadsheet held in Google’s
+        to this site’s server, which stores them in a Google Sheets spreadsheet held in Google’s
         cloud. Nothing is saved unless you submit the form.
       </p>
       <p>

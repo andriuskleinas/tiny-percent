@@ -15,11 +15,12 @@ export const SITE = {
   /** Legal name of the person or company operating the site. */
   operator: undefined as string | undefined,
   contactEmail: undefined as string | undefined,
-  legalUpdated: '16 September 2026',
+  legalUpdated: '4 October 2026',
   /**
-   * The waiting-list form. Hidden while the site is purely educational; the form,
-   * `/api/waitlist` and the Google Sheet stay in place, so switching this back on
-   * shows the form and the matching privacy wording again.
+   * The waiting-list form. Hidden while the site is purely educational. The form,
+   * its handler in src/server/waitlist.ts and the Google Sheet stay in place, but
+   * the production site is static Cloudflare assets with no `/api/waitlist`
+   * endpoint: switching this back on needs that endpoint deployed first.
    */
   waitlist: false as boolean,
 }
