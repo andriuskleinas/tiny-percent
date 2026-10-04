@@ -6,9 +6,30 @@
 
 A free angel investment calculator that shows what your startup stake becomes as the company raises money, what following on would cost, and what it could return when the company sells.
 
-[**Try it at tinypercent.com →**](https://tinypercent.com)
-
 </div>
+
+<p align="center">
+  <a href="https://tinypercent.com"><b>Live app →</b></a>
+  ·
+  <a href="#features">Features</a>
+  ·
+  <a href="#examples">Examples</a>
+  ·
+  <a href="#how-its-built">How it's built</a>
+  ·
+  <a href="#run-it-yourself">Run it yourself</a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/andriuskleinas/tiny-percent/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/andriuskleinas/tiny-percent/actions/workflows/ci.yml/badge.svg"></a>
+  <img alt="React 19" src="https://img.shields.io/badge/React-19-149eca?logo=react&logoColor=white">
+  <img alt="TypeScript strict" src="https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white">
+  <img alt="Vite 8" src="https://img.shields.io/badge/Vite-8-646cff?logo=vite&logoColor=white">
+  <img alt="Tailwind CSS 4" src="https://img.shields.io/badge/Tailwind-4-38bdf8?logo=tailwindcss&logoColor=white">
+  <img alt="Vitest: 383 tests" src="https://img.shields.io/badge/Vitest-383%20tests-6e9f18?logo=vitest&logoColor=white">
+  <img alt="Python oracle: 93 checks" src="https://img.shields.io/badge/Python%20oracle-93%20checks-3776ab?logo=python&logoColor=white">
+  <img alt="Cloudflare Workers" src="https://img.shields.io/badge/Cloudflare-Workers-f38020?logo=cloudflare&logoColor=white">
+</p>
 
 ![The tinypercent landing page: a €5,000 pre-seed cheque diluted to 0.051% and worth €51,200 at a €100M exit](docs/screenshots/hero.png)
 
@@ -18,7 +39,18 @@ Angel investors write small cheques into companies that go on to raise round aft
 
 Spreadsheets answer that badly, and full cap-table tools ask for numbers an angel never sees. tinypercent works entirely from the angel's chair, using only what an angel actually knows: the cheque, each round's valuation and size, and a guess at the exit.
 
-## What it does
+## Features
+
+| | Feature | What it does |
+|---|---|---|
+| 📉 | **Dilution, round by round** | Enter your cheque and every later round. Your ownership, paper value and exit return update as you type. |
+| ➕ | **Follow on or sit out** | At each round, sit out, pay your pro-rata or pick an amount, and see all three paths drawn side by side. |
+| 📝 | **SAFEs and convertible notes** | Cap, discount and interest. The stake converts at the next priced round on whichever term gives you the most. |
+| 🎲 | **How it could end** | The same deal if the company fails, returns its capital, or grows 10× or 100×, with the power-law arithmetic on your own numbers. |
+| 📈 | **Every possible exit** | A return curve from €1M to €1B that flags where liquidation preferences bite. |
+| 🤝 | **Syndicate costs** | Carry, management fees and entry fees come out, so the multiple shown is what reaches you. |
+| 🔗 | **Shareable links** | "Copy link" reopens exactly what you were looking at. The calculation lives after the `#` and never reaches a server. |
+| 🔒 | **Private by design** | No account, no tracking, no backend for the calculator. Nothing you type leaves your browser. |
 
 ### Follow your stake through every round
 
@@ -42,12 +74,22 @@ Before any later rounds are added, a return curve shows what your cheque pays at
 
 ![Return curve for a €5,000 seed cheque across exits from €1M to €1B](docs/screenshots/exit-curve.png)
 
+### SAFEs and convertible notes
+
+Many angel cheques buy no shares yet. Pick a SAFE or a convertible note and enter the cap, the discount and, for a note, simple or compounding interest. The calculator shows your stake at the cap, then converts it at the next priced round on whichever term gives you the most. Interest converts too, but is never counted as money you invested. A pre-money cap is marked as an estimate, because the answer also depends on the other SAFEs converting with yours.
+
+![A €5,000 SAFE with a €5M post-money cap and a 20% discount, converting in the Series A](docs/screenshots/safe.png)
+
+### How it could end
+
+A single exit on a slider hides the most important fact about angel investing: most companies fail and a few pay for the rest. The same deal is shown four ways: the company fails, sells for what it raised, or grows 10× or 100× from the valuation you invested at. Each row is a full run with dilution, preferences and carry, and one line of arithmetic on your own numbers says how many failed cheques like this one a single win pays back.
+
+![Four endings for a €5,000 seed cheque: fails, returns its capital, grows 10×, grows 100× for a 51.2× multiple](docs/screenshots/endings.png)
+
 ### Also
 
 - **Real round mechanics.** Pre-money or post-money valuations, new option pools created in a round, and pro-rata worked out for you.
-- **Syndicate costs.** Carry, management fees and entry fees are taken out, so the multiple you see is what actually reaches you.
-- **Shareable calculations.** "Copy link" produces a short link such as `tinypercent.com/shared#…` that reopens exactly what you were looking at. The calculation lives after the `#`, so it never reaches a server.
-- **Private by design.** No account, no tracking, no backend for the calculator. Nothing you type leaves your browser.
+- **Euros or dollars**, and short shared links such as `tinypercent.com/shared#…`.
 - **Works on a phone**, with a summary bar that stays in view as you scroll.
 
 <p align="center"><img src="docs/screenshots/phone.png" alt="tinypercent on a phone: the investment summary and the Copy link button" width="320"></p>
@@ -73,13 +115,31 @@ $50,000 at a $10M post-money Series A, diluted to 0.32% by two later rounds. A $
 
 ## How it's built
 
-| | |
+```mermaid
+flowchart TB
+  subgraph Build["Build and deploy: GitHub Actions on every push"]
+    direction LR
+    O[Python oracle<br/>two independent models] -->|golden-cases.json| G[typecheck · lint<br/>383 tests · build]
+    G -->|green on main:<br/>wrangler deploy| CF[Cloudflare Workers<br/>static assets]
+  end
+  subgraph Browser["In your browser: nothing leaves it"]
+    direction LR
+    L[Share link] <-->|state in the<br/>URL fragment| UI[React UI]
+    UI <-->|scenario in,<br/>results out| E[Pure TS engine<br/>integer cents]
+  end
+  Build -->|prerendered HTML + CSP headers| Browser
+```
+
+| Layer | Choices |
 |---|---|
-| **Front end** | React 19, TypeScript 6, Tailwind CSS 4, built with Vite 8 |
+| **Frontend** | React 19, TypeScript 6 (strict), Tailwind CSS 4, built with Vite 8; self-hosted Inter Tight and JetBrains Mono |
+| **Calculation engine** | Plain TypeScript in [`src/engine`](src/engine): no React, no browser APIs, money in integer cents. Rounds, pro-rata, option pools, SAFE and note conversion, liquidation preferences, syndicate fees and IRR |
 | **Charts** | Hand-written SVG, no chart library |
-| **Hosting** | Cloudflare Workers static assets at tinypercent.com, with every page prerendered to HTML so it loads before any JavaScript runs |
-| **Testing** | 322 Vitest tests, plus an independent Python oracle |
-| **CI/CD** | GitHub Actions: typecheck, lint, tests, oracle and build on every push |
+| **State and sharing** | One reducer for the whole scenario. Links compress it with the browser's `CompressionStream` into the URL fragment, so it never reaches a server |
+| **Rendering** | Every page prerendered to static HTML at build time, with sitemap and robots.txt, so content loads before any JavaScript runs |
+| **Testing** | 383 Vitest tests across 31 files (unit, property-based and render tests), plus an independent Python oracle: 93 assertions across 19 golden cases |
+| **CI/CD** | GitHub Actions: typecheck, lint, tests, oracle drift check and build on every push; a green push to `main` deploys with Wrangler |
+| **Hosting** | Cloudflare Workers static assets at tinypercent.com, with a strict Content Security Policy and security headers on every response |
 
 ### One formula, checked twice
 
@@ -91,19 +151,25 @@ own_after = own_before × (P / V − t) + I / V    if you invest I
 pro_rata  = own_before × (R + t × V)            to hold your position
 ```
 
-For a single holder, that is algebraically the same as running a full cap table. To prove it, [`tools/oracle.py`](tools/oracle.py) implements the maths twice: once with this formula, and once as an independent share-count cap table that knows nothing about it. The two must agree on **66 assertions across 10 golden cases**. The oracle writes the expected figures to a fixture that the TypeScript tests check against, and CI fails if the Python and TypeScript models ever drift apart.
+For a single holder, that is algebraically the same as running a full cap table. To prove it, [`tools/oracle.py`](tools/oracle.py) implements the maths twice: once with this formula, and once as an independent share-count cap table that knows nothing about it. The two must agree on **93 assertions across 19 golden cases**, including every SAFE and note conversion route checked against a share ledger. The oracle writes the expected figures to a fixture that the TypeScript tests check against, and CI fails if the Python and TypeScript models ever drift apart.
 
 ### Engineering choices worth a look
 
 - **A pure calculation engine.** [`src/engine`](src/engine) is plain TypeScript with no React and no browser APIs. A test enforces that boundary, so the maths stays portable and testable on its own.
 - **Money in integer cents.** No floating-point drift in currency amounts.
+- **Conversion picks the best outcome, not the lowest price.** A new option pool in the conversion round dilutes the cap route but not the discount or round-price routes, so the engine compares final ownership on each route rather than effective valuations.
+- **Old links keep their numbers.** Shared links are versioned: a link made before SAFEs existed opens as priced shares, which is what it computed at the time.
 - **Errors never blank the page.** Some inputs have no answer, such as an option pool larger than the round allows. [`safeRun`](src/ui/safeRun.ts) keeps the last workable result on screen and explains what is wrong instead of crashing.
 - **Shared links are untrusted input.** A link is checked field by field before use, refused if it unpacks to anything oversized, and only opened if the scenario actually runs. The link format is compressed with the browser's built-in `CompressionStream`, which makes links about half the length.
 - **Locked-down delivery.** A strict Content Security Policy and security headers on every response.
 
-## Running it locally
+## Run it yourself
+
+You need Node.js 22+ and, for the oracle, Python 3.12. There are no API keys or environment variables.
 
 ```bash
+git clone https://github.com/andriuskleinas/tiny-percent.git
+cd tiny-percent
 npm ci
 npm run dev        # http://localhost:5173
 ```
