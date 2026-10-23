@@ -114,9 +114,7 @@ A second section puts **shares, a SAFE and a convertible note** side by side: on
 
 ### Free, and supported by the people who use it
 
-tinypercent is built purely as an educational calculator: it collects no data, tracks nothing, and is always free. The page says so in plain words under its first button. Anyone who finds it useful can support it through [Buy Me a Coffee](https://buymeacoffee.com/tinypercent): a yellow button under the opening example, a quiet line under the results, a short note from the maker at the end of the page, and a button in the footer. The links open Buy Me a Coffee in a new tab, nothing is sent to it before a click, and the privacy page says so.
-
-<p align="center"><img src="docs/screenshots/support.png" alt="Keep tinypercent free: a short note from Andrius and a yellow Buy me a coffee button" width="600"></p>
+tinypercent is built purely as an educational calculator: it collects no data, tracks nothing, and is always free. The page says so in plain words under its first button. Anyone who finds it useful can support it through [Buy Me a Coffee](https://buymeacoffee.com/tinypercent): a yellow button under the opening example, a quiet line under the results, and a button in the footer. The links open Buy Me a Coffee in a new tab, nothing is sent to it before a click, and the privacy page says so.
 
 ### Also
 

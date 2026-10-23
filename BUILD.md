@@ -609,7 +609,7 @@ valuation, so a PDF never shows numbers that differ from the inputs on screen.
 
 | | Done |
 |---|---|
-| Support | "Buy me a coffee" opens https://buymeacoffee.com/tinypercent in a new tab from four places: a yellow button under the hero example, a quiet line under the share bar, a closing "Keep tinypercent free" card with a note from Andrius, and the footer. `SITE.supportUrl` controls all of them; unset it and every link and the privacy note go. `ui/Coffee.tsx` holds the button, the line and the cup icon. |
+| Support | "Buy me a coffee" opens https://buymeacoffee.com/tinypercent in a new tab from three places: a yellow button under the hero example, a quiet line under the share bar, and the footer. (A closing "Keep tinypercent free" card was tried and removed.) `SITE.supportUrl` controls all of them; unset it and every link and the privacy note go. `ui/Coffee.tsx` holds the button, the line and the cup icon. |
 | Privacy promise | Under "Use calculator": collects no data, no tracking, educational and always free, and nothing typed leaves the browser. A comment beside it and a test hold it to the Privacy page: if analytics are ever connected, both change first. |
 | Privacy page | A "Supporting the project" paragraph: the links open a separate service, nothing is sent before a click, with Buy Me a Coffee's privacy policy linked. |
 | Analytics | `support_clicked` records only which placement was used. |

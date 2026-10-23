@@ -42,7 +42,7 @@ describe('the page structure', () => {
     render(<App />)
     const sections = [...document.querySelectorAll('main > section')].map((s) => s.id)
     expect(sections.slice(0, 2)).toEqual(['hero', 'calculator'])
-    expect(sections).toEqual(['hero', 'calculator', 'learn', 'instruments', 'support'])
+    expect(sections).toEqual(['hero', 'calculator', 'learn', 'instruments'])
   })
 
   it('has landmarks for navigation, the main content and the footer', () => {

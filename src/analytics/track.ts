@@ -11,7 +11,7 @@
  */
 
 /** Where a "Buy me a coffee" link sits on the page. */
-export type SupportPlacement = 'hero' | 'calculator' | 'closing' | 'footer'
+export type SupportPlacement = 'hero' | 'calculator' | 'footer'
 
 export type CtaPlacement = 'hero' | 'nav' | 'features' | 'worked_example' | 'toolbar'
 

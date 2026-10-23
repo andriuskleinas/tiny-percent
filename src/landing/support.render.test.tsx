@@ -8,8 +8,8 @@ import { SITE } from '../site'
 import { LegalPage } from './LegalPage'
 
 /**
- * "Buy me a coffee" appears four times: once as a clear ask at the end of the
- * page, and as quieter reminders elsewhere. Every link goes to the one configured page, in a new tab.
+ * "Buy me a coffee" appears three times: under the hero example, under the
+ * results and in the footer. Every link goes to the one configured page, in a new tab.
  */
 
 afterEach(() => {
@@ -20,12 +20,11 @@ afterEach(() => {
 const coffee = () => screen.getAllByRole('link', { name: /Buy me a coffee/ })
 
 describe('support links', () => {
-  it('appear under the hero example, under the results, in a closing section and in the footer', () => {
+  it('appear under the hero example, under the results and in the footer', () => {
     render(<App />)
-    expect(coffee()).toHaveLength(4)
+    expect(coffee()).toHaveLength(3)
     expect(within(document.getElementById('hero') as HTMLElement).getByRole('link', { name: /Buy me a coffee/ })).toBeTruthy()
     expect(within(document.getElementById('calculator') as HTMLElement).getByRole('link', { name: /Buy me a coffee/ })).toBeTruthy()
-    expect(within(screen.getByRole('region', { name: 'Keep tinypercent free' })).getByRole('link', { name: /Buy me a coffee/ })).toBeTruthy()
     expect(within(screen.getByRole('contentinfo')).getByRole('link', { name: /Buy me a coffee/ })).toBeTruthy()
   })
 
@@ -47,7 +46,6 @@ describe('support links', () => {
     expect(events.filter((e) => e.name === 'support_clicked')).toEqual([
       { name: 'support_clicked', placement: 'hero' },
       { name: 'support_clicked', placement: 'calculator' },
-      { name: 'support_clicked', placement: 'closing' },
       { name: 'support_clicked', placement: 'footer' },
     ])
   })
