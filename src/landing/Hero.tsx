@@ -8,6 +8,38 @@ import { SITE } from '../site'
 import { HERO_FACTS } from './example'
 import { INVESTMENT_INPUT_ID, scrollToSection } from './scroll'
 
+/** The hero's promises, each with a 16px line icon. */
+const PROMISES = [
+  {
+    text: 'Runs in your browser',
+    icon: (
+      <>
+        <rect x="3" y="7" width="10" height="7" rx="1.5" />
+        <path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" />
+      </>
+    ),
+  },
+  {
+    text: 'No data, no tracking',
+    icon: (
+      <>
+        <path d="M2 8s2.2-4.5 6-4.5S14 8 14 8s-2.2 4.5-6 4.5S2 8 2 8Z" />
+        <circle cx="8" cy="8" r="1.75" />
+        <path d="m2.5 2.5 11 11" />
+      </>
+    ),
+  },
+  {
+    text: 'Free and educational',
+    icon: (
+      <>
+        <path d="M1.5 6 8 3l6.5 3L8 9 1.5 6Z" />
+        <path d="M4.5 7.5V11c1 .9 2.2 1.4 3.5 1.4s2.5-.5 3.5-1.4V7.5" />
+      </>
+    ),
+  },
+]
+
 export function Hero() {
   return (
     <section id="hero" aria-labelledby="hero-title" className="scroll-mt-20">
@@ -34,19 +66,21 @@ export function Hero() {
           </div>
           {/* Keep this true. If analytics are ever connected (analytics/track.ts), this line
               and the Privacy page both have to change first. */}
-          <ul aria-label="What tinypercent does with your data" className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-ink-soft">
-            {['Collects no data', 'No tracking', 'Educational, always free'].map((item) => (
-              <li key={item} className="flex items-center gap-1.5">
-                <svg aria-hidden="true" viewBox="0 0 16 16" className="size-4 text-gain" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="m3.5 8.5 3 3 6-7" />
-                </svg>
-                {item}
+          <ul
+            aria-label="What tinypercent does with your data"
+            className="mt-10 flex max-w-xl flex-col gap-3 border-t border-rule pt-6 text-sm font-medium text-ink sm:flex-row sm:flex-wrap sm:gap-x-7"
+          >
+            {PROMISES.map(({ text, icon }) => (
+              <li key={text} className="flex items-center gap-2.5">
+                <span aria-hidden="true" className="grid size-7 shrink-0 place-items-center rounded-lg bg-accent-wash text-accent">
+                  <svg viewBox="0 0 16 16" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    {icon}
+                  </svg>
+                </span>
+                {text}
               </li>
             ))}
           </ul>
-          <p className="mt-3 max-w-xl text-sm text-ink-faint">
-            tinypercent is built purely as an educational calculator. Nothing you type leaves your browser.
-          </p>
         </div>
 
         <div className="flex flex-col gap-5">

@@ -63,7 +63,7 @@ describe('support links', () => {
   it('promises in the hero only what the privacy page says', () => {
     render(<App />)
     const promise = within(screen.getByRole('list', { name: 'What tinypercent does with your data' }))
-    expect(promise.getAllByRole('listitem').map((li) => li.textContent)).toEqual(['Collects no data', 'No tracking', 'Educational, always free'])
+    expect(promise.getAllByRole('listitem').map((li) => li.textContent)).toEqual(['Runs in your browser', 'No data, no tracking', 'Free and educational'])
     cleanup()
     render(<LegalPage page="privacy" />)
     expect(document.body.textContent).toMatch(/no accounts, no cookies, no analytics/)
