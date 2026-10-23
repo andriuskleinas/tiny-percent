@@ -344,7 +344,7 @@ function InstrumentsBody() {
           <tbody>
             <tr>
               <th scope="colgroup" colSpan={4} className={groupHeading}>
-                What you put in
+                <span className="marker">What you put in</span>
               </th>
             </tr>
             <tr className="border-b border-rule align-top transition-colors last:border-0 hover:bg-sunk/30">
@@ -360,7 +360,7 @@ function InstrumentsBody() {
             </tr>
             <tr>
               <th scope="colgroup" colSpan={4} className={groupHeading}>
-                How it works
+                <span className="marker">How it works</span>
               </th>
             </tr>
             {facts.map(([question, ...answers]) => (
@@ -377,7 +377,9 @@ function InstrumentsBody() {
             ))}
             <tr>
               <th scope="colgroup" colSpan={4} className={groupHeading}>
-                What your {cheque} is worth after the {f.seed.label}
+                <span className="marker">
+                  What your {cheque} is worth after the {f.seed.label}
+                </span>
               </th>
             </tr>
             {stakes.map(({ question, owned, worth, most }) => (
@@ -437,7 +439,7 @@ function InstrumentsBody() {
         ))}
       </div>
       <p className="mt-6 text-sm text-ink-faint">
-        Want to try your own terms? Pick SAFE or Convertible note under “What you are buying” in the calculator above.
+        Want to try your own terms? Pick SAFE or Convertible note in the calculator above.
       </p>
     </Section>
   )
