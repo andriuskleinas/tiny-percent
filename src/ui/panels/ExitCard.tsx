@@ -70,7 +70,7 @@ export function ExitCard({ scenario, dispatch }: { scenario: Scenario; dispatch:
         </div>
         <p className="mt-2 text-xs text-ink-faint">
           Drag to set the price the whole company sells for, or fine-tune it with <Key glyph="←" name="Left arrow" />{' '}
-          <Key glyph="→" name="Right arrow" />.
+          <Key glyph="→" name="Right arrow" />
         </p>
 
         <div className="mt-4 border-t border-rule pt-4">
