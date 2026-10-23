@@ -265,16 +265,22 @@ function InstrumentsBody() {
     ['Interest', 'None', 'None', 'Yes, and it converts too'],
     ['If no round ever comes', 'You keep your shares', 'It waits, with no end date', 'Repaid, converted or extended at maturity'],
   ]
-  // The stakes are drawn as bars, each row scaled to its own largest stake.
-  const stakes: Array<{ question: string; values: readonly [number, number, number] }> = [
-    {
-      question: `After the ${f.seed.label} at ${compactMoney(f.seed.postMoneyCents)}`,
-      values: [f.shares.ownership, f.safe.ownership, f.note.ownership],
-    },
-    {
-      question: `After a ${f.seed.label} at ${compactMoney(f.cheapSeed.postMoneyCents)}`,
-      values: [f.shares.cheapOwnership, f.cheapSafe.ownership, f.cheapNote.ownership],
-    },
+  // Each stake is valued at the Seed's own price: ownership × its post-money.
+  const stake = (question: string, postMoneyCents: number, owned: readonly number[]) => {
+    const worth = owned.map((o) => Math.round(o * postMoneyCents))
+    return { question, owned, worth, most: Math.max(...worth) }
+  }
+  const stakes = [
+    stake(`${f.seed.label} at ${compactMoney(f.seed.postMoneyCents)}`, f.seed.postMoneyCents, [
+      f.shares.ownership,
+      f.safe.ownership,
+      f.note.ownership,
+    ]),
+    stake(`${f.seed.label} at ${compactMoney(f.cheapSeed.postMoneyCents)}, below the cap`, f.cheapSeed.postMoneyCents, [
+      f.shares.cheapOwnership,
+      f.cheapSafe.ownership,
+      f.cheapNote.ownership,
+    ]),
   ]
   const columns = [
     { name: 'Shares', blurb: 'Priced today' },
@@ -334,32 +340,26 @@ function InstrumentsBody() {
             ))}
             <tr>
               <th scope="colgroup" colSpan={4} className={groupHeading}>
-                What you end up owning
+                What your {cheque} is worth after the {f.seed.label}
               </th>
             </tr>
-            {stakes.map(({ question, values }) => {
-              const most = Math.max(...values)
-              return (
-                <tr key={question} className="border-b border-rule align-top transition-colors last:border-0 hover:bg-sunk/30">
-                  <th scope="row" className="px-5 py-4 text-left font-medium text-ink-soft">
-                    {question}
-                  </th>
-                  {values.map((v, i) => (
-                    <td key={columns[i]?.name} className="px-5 py-4">
-                      <span className={`font-mono text-base font-semibold tabular-nums ${v === most ? 'text-accent-label' : 'text-ink'}`}>
-                        {pct(v)}
-                      </span>
-                      <span aria-hidden="true" className="mt-2 block h-1.5 max-w-40 overflow-hidden rounded-full bg-sunk">
-                        <span
-                          className={`block h-full rounded-full ${v === most ? 'bg-accent' : 'bg-rule-strong'}`}
-                          style={{ width: `${(v / most) * 100}%` }}
-                        />
-                      </span>
-                    </td>
-                  ))}
-                </tr>
-              )
-            })}
+            {stakes.map(({ question, owned, worth, most }) => (
+              <tr key={question} className="border-b border-rule align-top transition-colors last:border-0 hover:bg-sunk/30">
+                <th scope="row" className="px-5 py-4 text-left font-medium text-ink-soft">
+                  {question}
+                </th>
+                {worth.map((w, i) => (
+                  <td key={columns[i]?.name} className="px-5 py-4">
+                    <span className={`block font-mono text-lg font-semibold tabular-nums ${w === most ? 'text-accent' : 'text-ink'}`}>
+                      {money(w)}
+                    </span>
+                    <span className="mt-0.5 block text-xs text-ink-faint">
+                      {pct(owned[i] ?? 0)} owned · {multiple(w / f.chequeCents)}
+                    </span>
+                  </td>
+                ))}
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
@@ -375,15 +375,16 @@ function InstrumentsBody() {
                   <dd className="text-right text-ink">{answers[i]}</dd>
                 </div>
               ))}
-              {stakes.map(({ question, values }) => {
-                const v = values[i] ?? 0
+              {stakes.map(({ question, owned, worth, most }) => {
+                const w = worth[i] ?? 0
                 return (
                   <div key={question} className="flex items-baseline justify-between gap-4 py-2">
                     <dt className="text-ink-faint">{question}</dt>
-                    <dd
-                      className={`text-right font-mono font-semibold tabular-nums ${v === Math.max(...values) ? 'text-accent-label' : 'text-ink'}`}
-                    >
-                      {pct(v)}
+                    <dd className="text-right">
+                      <span className={`block font-mono font-semibold tabular-nums ${w === most ? 'text-accent' : 'text-ink'}`}>{money(w)}</span>
+                      <span className="block text-xs text-ink-faint">
+                        {pct(owned[i] ?? 0)} owned · {multiple(w / f.chequeCents)}
+                      </span>
                     </dd>
                   </div>
                 )

@@ -102,7 +102,7 @@ export function ReturnCurveChart({ scenario, run, dispatch }: { scenario: Scenar
   return (
     <section aria-labelledby={titleId} className="relative overflow-hidden rounded-2xl border border-rule bg-surface shadow-card">
       <header className="px-5 pt-6 sm:px-8 sm:pt-8">
-        <p className="font-mono text-xs font-bold uppercase tracking-[0.14em] text-accent-label">One cheque, every possible exit</p>
+        <p className="font-mono text-xs font-bold uppercase tracking-[0.14em] text-accent">One cheque, every possible exit</p>
         <h3 id={titleId} className="mt-2 text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
           From cheque to exit
         </h3>

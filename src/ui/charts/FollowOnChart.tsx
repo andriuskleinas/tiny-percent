@@ -224,7 +224,7 @@ export function FollowOnChart({ paths, pending }: { paths: StrategyPaths; pendin
   return (
     <section aria-labelledby={titleId} className="relative overflow-hidden rounded-2xl border border-rule bg-surface shadow-card">
       <header className="px-5 pt-6 sm:px-8 sm:pt-8">
-        <p className="font-mono text-xs font-bold uppercase tracking-[0.14em] text-accent-label">The same company, three ways</p>
+        <p className="font-mono text-xs font-bold uppercase tracking-[0.14em] text-accent">The same company, three ways</p>
         <h3 id={titleId} className="mt-2 text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
           Follow on or sit out?
         </h3>
