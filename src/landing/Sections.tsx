@@ -282,12 +282,22 @@ function InstrumentsBody() {
       f.cheapNote.ownership,
     ]),
   ]
+  const capShort = compactMoney(f.capCents)
+  const terms = `${capShort} cap, ${pct(f.discount, 0)} discount`
   const columns = [
-    { name: 'Shares', blurb: 'Priced today' },
-    { name: 'SAFE', blurb: 'Priced at the next round' },
-    { name: 'Convertible note', blurb: 'A loan, priced later' },
+    { name: 'Shares', blurb: 'Priced today', terms: `${pct(f.shares.initialOwnership)} of the company at ${capShort}` },
+    { name: 'SAFE', blurb: 'Priced at the next round', terms },
+    { name: 'Convertible note', blurb: 'A loan, priced later', terms: `${terms}, ${pct(f.interestRate, 0)} a year` },
   ] as const
   const groupHeading = 'bg-sunk/60 px-5 py-2 text-left font-mono text-[11px] font-medium uppercase tracking-wider text-ink-faint'
+  // The deal restated where the comparison starts, so the table reads on its own.
+  const deal = (
+    <>
+      One <strong className="font-mono font-semibold text-ink">{cheque}</strong> cheque at a{' '}
+      <strong className="font-mono font-semibold text-ink">{capShort}</strong> valuation, invested three ways, then valued after the{' '}
+      {f.seed.label}.
+    </>
+  )
 
   return (
     <Section
@@ -305,6 +315,7 @@ function InstrumentsBody() {
 
       <h3 className="mt-12 text-lg font-semibold tracking-tight text-ink">Side by side</h3>
       <div className="mt-4 hidden overflow-hidden rounded-2xl border border-rule bg-surface shadow-card sm:block">
+        <p className="border-b border-rule bg-accent-wash px-5 py-4 text-base text-ink-soft">{deal}</p>
         <table className="w-full table-fixed border-collapse text-sm">
           <caption className="sr-only">Shares, SAFE and convertible note compared</caption>
           <thead>
@@ -321,6 +332,22 @@ function InstrumentsBody() {
             </tr>
           </thead>
           <tbody>
+            <tr>
+              <th scope="colgroup" colSpan={4} className={groupHeading}>
+                What you put in
+              </th>
+            </tr>
+            <tr className="border-b border-rule align-top transition-colors last:border-0 hover:bg-sunk/30">
+              <th scope="row" className="px-5 py-4 text-left font-medium text-ink-soft">
+                Your cheque
+              </th>
+              {columns.map((c) => (
+                <td key={c.name} className="px-5 py-4">
+                  <span className="block font-mono text-lg font-semibold tabular-nums text-ink">{cheque}</span>
+                  <span className="mt-0.5 block text-xs text-ink-faint">{c.terms}</span>
+                </td>
+              ))}
+            </tr>
             <tr>
               <th scope="colgroup" colSpan={4} className={groupHeading}>
                 How it works
@@ -364,11 +391,19 @@ function InstrumentsBody() {
         </table>
       </div>
       <div className="mt-4 flex flex-col gap-4 sm:hidden">
+        <p className="rounded-2xl bg-accent-wash px-4 py-3 text-sm text-ink-soft">{deal}</p>
         {columns.map((c, i) => (
           <div key={c.name} className="rounded-2xl border border-rule bg-surface p-4 shadow-card">
             <p className="font-semibold text-ink">{c.name}</p>
             <p className="text-xs text-ink-faint">{c.blurb}</p>
             <dl className="mt-2 flex flex-col divide-y divide-rule text-sm">
+              <div className="flex items-baseline justify-between gap-4 py-2">
+                <dt className="text-ink-faint">Your cheque</dt>
+                <dd className="text-right">
+                  <span className="block font-mono font-semibold tabular-nums text-ink">{cheque}</span>
+                  <span className="block text-xs text-ink-faint">{c.terms}</span>
+                </dd>
+              </div>
               {facts.map(([question, ...answers]) => (
                 <div key={question} className="flex items-baseline justify-between gap-4 py-2">
                   <dt className="text-ink-faint">{question}</dt>
