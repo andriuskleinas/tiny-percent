@@ -14,6 +14,8 @@
   --color-rule: #ddd6c8;
   --color-rule-strong: #c3bbaa;
   --color-accent: #7f93ff;
+  /* The same blue, deeper and more vivid, for the small section labels. */
+  --color-accent-label: #4f67ff;
   --color-accent-wash: #e6e9ff;
   --color-on-accent: #ffffff;
   --color-gain: #1a6e49;

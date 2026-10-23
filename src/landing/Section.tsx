@@ -26,7 +26,7 @@ export function Section({
       className={`scroll-mt-20 border-t border-rule ${tone === 'band' ? 'bg-surface' : ''}`}
     >
       <div className={`mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20 ${centred ? 'text-center' : ''}`}>
-        {eyebrow ? <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-accent">{eyebrow}</p> : null}
+        {eyebrow ? <p className="font-mono text-xs font-bold uppercase tracking-[0.14em] text-accent-label">{eyebrow}</p> : null}
         <h2 id={`${id}-title`} className={`mt-2 max-w-3xl text-3xl ${centred ? 'mx-auto' : ''} font-semibold tracking-tight text-ink outline-none sm:text-4xl`}>
           {title}
         </h2>
