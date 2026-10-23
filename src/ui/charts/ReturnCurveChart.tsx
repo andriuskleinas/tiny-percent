@@ -74,7 +74,7 @@ export function ReturnCurveChart({ scenario, run, dispatch }: { scenario: Scenar
 
   const chosen = outcomes.find((o) => o.valueCents === exitCents)
   const shown = outcomes.find((o) => o.valueCents === hovered) ?? chosen
-  const range = (low: string, highText: string) => (low === highText ? highText : `${low} – ${highText}`)
+  const range = (low: string, highText: string) => (low === highText ? highText : `${low} - ${highText}`)
   // Where the money comes back for good: the lowest exit above which every
   // larger one returns at least what was invested, preferences or not.
   let breakEven: Outcome | undefined

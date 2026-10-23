@@ -205,7 +205,7 @@ export function FollowOnChart({ paths, pending }: { paths: StrategyPaths; pendin
       return placed
     }, [])
 
-  const range = (low: string, high: string) => (low === high ? high : `${low} – ${high}`)
+  const range = (low: string, high: string) => (low === high ? high : `${low} - ${high}`)
   const pendingNames = columns.filter((c) => c.pending).map((c) => c.label)
   const same = (a: PathKind, b: PathKind) => columns.every((c) => c.cells[a].investedCents === c.cells[b].investedCents)
   const yoursMatches = same('yours', 'sitOut') ? 'No follow-on' : same('yours', 'proRata') ? 'Always pro-rata' : undefined

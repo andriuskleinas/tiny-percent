@@ -35,7 +35,7 @@ describe('the €5,000 example', () => {
   it('lists every round and ends the table with the exit', () => {
     const rows = r.rounds?.rows ?? []
     expect(rows.map((row) => row.cells[0])).toEqual(['Pre-seed', 'Seed', 'Series A', 'Series B', 'Exit at €250M'])
-    expect(rows[1]?.cells).toEqual(['Seed', 'Sep 1, 2027', '€15,000,000', '—', '0.080%', '€12,000'])
+    expect(rows[1]?.cells).toEqual(['Seed', 'Sep 1, 2027', '€15,000,000', '-', '0.080%', '€12,000'])
     expect(rows.at(-1)?.emphasis).toBe(true)
   })
 
@@ -43,7 +43,7 @@ describe('the €5,000 example', () => {
     expect(r.endings?.rows.map((row) => row.cells)).toEqual([
       ['The company fails', '€0', '€0', '0×'],
       ['It returns its capital', '€32,000,000', '€5,000', '1×'],
-      ['It grows 10×', '€50,000,000', '€5,000 – €25,600', '1× – 5.12×'],
+      ['It grows 10×', '€50,000,000', '€5,000 - €25,600', '1× - 5.12×'],
       ['It grows 100×', '€500,000,000', '€256,000', '51.2×'],
     ])
   })

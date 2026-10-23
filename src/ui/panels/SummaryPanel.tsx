@@ -17,7 +17,7 @@ function figures(scenario: Scenario, run: ScenarioResult) {
   const entry = run.rounds.find((r) => r.round.id === entryId)
   const initialCents = entry?.investedCents ?? 0
   const uncertain = run.exit.uncertain
-  const range = (low: string, high: string) => (uncertain && low !== high ? `${low} – ${high}` : high)
+  const range = (low: string, high: string) => (uncertain && low !== high ? `${low} - ${high}` : high)
   return { entry, initialCents, followOnCents: run.totalInvestedCents - initialCents, range }
 }
 
@@ -80,7 +80,7 @@ export function SummaryPanel({ scenario, run }: { scenario: Scenario; run: Scena
                         ? `−${money(high.dragCents)}`
                         : low.dragCents === 0
                           ? `up to −${money(high.dragCents)}`
-                          : `−${money(low.dragCents)} – ${money(high.dragCents)}`}
+                          : `−${money(low.dragCents)} - ${money(high.dragCents)}`}
                     </dd>
                   </div>
                 ) : null}

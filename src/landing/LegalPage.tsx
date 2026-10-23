@@ -43,8 +43,8 @@ function Privacy() {
       <H2>Hosting</H2>
       <p>
         The site is hosted by Cloudflare. When your browser loads a page, Cloudflare processes the technical
-        information any web request carries — such as your IP address, browser type, the time and the address
-        requested — to deliver and protect the site. See{' '}
+        information any web request carries (such as your IP address, browser type, the time and the address
+        requested) to deliver and protect the site. See{' '}
         <a className="text-accent underline" href="https://www.cloudflare.com/privacypolicy/">
           Cloudflare’s privacy policy
         </a>

@@ -256,7 +256,7 @@ export function EntryPanel({
           ) : (
             <>
               <p className="text-xs font-medium text-ink-faint">Your ownership</p>
-              <p className="mt-1 font-mono text-4xl font-semibold tracking-tight text-ink-faint">—</p>
+              <p className="mt-1 font-mono text-4xl font-semibold tracking-tight text-ink-faint">-</p>
               <p className="mt-3 text-sm text-ink-soft">
                 {convertible
                   ? 'Enter your investment amount and the valuation cap to see what you own.'

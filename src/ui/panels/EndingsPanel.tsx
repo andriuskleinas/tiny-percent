@@ -49,7 +49,7 @@ function EndingsBody({
 }) {
   const { money, compactMoney } = useMoney()
   const titleId = useId()
-  const range = (low: string, high: string) => (low === high ? high : `${low} – ${high}`)
+  const range = (low: string, high: string) => (low === high ? high : `${low} - ${high}`)
   const charged = result.rows.some((r) => r.outcome.feesHigh.dragCents > 0)
   const from = convertible ? `your ${compactMoney(result.entryPostCents)} cap` : `the ${compactMoney(result.entryPostCents)} you invested at`
   const selected = (row: Ending) => row.valueCents > 0 && row.valueCents === scenario.exit.valueCents

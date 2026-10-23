@@ -116,7 +116,7 @@ export function exitProceeds(input: ExitInput): ExitProceeds {
       `The sale at ${currency(input.valueCents)} is above the ` +
       `${currency(input.totalRaisedCents)} raised but not far enough above it for the ` +
       `outcome to be obvious. Whether you land nearer ${currency(Math.min(low, high))} or ` +
-      `${currency(Math.max(low, high))} depends on the preference stack — seniority, ` +
-      `participation and who converts — which cannot be derived from angel-side inputs.`,
+      `${currency(Math.max(low, high))} depends on the preference stack (seniority, ` +
+      `participation and who converts), which cannot be derived from angel-side inputs.`,
   }
 }

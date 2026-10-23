@@ -25,7 +25,7 @@ export const GLOSSARY = {
   },
   valuationBasis: {
     question: 'Pre-money or post-money?',
-    body: 'Term sheets quote one or the other. Pre-money is the value before the raise; post-money includes it. Pick the one your deal states — mixing them up changes your ownership.',
+    body: 'Term sheets quote one or the other. Pre-money is the value before the raise; post-money includes it. Pick the one your deal states: mixing them up changes your ownership.',
   },
   dilution: {
     question: 'What is dilution?',
@@ -37,7 +37,7 @@ export const GLOSSARY = {
   },
   optionPool: {
     question: 'What is a new option pool?',
-    body: 'Shares set aside for future employees, created as part of the round. It is usually carved out before the new money comes in, so existing holders — you included — bear the dilution.',
+    body: 'Shares set aside for future employees, created as part of the round. It is usually carved out before the new money comes in, so existing holders, you included, bear the dilution.',
   },
   paperValue: {
     question: 'What is paper value?',
@@ -77,11 +77,11 @@ export const GLOSSARY = {
   },
   discount: {
     question: 'What is a discount?',
-    body: 'A percentage off the price the next round pays per share, commonly 10–25%. You convert at whichever is better for you, the cap or the discount, never both.',
+    body: 'A percentage off the price the next round pays per share, commonly 10-25%. You convert at whichever is better for you, the cap or the discount, never both.',
   },
   interest: {
     question: 'What is interest on a convertible note?',
-    body: 'A note is a loan, so it earns interest until it converts, usually 4–8% a year. The interest converts into shares too, but it is not money you paid, so your multiple is measured against your cheque alone. Simple interest is charged on the loan only; compounding is also charged on interest already added.',
+    body: 'A note is a loan, so it earns interest until it converts, usually 4-8% a year. The interest converts into shares too, but it is not money you paid, so your multiple is measured against your cheque alone. Simple interest is charged on the loan only; compounding is also charged on interest already added.',
   },
   maturity: {
     question: 'What happens when a note matures?',

@@ -37,7 +37,7 @@ describe('the four endings', () => {
     ])
     const text = rows.map((r) => r.textContent).join(' | ')
     expect(text).toContain('€0')
-    expect(text).toContain('€5,000 – €25,600')
+    expect(text).toContain('€5,000 - €25,600')
     expect(text).toContain('€256,000')
     expect(text).toContain('51.2×')
   })

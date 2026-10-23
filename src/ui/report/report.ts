@@ -67,7 +67,7 @@ export function buildReport(scenario: Scenario, run: ScenarioResult, today: Date
   const cur = scenario.currency
   const $ = (cents: number) => money(cents, cur)
   const $$ = (cents: number) => compactMoney(cents, cur)
-  const range = (low: string, high: string) => (low === high ? high : `${low} – ${high}`)
+  const range = (low: string, high: string) => (low === high ? high : `${low} - ${high}`)
 
   const entryRound = scenario.rounds[0] as Round
   const cheque = entryRound.participation as Instrument
@@ -171,7 +171,7 @@ export function buildReport(scenario: Scenario, run: ScenarioResult, today: Date
         roundName(s.round),
         longDate(s.round.date),
         $(s.postMoneyCents),
-        s.investedCents > 0 ? $(s.investedCents) : '—',
+        s.investedCents > 0 ? $(s.investedCents) : '-',
         ownership(s.ownershipAfter),
         $(s.stakeValueCents),
       ],
@@ -179,7 +179,7 @@ export function buildReport(scenario: Scenario, run: ScenarioResult, today: Date
     }))
     if (exitCents > 0 && run.totalInvestedCents > 0) {
       rows.push({
-        cells: [`Exit at ${$$(exitCents)}`, longDate(scenario.exit.date), $(exitCents), '—', ownership(run.finalOwnership), range($(low.grossCents), $(high.grossCents))],
+        cells: [`Exit at ${$$(exitCents)}`, longDate(scenario.exit.date), $(exitCents), '-', ownership(run.finalOwnership), range($(low.grossCents), $(high.grossCents))],
         note: high.carryCents > 0 ? `${range($(low.netCents), $(high.netCents))} after carry` : undefined,
         emphasis: true,
       })

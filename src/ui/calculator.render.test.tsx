@@ -323,7 +323,7 @@ describe('the exit and the summary', () => {
   it('shows a range, and says why, where liquidation preferences decide the outcome', () => {
     open(EXAMPLE)
     slideTo(50_000_000)
-    expect(summaryValue('Gross proceeds')).toBe('€5,000 – €25,600')
+    expect(summaryValue('Gross proceeds')).toBe('€5,000 - €25,600')
     expect(within(summary()).getByText(/liquidation preferences decide where in this range you land/)).toBeTruthy()
   })
 

@@ -9,7 +9,7 @@ export const SITE = {
    * Production origin, no trailing slash.
    */
   url: 'https://tinypercent.com',
-  title: 'TinyPercent — Angel Investment Calculator for Dilution & Follow-ons',
+  title: 'TinyPercent - Angel Investment Calculator for Dilution & Follow-ons',
   description:
     'Free angel investment calculator. See whether your startup stake compounds or shrinks as the company raises, what follow-on and pro-rata cheques do, and what your equity could return at exit.',
   /** Legal name of the person or company operating the site. */

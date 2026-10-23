@@ -35,7 +35,7 @@ export function ExitCard({ scenario, dispatch }: { scenario: Scenario; dispatch:
           Exit valuation
         </label>
         <p aria-hidden="true" className="mt-0.5 font-mono text-3xl font-semibold tracking-tight tabular-nums text-ink">
-          {value > 0 ? compactMoney(value) : '—'}
+          {value > 0 ? compactMoney(value) : '-'}
         </p>
         <input
           id={sliderId}

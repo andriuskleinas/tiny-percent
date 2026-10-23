@@ -17,8 +17,8 @@ const PATHS: Record<Page, string> = { home: '/', privacy: '/privacy', terms: '/t
 
 const TITLES: Record<Page, string> = {
   home: SITE.title,
-  privacy: `Privacy — ${SITE.name}`,
-  terms: `Terms of use — ${SITE.name}`,
+  privacy: `Privacy - ${SITE.name}`,
+  terms: `Terms of use - ${SITE.name}`,
 }
 
 const DESCRIPTIONS: Record<Page, string> = {
