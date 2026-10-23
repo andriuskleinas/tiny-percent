@@ -73,9 +73,9 @@ export function RoundsPanel({
       aside={rounds.length === 0 ? addRound : undefined}
     >
       {rounds.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-rule-strong bg-ground/40 px-5 py-8 text-center">
-          <p className="text-sm text-ink-soft">
-            No later rounds yet. Add a Series A to see how new money dilutes you and what it would cost to keep your{' '}
+        <div className="rounded-2xl border-2 border-dashed border-coffee-ink/40 bg-coffee/15 px-5 py-8 text-center">
+          <p className="text-sm text-ink">
+            No later rounds yet. Add the next round to see how new money dilutes you and what it would cost to keep your{' '}
             <span className="inline-flex items-center gap-1">
               share. <InfoTip term="dilution" />
             </span>
