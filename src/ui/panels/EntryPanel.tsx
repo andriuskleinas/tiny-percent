@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type { ReactNode } from 'react'
 import { useMoney } from '../currency'
 import { isConvertible } from '../../engine/convert'
 import type { Maturity } from '../../engine/convert'
@@ -15,6 +16,32 @@ const CURRENCIES: readonly [readonly [Currency, string], readonly [Currency, str
   ['EUR', 'Euro'],
   ['USD', 'US dollar'],
 ]
+
+/** The currency switch shows each currency's flag: the EU's for the euro, the US's for the dollar. */
+const FLAG = 'h-5 w-[30px] rounded-[3px] ring-1 ring-black/10'
+const EU_STARS = Array.from({ length: 12 }, (_, i) => {
+  const a = (i / 12) * 2 * Math.PI
+  return [15 + 6 * Math.sin(a), 10 - 6 * Math.cos(a)] as const
+})
+const CURRENCY_FLAGS: Record<Currency, ReactNode> = {
+  EUR: (
+    <svg viewBox="0 0 30 20" className={FLAG}>
+      <rect width="30" height="20" fill="#003399" />
+      {EU_STARS.map(([x, y]) => (
+        <circle key={`${x}-${y}`} cx={x} cy={y} r="1" fill="#ffcc00" />
+      ))}
+    </svg>
+  ),
+  USD: (
+    <svg viewBox="0 0 30 20" className={FLAG}>
+      <rect width="30" height="20" fill="#b22234" />
+      {[1, 3, 5, 7, 9, 11].map((i) => (
+        <rect key={i} y={(i * 20) / 13} width="30" height={20 / 13} fill="#ffffff" />
+      ))}
+      <rect width="12" height={(7 * 20) / 13} fill="#3c3b6e" />
+    </svg>
+  ),
+}
 
 const VALUATION_BASIS = [
   ['pre', 'Pre-money'],
@@ -131,6 +158,7 @@ export function EntryPanel({
             label="Currency"
             value={currency}
             options={CURRENCIES}
+            icons={CURRENCY_FLAGS}
             onChange={(next) => dispatch({ type: 'currency:set', currency: next })}
             info="currency"
           />

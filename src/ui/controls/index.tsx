@@ -375,6 +375,7 @@ export function SwitchField<T extends string>({
   info,
   value,
   options,
+  icons,
   onChange,
 }: {
   label: string
@@ -382,6 +383,8 @@ export function SwitchField<T extends string>({
   info?: TermKey | undefined
   value: T
   options: readonly [readonly [T, string], readonly [T, string]]
+  /** Drawn in place of each option's name, which stays as its accessible name and tooltip. */
+  icons?: Record<T, ReactNode> | undefined
   onChange: (value: T) => void
 }) {
   const refs = useRef<Array<HTMLButtonElement | null>>([])
@@ -418,8 +421,21 @@ export function SwitchField<T extends string>({
                 className={`relative z-10 rounded-full px-3 py-2 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent/40 ${
                   checked ? 'text-accent' : 'text-ink-faint hover:text-ink'
                 }`}
+                title={icons ? text : undefined}
               >
-                {text}
+                {icons ? (
+                  <>
+                    <span
+                      aria-hidden="true"
+                      className={`inline-flex transition-[opacity,filter] ${checked ? '' : 'opacity-50 grayscale'}`}
+                    >
+                      {icons[key]}
+                    </span>
+                    <span className="sr-only">{text}</span>
+                  </>
+                ) : (
+                  text
+                )}
               </button>
             )
           })}
