@@ -98,7 +98,6 @@ function LearnBody() {
       id="learn"
       eyebrow="The maths, briefly"
       title="How a small stake grows, shrinks and pays out"
-      lede={`Four ideas decide what your cheque returns, each worked through with one ${money(f.chequeCents)} ${f.entryLabel} cheque.`}
     >
       <div className="grid gap-6 md:grid-cols-2">
         {cards.map((card) => (
