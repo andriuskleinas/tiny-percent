@@ -42,7 +42,7 @@ describe('the page structure', () => {
     render(<App />)
     const sections = [...document.querySelectorAll('main > section')].map((s) => s.id)
     expect(sections.slice(0, 2)).toEqual(['hero', 'calculator'])
-    expect(sections).toEqual(['hero', 'calculator', 'learn'])
+    expect(sections).toEqual(['hero', 'calculator', 'learn', 'instruments'])
   })
 
   it('has landmarks for navigation, the main content and the footer', () => {
@@ -154,6 +154,63 @@ describe('the explanations', () => {
     expect(text).toContain('0.0512% × €250,000,000 =€128,000')
     expect(text).toContain('€128,000 ÷ €5,000 =25.6×')
     expect(text).toContain('€128,000 − 20% × (€128,000 − €5,000) =€103,400 · 20.7×')
+  })
+})
+
+describe('shares, SAFE or convertible note', () => {
+  // €25,000 at a €5M cap, then a Seed of €8M pre raising €2M (or €3M raising
+  // €1M). The same cap and discount routes as golden cases E, F and G.
+  const text = () => region('Shares, SAFE or convertible note?').textContent ?? ''
+
+  it('works shares through to the Seed', () => {
+    render(<App />)
+    expect(text()).toContain('€25,000 ÷ €5,000,000 =0.50%')
+    expect(text()).toContain('0.50% × 80% =0.40%')
+  })
+
+  it('shows a SAFE taking the better of the cap and the discount', () => {
+    render(<App />)
+    expect(text()).toContain('At the capYou get this€25,000 ÷ €5,000,000 × 80% =0.40%')
+    expect(text()).toContain('At the discount€25,000 ÷ (80% × €10,000,000) =0.31%')
+  })
+
+  it('shows a note’s interest converting', () => {
+    render(<App />)
+    expect(text()).toContain('€25,000 × (1 + 8% × 2) =€29,000')
+    expect(text()).toContain('€29,000 ÷ €5,000,000 × 80% =0.46%')
+    expect(text()).toContain('The €4,000 of interest converts, but it isn’t money you paid.')
+  })
+
+  it('shows the discount protecting a SAFE when the next round is cheaper', () => {
+    render(<App />)
+    expect(text()).toContain('0.50% × 75% =0.38%')
+    expect(text()).toContain('SAFE at the discountYou get this€25,000 ÷ (80% × €4,000,000) =0.78%')
+  })
+
+  it('says why each one exists, with when it fits one click away', () => {
+    render(<App />)
+    const cards = within(region('Shares, SAFE or convertible note?')).getAllByRole('article')
+    expect(cards).toHaveLength(4)
+    for (const card of cards.slice(0, 3)) {
+      const why = [...card.querySelectorAll('p')].find((p) => p.textContent?.startsWith('Why it exists.'))
+      expect(why?.closest('details')).toBeNull()
+    }
+    expect(cards[1]?.textContent).toContain('Why it exists. Nobody can price a company this early')
+    const folded = cards.map((card) => card.querySelector('details'))
+    expect(folded.slice(0, 3).every((d) => d !== null && !d.open)).toBe(true)
+    expect(folded[2]?.querySelector('summary')?.textContent).toContain('When it works best')
+    expect(folded[2]?.textContent).toContain('Best for bridge rounds')
+    // The scenario card is an example, not an instrument.
+    expect(folded[3]).toBeNull()
+    expect(cards[3]?.textContent).not.toContain('Why it exists')
+  })
+
+  it('compares all three side by side', () => {
+    render(<App />)
+    const table = within(region('Shares, SAFE or convertible note?')).getByRole('table')
+    const rows = within(table).getAllByRole('row').map((r) => r.textContent)
+    expect(rows).toContain('After the Seed at €10M0.40%0.40%0.46%')
+    expect(rows).toContain('After a Seed at €4M0.38%0.78%0.91%')
   })
 })
 

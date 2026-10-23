@@ -94,6 +94,24 @@ function asPostMoney(entry: Round, cheque: Instrument, valuationCents: number, c
   return valuationCents + convertingCents + others
 }
 
+export interface RouteOwnership {
+  route: ConversionRoute
+  /** Ownership once the round has closed, if this route were the one taken. */
+  ownership: number
+}
+
+/**
+ * The ownership each price would give, cap first. `convertAt` takes the best;
+ * this is exported so an explanation can show the routes that lost as well.
+ */
+export function conversionRoutes(convertingCents: number, capPostCents: number, discount: number, terms: RoundTerms): RouteOwnership[] {
+  const value = postMoney(terms)
+  const routes: RouteOwnership[] = [{ route: 'cap', ownership: (convertingCents / capPostCents) * dilutionFactor(terms) }]
+  if (discount > 0) routes.push({ route: 'discount', ownership: convertingCents / ((1 - discount) * value) })
+  routes.push({ route: 'round_price', ownership: convertingCents / value })
+  return routes
+}
+
 /**
  * How the entry cheque converts in `round`, the first round after it.
  *
@@ -113,13 +131,8 @@ export function convertAt(entry: Round, cheque: Instrument, round: Round, terms:
   const capPostCents = asPostMoney(entry, cheque, entry.valuationCents, convertingCents)
   if (!(capPostCents > 0)) throw new RangeError('Enter the valuation cap to see what your SAFE converts into.')
 
-  const value = postMoney(terms)
   const retained = dilutionFactor(terms)
-  const routes: Array<{ route: ConversionRoute; ownership: number }> = [
-    { route: 'cap', ownership: (convertingCents / capPostCents) * retained },
-  ]
-  if (discount > 0) routes.push({ route: 'discount', ownership: convertingCents / ((1 - discount) * value) })
-  routes.push({ route: 'round_price', ownership: convertingCents / value })
+  const routes = conversionRoutes(convertingCents, capPostCents, discount, terms)
 
   // The best ownership wins outright. Ties stay with the earlier route, the cap.
   let best = routes[0] as (typeof routes)[number]
