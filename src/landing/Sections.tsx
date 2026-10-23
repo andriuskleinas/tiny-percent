@@ -483,7 +483,7 @@ export function SiteFooter() {
     ['Terms', '/terms', undefined],
   ]
   return (
-    <footer className="border-t border-rule bg-surface">
+    <footer className="footer-black border-t border-rule bg-surface">
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:px-6 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
         <div>
           <p className="text-lg text-ink">

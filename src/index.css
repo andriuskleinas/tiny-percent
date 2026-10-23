@@ -1,9 +1,9 @@
 @import "tailwindcss";
 
-/* TinyPercent, "paper & cobalt": warm paper neutrals and one electric cobalt for
-   your slice of the company, with one hue for growth and one for dilution and
-   fees. Every text colour clears WCAG AA (4.5:1) on every background token in
-   both themes. `slice` and `grid` are the company-grid visuals' own names. */
+/* TinyPercent, "paper & cobalt": warm paper neutrals and one light cobalt, the
+   same in both themes, for your slice of the company, with one hue for growth
+   and one for dilution and fees. Every text colour except the blue clears WCAG
+   AA (4.5:1) on every background token in both themes. `slice` and `grid` are the company-grid visuals' own names. */
 @theme {
   --color-ground: #f5f2ea;
   --color-surface: #fffdf8;
@@ -13,9 +13,10 @@
   --color-ink-faint: #65676f;
   --color-rule: #ddd6c8;
   --color-rule-strong: #c3bbaa;
-  --color-accent: #2f4bff;
+  --color-accent: #7f93ff;
   --color-accent-wash: #e6e9ff;
-  --color-on-accent: #ffffff;
+  /* Dark text on the light blue: white on it would be too faint to read. */
+  --color-on-accent: #15161a;
   --color-gain: #1a6e49;
   --color-dilute: #a83e25;
   --color-slice: var(--color-accent);
@@ -72,6 +73,16 @@
   --color-dilute: #f08a66;
   --color-grid: #25272e;
   --color-marker: #5a4a12;
+}
+
+/* The footer is always black, in either theme: it takes the dark palette on a
+   black surface so its text, links and wordmark keep their contrast. */
+.footer-black {
+  --color-surface: #000000;
+  --color-ink: #eceae4;
+  --color-ink-soft: #b9b8b2;
+  --color-ink-faint: #94938e;
+  --color-rule: #2a2c33;
 }
 
 /* A highlighter stroke behind text. It sits a little inside the line height,
