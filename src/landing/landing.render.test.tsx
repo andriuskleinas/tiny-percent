@@ -211,8 +211,8 @@ describe('shares, SAFE or convertible note', () => {
     const table = within(region('Shares, SAFE or convertible note?')).getByRole('table')
     const rows = within(table).getAllByRole('row').map((r) => r.textContent)
     expect(rows).toContain('What your €5,000 is worth after the Seed')
-    expect(rows).toContain('Seed at €10M€8,0000.080% owned · 1.6×€8,0000.080% owned · 1.6×€9,2800.093% owned · 1.86×')
-    expect(rows).toContain('Seed at €4M, below the cap€3,0000.075% owned · 0.6×€6,2500.16% owned · 1.25×€7,2500.18% owned · 1.45×')
+    expect(rows).toContain('Seed at €10M€8,0000.080% owned1.6× return€8,0000.080% owned1.6× return€9,2800.093% owned1.86× return')
+    expect(rows).toContain('Seed at €4M, below the cap€3,0000.075% owned0.6× return€6,2500.16% owned1.25× return€7,2500.18% owned1.45× return')
   })
 })
 

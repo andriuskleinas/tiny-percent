@@ -70,7 +70,6 @@ export function Calculator({ state, dispatch }: { state: AppState; dispatch: (ac
             </h2>
             <p className="mt-3 text-ink-soft">
               Enter your first cheque, add the rounds the company raises, and decide at each one whether you follow on.
-              Nothing you type leaves your browser.
             </p>
           </header>
 

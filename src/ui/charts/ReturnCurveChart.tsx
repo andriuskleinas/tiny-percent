@@ -108,7 +108,7 @@ export function ReturnCurveChart({ scenario, run, dispatch }: { scenario: Scenar
         </h3>
         <p className="mt-2 max-w-2xl text-ink-soft">
           What your {money(invested)} {roundName(entry.round)} cheque returns at every price the company could sell for.
-          Drag the exit slider, or click the curve.
+          <span className="block">Drag the exit slider, or click the curve.</span>
         </p>
       </header>
 
@@ -221,7 +221,8 @@ export function ReturnCurveChart({ scenario, run, dispatch }: { scenario: Scenar
       <div className="flex flex-wrap items-center justify-between gap-4 border-t border-rule bg-ground/40 px-5 py-5 sm:px-8">
         <p className="max-w-2xl text-ink-soft">
           {breakEven ? `You get your money back from about a ${compactMoney(breakEven.valueCents)} exit. ` : ''}
-          This curve assumes no later rounds. Add one to see how dilution lowers it, and what following on would add back.
+          This curve assumes no later rounds.
+          <span className="block">Add one to see how dilution lowers it, and what following on would add back.</span>
         </p>
         <button
           type="button"

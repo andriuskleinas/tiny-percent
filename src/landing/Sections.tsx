@@ -301,7 +301,7 @@ function InstrumentsBody() {
     { name: 'SAFE', blurb: 'Priced at the next round', terms },
     { name: 'Convertible note', blurb: 'A loan, priced later', terms: `${terms}, ${pct(f.interestRate, 0)} a year` },
   ] as const
-  const groupHeading = 'bg-sunk/60 px-5 py-2 text-left font-mono text-[11px] font-medium uppercase tracking-wider text-ink-faint'
+  const groupHeading = 'bg-sunk/60 px-5 py-2 text-left font-mono text-xs font-bold uppercase tracking-wider text-ink'
   // The deal restated where the comparison starts, so the table reads on its own.
   const deal = (
     <>
@@ -390,9 +390,8 @@ function InstrumentsBody() {
                     <span className={`block font-mono text-lg font-semibold tabular-nums ${w === most ? 'text-accent' : 'text-ink'}`}>
                       {money(w)}
                     </span>
-                    <span className="mt-0.5 block text-xs text-ink-faint">
-                      {pct(owned[i] ?? 0)} owned · {multiple(w / f.chequeCents)}
-                    </span>
+                    <span className="mt-0.5 block text-xs text-ink-faint">{pct(owned[i] ?? 0)} owned</span>
+                    <span className="block text-xs text-ink-faint">{multiple(w / f.chequeCents)} return</span>
                   </td>
                 ))}
               </tr>
@@ -427,9 +426,8 @@ function InstrumentsBody() {
                     <dt className="text-ink-faint">{question}</dt>
                     <dd className="text-right">
                       <span className={`block font-mono font-semibold tabular-nums ${w === most ? 'text-accent' : 'text-ink'}`}>{money(w)}</span>
-                      <span className="block text-xs text-ink-faint">
-                        {pct(owned[i] ?? 0)} owned · {multiple(w / f.chequeCents)}
-                      </span>
+                      <span className="block text-xs text-ink-faint">{pct(owned[i] ?? 0)} owned</span>
+                      <span className="block text-xs text-ink-faint">{multiple(w / f.chequeCents)} return</span>
                     </dd>
                   </div>
                 )

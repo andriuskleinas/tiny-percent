@@ -75,11 +75,10 @@ export function RoundsPanel({
       {rounds.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-rule-strong bg-ground/40 px-5 py-8 text-center">
           <p className="text-sm text-ink-soft">
-            No later rounds yet. Add a Series A to see how new money{' '}
+            No later rounds yet. Add a Series A to see how new money dilutes you and what it would cost to keep your{' '}
             <span className="inline-flex items-center gap-1">
-              dilutes you <InfoTip term="dilution" />
-            </span>{' '}
-            and what it would cost to keep your share.
+              share. <InfoTip term="dilution" />
+            </span>
           </p>
         </div>
       ) : null}
