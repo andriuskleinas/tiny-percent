@@ -25,6 +25,9 @@ describe('a shared link carries the exact scenario', () => {
                 discount: 0.2,
                 interestRate: 0.08,
                 interestMode: 'compound' as const,
+                maturityDate: '2023-06-30',
+                atMaturity: 'convert' as const,
+                maturityValuationCents: toCents(4_000_000),
               },
             }
           : { participation: { type: 'equity' as const, amountCents: toCents(12_345), entryFee: { rule: 'fixed' as const, fixedCents: toCents(500) } } }),
@@ -96,6 +99,20 @@ describe('a link that is malformed or hostile is refused, never trusted', () => 
       },
     ],
     ['no rounds', { ...WORKED_EXAMPLE, rounds: [] }],
+    [
+      'an unknown maturity outcome',
+      {
+        ...WORKED_EXAMPLE,
+        rounds: [{ ...WORKED_EXAMPLE.rounds[0], participation: { ...WORKED_EXAMPLE.rounds[0]?.participation, atMaturity: 'forgive' } }],
+      },
+    ],
+    [
+      'an unreadable maturity date',
+      {
+        ...WORKED_EXAMPLE,
+        rounds: [{ ...WORKED_EXAMPLE.rounds[0], participation: { ...WORKED_EXAMPLE.rounds[0]?.participation, maturityDate: 'soon' } }],
+      },
+    ],
     [
       'a 100% discount',
       {

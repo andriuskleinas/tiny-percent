@@ -76,6 +76,24 @@ function fraction(value: number | undefined, what: string, below1 = false): numb
   return v
 }
 
+/** Principal plus the interest a note has accrued by `dateIso`. A SAFE owes its principal. */
+function owedAt(entry: Round, cheque: Instrument, dateIso: string): number {
+  const rate = cheque.type === 'cla' ? fraction(cheque.interestRate, 'An interest rate') : 0
+  if (rate <= 0) return cheque.amountCents
+  return accrue(cheque.amountCents, rate, yearsBetween(entry.date, dateIso), cheque.interestMode ?? 'simple')
+}
+
+/**
+ * A valuation on the cap's basis, as a post-money figure. A pre-money one
+ * converts against the capitalisation before anything converts, so it adds
+ * everything converting: this cheque and the others on the same terms.
+ */
+function asPostMoney(entry: Round, cheque: Instrument, valuationCents: number, convertingCents: number): number {
+  if (entry.valuationBasis !== 'pre') return valuationCents
+  const others = Math.max(0, entry.raisedCents - cheque.amountCents)
+  return valuationCents + convertingCents + others
+}
+
 /**
  * How the entry cheque converts in `round`, the first round after it.
  *
@@ -88,14 +106,11 @@ function fraction(value: number | undefined, what: string, below1 = false): numb
  */
 export function convertAt(entry: Round, cheque: Instrument, round: Round, terms: RoundTerms): Conversion {
   const discount = fraction(cheque.discount, 'A discount', true)
-  const rate = cheque.type === 'cla' ? fraction(cheque.interestRate, 'An interest rate') : 0
-  const convertingCents =
-    rate > 0 ? accrue(cheque.amountCents, rate, yearsBetween(entry.date, round.date), cheque.interestMode ?? 'simple') : cheque.amountCents
+  const convertingCents = owedAt(entry, cheque, round.date)
   const accruedCents = convertingCents - cheque.amountCents
 
   const estimate = entry.valuationBasis === 'pre'
-  const others = Math.max(0, entry.raisedCents - cheque.amountCents)
-  const capPostCents = estimate ? entry.valuationCents + convertingCents + others : entry.valuationCents
+  const capPostCents = asPostMoney(entry, cheque, entry.valuationCents, convertingCents)
   if (!(capPostCents > 0)) throw new RangeError('Enter the valuation cap to see what your SAFE converts into.')
 
   const value = postMoney(terms)
@@ -118,4 +133,81 @@ export function convertAt(entry: Round, cheque: Instrument, round: Round, terms:
     )
   }
   return { route: best.route, ownership: best.ownership, stake, convertingCents, accruedCents, capPostCents, estimate }
+}
+
+/**
+ * A note whose maturity date arrives before any priced round settles there, and
+ * its interest stops on that date. Repaid, the company pays principal and
+ * interest back in cash and the stake is gone; later cheques still buy shares.
+ * Converted, it buys shares at the maturity valuation (the cap unless stated)
+ * and is an ordinary holder from then on, diluted by every later round.
+ *
+ * A SAFE has no maturity, so this is a note's alone.
+ */
+interface Settled {
+  /** The maturity date, when this happened. */
+  date: string
+  /** Interest to maturity. Never counted as money you paid. */
+  accruedCents: number
+  /** The stake once settled: zero once repaid. Later rounds dilute it. */
+  stake: number
+}
+
+export interface Repayment extends Settled {
+  outcome: 'repay'
+  /** Principal plus interest, paid to you in cash on `date`. */
+  repaidCents: number
+}
+
+export interface MaturityConversion extends Settled {
+  outcome: 'convert'
+  /** Principal plus interest, which is what converts. */
+  convertingCents: number
+  /** The maturity valuation as a post-money figure. */
+  valuationPostCents: number
+  /** True on a pre-money basis, which depends on other notes the angel cannot see. */
+  estimate: boolean
+}
+
+export type Maturity = Repayment | MaturityConversion
+
+/**
+ * What maturity does to the entry cheque, given the round after it (if any) and
+ * the exit date. Undefined unless a note with a maturity date reaches it first:
+ * a round on or before the due date is the financing it was waiting for and it
+ * converts there as usual, an exit before it leaves it unconverted, and an
+ * extended note waits for the next round as if it had no maturity date.
+ */
+export function maturityOf(entry: Round, cheque: Instrument, next: Round | undefined, exitDate: string): Maturity | undefined {
+  if (cheque.type !== 'cla' || cheque.maturityDate === undefined) return undefined
+  const due = cheque.maturityDate
+  if (!(yearsBetween(entry.date, due) > 0)) {
+    throw new RangeError('A note’s maturity date has to come after the date you lent the money.')
+  }
+  const outcome = cheque.atMaturity ?? 'repay'
+  if (outcome === 'extend') return undefined
+  if (next !== undefined && Date.parse(next.date) <= Date.parse(due)) return undefined
+  if (Date.parse(exitDate) < Date.parse(due)) return undefined
+
+  const owed = owedAt(entry, cheque, due)
+  const accruedCents = owed - cheque.amountCents
+  if (outcome === 'repay') return { outcome, date: due, accruedCents, stake: 0, repaidCents: owed }
+
+  const valuationPostCents = asPostMoney(entry, cheque, cheque.maturityValuationCents ?? entry.valuationCents, owed)
+  if (!(valuationPostCents > 0)) {
+    throw new RangeError('Enter the valuation cap to see what your note converts into at maturity.')
+  }
+  const stake = owed / valuationPostCents
+  if (!(stake < 1)) {
+    throw new RangeError('At maturity the note would convert into the whole company. Check the maturity valuation.')
+  }
+  return {
+    outcome,
+    date: due,
+    accruedCents,
+    stake,
+    convertingCents: owed,
+    valuationPostCents,
+    estimate: entry.valuationBasis === 'pre',
+  }
 }

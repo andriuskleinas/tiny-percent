@@ -309,6 +309,99 @@ eq("P2 discount under a pool", conv_case("P2", 100_000, 10e6, 6e6, 2e6, discount
 assert conv_cases["G"]["route"] == "discount" and conv_cases["H"]["route"] == "round_price"
 assert conv_cases["P"]["route"] == "cap" and conv_cases["P2"]["route"] == "discount"
 
+# ---------- note maturity: repay, convert, extend ----------
+# A note that reaches its maturity date before any priced round settles there.
+# Interest stops at maturity. Repaid, it pays principal plus interest in cash on
+# that date and holds nothing afterwards. Converted, it buys shares at the cap
+# (or a stated maturity valuation) and is an ordinary holder in later rounds.
+# Extended, it ignores the date and converts at the next round as case F does.
+# Each case: $50k at 8% simple from 2021-01-01, maturing 2023-01-01 (exactly two
+# years Actual/365), a Seed of $8M pre raising $2M on 2024-01-01 (three years),
+# a $20k follow-on there, and a $100M exit on 2027-01-01 with $10M raised.
+from datetime import date as _date
+def _years(a, b): return (_date.fromisoformat(b) - _date.fromisoformat(a)).days / 365
+
+MAT = dict(entry="2021-01-01", maturity="2023-01-01", round="2024-01-01", exit="2027-01-01",
+           amount=50_000, rate=0.08, cap=5e6, pre=8e6, raised=2e6, follow=20_000,
+           exit_value=100e6, total_raised=10e6, carry=0.20)
+
+def ledger_maturity_convert(L, conv, valuation):
+    """Post-money conversion with no round: the converting shares S are part of
+    the capitalisation the valuation prices, so S = conv / (valuation / (T + S))."""
+    S = conv * L.total / (valuation - conv)
+    L.angel += S
+    L.total += S
+    return L.own()
+
+mat_cases = {}
+def mat_case(name, outcome, valuation=None):
+    m = MAT
+    V = m["pre"] + m["raised"]
+    to_maturity = _years(m["entry"], m["maturity"])
+    to_round = _years(m["entry"], m["round"])
+    owed = accrue(m["amount"], m["rate"], to_maturity)
+    repaid = 0.0
+    L = Ledger()
+    if outcome == "repay":
+        repaid, converting, stake = owed, 0.0, 0.0
+    elif outcome == "convert":
+        converting = owed
+        stake = converting / (valuation or m["cap"])
+        eq(f"{name} ledger at maturity", ledger_maturity_convert(L, converting, valuation or m["cap"]), stake)
+    else:  # extend: no maturity event, converts at the round with interest to then
+        converting = accrue(m["amount"], m["rate"], to_round)
+        _, own = convert_routes(converting, m["cap"], 0.0, m["pre"], m["raised"])
+        stake = own / (m["pre"] / V)
+    final = own_after(stake, m["pre"], m["raised"], invested=m["follow"])
+    if outcome == "extend":
+        led = ledger_convert(Ledger(), m["pre"], m["raised"], converting, m["cap"], 0.0, 0.0, m["follow"])
+    else:
+        L.priced_round(m["pre"], m["raised"], angel_invests=m["follow"])
+        led = L.own()
+    eq(f"{name} ledger agrees", led, final)
+
+    # Money. A repaid note's principal is out of the preference stack, so only
+    # the cheques still held as shares count there; the exit here is clean.
+    deployed = m["amount"] + m["follow"]
+    assert m["exit_value"] > 2 * m["total_raised"]
+    exit_gross = final * m["exit_value"]
+    gross = exit_gross + repaid
+    carry = max(0.0, gross - deployed) * m["carry"]
+    net = gross - carry
+    # Carry comes out of the first money back: the repayment arrives net of as
+    # much of it as it can bear, and the exit brings the rest.
+    at_maturity = min(repaid, net)
+    flows = [(0.0, -m["amount"]), (to_round, -m["follow"]), (_years(m["entry"], m["exit"]), net - at_maturity)]
+    if repaid: flows.insert(1, (to_maturity, at_maturity))
+    rate = irr(flows)
+    mat_cases[name] = dict(outcome=outcome, valuation=valuation, repaid=repaid, accrued=owed - m["amount"] if outcome != "extend" else converting - m["amount"],
+                           converting=converting, stake=stake, ownership=final,
+                           exit_gross=exit_gross, gross=gross, carry=carry, net=net, irr=rate)
+    print(f"{name:<3}{outcome:<8} repaid {repaid:>8,.0f} converts {converting:>8,.0f} "
+          f"... {final:.4%}  net {net:>10,.0f}  IRR {rate:.2%}  [ledger {led:.4%}]")
+    return final
+
+def irr(flows):
+    def npv(r): return sum(cf / (1 + r) ** t for t, cf in flows)
+    lo, hi = -0.9999, 10.0
+    if npv(lo) * npv(hi) > 0: return None
+    for _ in range(200):
+        mid = (lo + hi) / 2
+        if npv(lo) * npv(mid) <= 0: hi = mid
+        else: lo = mid
+    return (lo + hi) / 2
+
+eq("R1 repaid holds only the follow-on", mat_case("R1", "repay"), 20_000 / 10e6)
+eq("R1 repays 58,000", mat_cases["R1"]["repaid"], 58_000)
+eq("R2 converts at the cap at maturity", mat_case("R2", "convert"), 58_000 / 5e6 * 0.8 + 0.002)
+eq("R3 converts at a $4M maturity valuation", mat_case("R3", "convert", valuation=4e6), 58_000 / 4e6 * 0.8 + 0.002)
+eq("R4 extended converts at the round", mat_case("R4", "extend"), 62_000 / 5e6 * 0.8 + 0.002)
+# Interest stops at maturity: converting there buys less than waiting would have.
+assert mat_cases["R2"]["converting"] < mat_cases["R4"]["converting"]
+# With nothing after the repayment, IRR is the note's own rate after carry.
+r1_alone = irr([(0.0, -50_000), (2.0, 58_000 - 0.2 * 8_000)])
+eq("R1 repayment alone, IRR closed form", r1_alone, (56_400 / 50_000) ** 0.5 - 1, 1e-6)
+
 print()
 print("=" * 72)
 print("CLAIMS MADE IN THE FOUR VISUALS")
@@ -363,16 +456,7 @@ print(f"4  fee drag .................. ${192_000:,} gross -> ${v4['net']:,.0f} n
 seg = 323.7 + 56.2 + 4.0
 print(f"   bar segments drawn ........ net {323.7/380:.1%} + carry {56.2/380:.1%} of the bar")
 
-# IRR sanity
-def irr(flows):
-    def npv(r): return sum(cf / (1 + r) ** t for t, cf in flows)
-    lo, hi = -0.9999, 10.0
-    if npv(lo) * npv(hi) > 0: return None
-    for _ in range(200):
-        mid = (lo + hi) / 2
-        if npv(lo) * npv(mid) <= 0: hi = mid
-        else: lo = mid
-    return (lo + hi) / 2
+# IRR sanity (irr is defined with the note maturity cases above)
 r = irr([(0, -50_000), (6, 192_000)])
 eq("IRR closed form", r, (192_000 / 50_000) ** (1 / 6) - 1, 1e-6)
 print(f"\nIRR  $50k -> $192k over 6y .... {r:.2%}   (closed form agrees)")
@@ -442,6 +526,21 @@ def emit_fixture(path):
                                 "followOnCents": cents(c["follow"]), "convertingCents": cents(c["converting"]),
                                 "route": c["route"], "ownership": c["ownership"]}
                          for name, c in conv_cases.items()},
+        "maturity": {"terms": {"entryDate": MAT["entry"], "maturityDate": MAT["maturity"],
+                               "roundDate": MAT["round"], "exitDate": MAT["exit"],
+                               "amountCents": cents(MAT["amount"]), "interestRate": MAT["rate"],
+                               "capCents": cents(MAT["cap"]), "preMoneyCents": cents(MAT["pre"]),
+                               "raisedCents": cents(MAT["raised"]), "followOnCents": cents(MAT["follow"]),
+                               "exitCents": cents(MAT["exit_value"]), "totalRaisedCents": cents(MAT["total_raised"]),
+                               "carryPercent": MAT["carry"]},
+                     "cases": {name: {"outcome": c["outcome"],
+                                      "valuationCents": cents(c["valuation"]) if c["valuation"] else None,
+                                      "repaidCents": cents(c["repaid"]), "accruedCents": cents(c["accrued"]),
+                                      "convertingCents": cents(c["converting"]), "stake": c["stake"],
+                                      "ownership": c["ownership"], "exitGrossCents": cents(c["exit_gross"]),
+                                      "grossCents": cents(c["gross"]), "carryCents": cents(c["carry"]),
+                                      "netCents": cents(c["net"]), "irr": c["irr"]}
+                               for name, c in mat_cases.items()}},
     }
     with open(path, "w") as fh:
         json.dump(fixture, fh, indent=2)
@@ -455,7 +554,7 @@ if "--emit" in sys.argv:
 
 print()
 print("=" * 72)
-print(f"{checks} assertions across 19 golden cases and 4 visuals")
+print(f"{checks} assertions across 23 golden cases and 4 visuals")
 print("RESULT:", "ALL PASS — two independent models agree" if not fails else f"{len(fails)} FAILURES")
 for f_ in fails: print("  FAIL", f_)
 print("=" * 72)

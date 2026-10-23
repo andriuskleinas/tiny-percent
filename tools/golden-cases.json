@@ -439,5 +439,80 @@
       "route": "discount",
       "ownership": 0.015625
     }
+  },
+  "maturity": {
+    "terms": {
+      "entryDate": "2021-01-01",
+      "maturityDate": "2023-01-01",
+      "roundDate": "2024-01-01",
+      "exitDate": "2027-01-01",
+      "amountCents": 5000000,
+      "interestRate": 0.08,
+      "capCents": 500000000,
+      "preMoneyCents": 800000000,
+      "raisedCents": 200000000,
+      "followOnCents": 2000000,
+      "exitCents": 10000000000,
+      "totalRaisedCents": 1000000000,
+      "carryPercent": 0.2
+    },
+    "cases": {
+      "R1": {
+        "outcome": "repay",
+        "valuationCents": null,
+        "repaidCents": 5800000,
+        "accruedCents": 800000,
+        "convertingCents": 0,
+        "stake": 0.0,
+        "ownership": 0.002,
+        "exitGrossCents": 20000000,
+        "grossCents": 25800000,
+        "carryCents": 3760000,
+        "netCents": 22040000,
+        "irr": 0.3534064282162138
+      },
+      "R2": {
+        "outcome": "convert",
+        "valuationCents": null,
+        "repaidCents": 0,
+        "accruedCents": 800000,
+        "convertingCents": 5800000,
+        "stake": 0.0116,
+        "ownership": 0.01128,
+        "exitGrossCents": 112800000,
+        "grossCents": 112800000,
+        "carryCents": 21160000,
+        "netCents": 91640000,
+        "irr": 0.5983112636968968
+      },
+      "R3": {
+        "outcome": "convert",
+        "valuationCents": 400000000,
+        "repaidCents": 0,
+        "accruedCents": 800000,
+        "convertingCents": 5800000,
+        "stake": 0.014499999999999999,
+        "ownership": 0.0136,
+        "exitGrossCents": 136000000,
+        "grossCents": 136000000,
+        "carryCents": 25800000,
+        "netCents": 110200000,
+        "irr": 0.6504397779446023
+      },
+      "R4": {
+        "outcome": "extend",
+        "valuationCents": null,
+        "repaidCents": 0,
+        "accruedCents": 1200000,
+        "convertingCents": 6200000,
+        "stake": 0.0124,
+        "ownership": 0.01192,
+        "exitGrossCents": 119200000,
+        "grossCents": 119200000,
+        "carryCents": 22440000,
+        "netCents": 96760000,
+        "irr": 0.6135254129325267
+      }
+    }
   }
 }

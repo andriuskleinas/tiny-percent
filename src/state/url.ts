@@ -9,6 +9,7 @@ import type { Currency, ExitEvent, Instrument, InstrumentType, Round, Scenario }
 
 const CURRENCIES: readonly string[] = ['USD', 'EUR']
 const INSTRUMENTS: readonly string[] = ['equity', 'safe', 'cla']
+const MATURITY_OUTCOMES: readonly string[] = ['repay', 'convert', 'extend']
 /** Round names are free text — "Seed", "Series A" or whatever the user calls it. */
 export const MAX_LABEL_LENGTH = 40
 
@@ -64,7 +65,10 @@ function isInstrument(value: unknown): value is Instrument {
     isEntryFee(value['entryFee']) &&
     optional(value['discount'], isDiscount) &&
     optional(value['interestRate'], isFraction) &&
-    (value['interestMode'] === undefined || value['interestMode'] === 'simple' || value['interestMode'] === 'compound')
+    (value['interestMode'] === undefined || value['interestMode'] === 'simple' || value['interestMode'] === 'compound') &&
+    optional(value['maturityDate'], isDate) &&
+    (value['atMaturity'] === undefined || MATURITY_OUTCOMES.includes(value['atMaturity'] as string)) &&
+    optional(value['maturityValuationCents'], isAmount)
   )
 }
 

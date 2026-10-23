@@ -14,6 +14,13 @@ export function money(cents: number, currency: string = 'USD'): string {
   }).format(toMajor(cents))
 }
 
+/** An ISO date as people write it: "Jan 1, 2024". Read in UTC, so it never shifts a day. */
+export function longDate(iso: string): string {
+  const at = Date.parse(iso)
+  if (Number.isNaN(at)) return iso
+  return new Intl.DateTimeFormat('en-US', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(at)
+}
+
 export function percent(fraction: number, places = 2): string {
   return `${(fraction * 100).toFixed(places)}%`
 }

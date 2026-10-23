@@ -59,7 +59,7 @@ function EndingsBody({
     if (row.kind === 'capital') return `Sold for the ${compactMoney(row.valueCents)} it raised`
     return `Sold for ${row.kind === 'grows10' ? '10' : '100'}× ${from}`
   }
-  const gross = (row: Ending) => range(money(row.outcome.exit.lowCents), money(row.outcome.exit.highCents))
+  const gross = (row: Ending) => range(money(row.outcome.feesLow.grossCents), money(row.outcome.feesHigh.grossCents))
   const net = (row: Ending) => range(money(row.outcome.feesLow.netCents), money(row.outcome.feesHigh.netCents))
   const mult = (row: Ending) => range(multiple(row.outcome.feesLow.netMultiple), multiple(row.outcome.feesHigh.netMultiple))
   const use = (row: Ending) =>

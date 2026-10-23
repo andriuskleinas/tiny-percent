@@ -182,8 +182,13 @@ or pre-money, the latter an estimate), a discount, and simple or compounding
 interest for a note. Conversion happens at the round dated next after the entry.
 The best final ownership wins rather than the lowest effective valuation, because
 a new pool in the conversion round dilutes the cap route but not the price
-routes; see BUILD.md. KISS, ASA, uncapped SAFEs and loan maturity outcomes are
-not modelled.
+routes; see BUILD.md. KISS, ASA and uncapped SAFEs are not modelled.
+
+Note maturity (2026-10-23): a note with a maturity date that
+arrives before the next priced round, and on or before the exit, is repaid,
+converted at the cap or a stated maturity valuation, or extended to wait for the
+round. A note still unconverted at an exit keeps its stake at the cap; the
+"repaid ahead of equity on a sale" rule is not modelled.
 
 ---
 

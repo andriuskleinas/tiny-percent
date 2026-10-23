@@ -147,3 +147,29 @@ describe('when you already follow on pro-rata', () => {
     expect(paths.yours.run.feesLow).toEqual(paths.proRata.run.feesLow)
   })
 })
+
+describe('a note repaid at maturity has no position to follow on', () => {
+  it('quotes no pro-rata cheque in the round after', () => {
+    const NO_FEE = { rule: 'percent' as const, percent: 0 }
+    const paths = strategyPaths({
+      version: 3,
+      currency: 'USD',
+      rounds: [
+        {
+          id: 'note',
+          label: 'Pre-seed',
+          date: '2023-01-01',
+          valuationCents: 500_000_000,
+          valuationBasis: 'post',
+          raisedCents: 10_000_000,
+          participation: { type: 'cla', amountCents: 10_000_000, entryFee: NO_FEE, interestRate: 0.08, maturityDate: '2024-01-01' },
+        },
+        { id: 'seed', label: 'Seed', date: '2025-01-01', valuationCents: 800_000_000, valuationBasis: 'pre', raisedCents: 200_000_000 },
+      ],
+      fees: { carry: { percent: 0, basis: 'per_deal' } },
+      exit: { date: '2030-01-01', valueCents: 10_000_000_000, totalRaisedCents: 210_000_000 },
+    })
+    expect(paths.proRata.points[1]?.chequeCents).toBe(0)
+    expect(paths.proRata.run.finalOwnership).toBe(0)
+  })
+})

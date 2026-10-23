@@ -83,6 +83,10 @@ export const GLOSSARY = {
     question: 'What is interest on a convertible note?',
     body: 'A note is a loan, so it earns interest until it converts, usually 4–8% a year. The interest converts into shares too, but it is not money you paid, so your multiple is measured against your cheque alone. Simple interest is charged on the loan only; compounding is also charged on interest already added.',
   },
+  maturity: {
+    question: 'What happens when a note matures?',
+    body: 'A note is a loan with a date it falls due. A priced round before then converts it as usual. If none has come, the note says what happens: the company repays the loan with interest, the loan converts into shares at the cap or a set maturity valuation, or the lenders extend it to wait for the next round. Interest stops at maturity.',
+  },
   powerLaw: {
     question: 'What is the power law?',
     body: 'Startup returns are uneven: most investments lose money, and a few large wins pay for all of them. So the likeliest result of any single cheque is a loss, even when a portfolio of many cheques does well. It is why angels spread their money across many companies.',

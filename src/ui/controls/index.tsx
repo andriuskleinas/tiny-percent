@@ -301,6 +301,8 @@ export function NumberField({
 
 export function TextField({
   label,
+  hint,
+  info,
   value,
   onChange,
   type = 'text',
@@ -308,6 +310,8 @@ export function TextField({
   autoFocus,
 }: {
   label: string
+  hint?: string | undefined
+  info?: TermKey | undefined
   value: string
   onChange: (value: string) => void
   type?: 'text' | 'date'
@@ -316,7 +320,7 @@ export function TextField({
   autoFocus?: boolean | undefined
 }) {
   return (
-    <Field label={label}>
+    <Field label={label} hint={hint} info={info}>
       {(id) => (
         <input
           id={id}

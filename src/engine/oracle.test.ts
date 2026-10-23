@@ -18,7 +18,39 @@ import type { Round, Scenario } from './types'
  * apart quietly.
  */
 
+interface MaturityCase {
+  outcome: 'repay' | 'convert' | 'extend'
+  valuationCents: number | null
+  repaidCents: number
+  accruedCents: number
+  convertingCents: number
+  stake: number
+  ownership: number
+  exitGrossCents: number
+  grossCents: number
+  carryCents: number
+  netCents: number
+  irr: number
+}
+
+interface MaturityTerms {
+  entryDate: string
+  maturityDate: string
+  roundDate: string
+  exitDate: string
+  amountCents: number
+  interestRate: number
+  capCents: number
+  preMoneyCents: number
+  raisedCents: number
+  followOnCents: number
+  exitCents: number
+  totalRaisedCents: number
+  carryPercent: number
+}
+
 interface Fixture {
+  maturity: { terms: MaturityTerms; cases: Record<string, MaturityCase> }
   seedRound: { preMoneyCents: number; raisedCents: number }
   seriesB: { preMoneyCents: number; raisedCents: number }
   seriesBPool: number
@@ -232,5 +264,75 @@ describe('SAFEs and notes agree with the Python oracle', () => {
     expect(run.entry).toEqual({ kind: 'converted', estimate: c.capBasis === 'pre' })
     // Interest converts, but it is never money you paid.
     expect(run.totalInvestedCents).toBe(c.amountCents + c.followOnCents)
+  })
+})
+
+function maturityScenario(t: MaturityTerms, c: MaturityCase): Scenario {
+  const NO_FEE = { rule: 'percent' as const, percent: 0 }
+  return {
+    version: 3,
+    currency: 'USD',
+    rounds: [
+      {
+        id: 'note',
+        label: 'Pre-seed',
+        date: t.entryDate,
+        valuationCents: t.capCents,
+        valuationBasis: 'post',
+        raisedCents: t.amountCents,
+        participation: {
+          type: 'cla',
+          amountCents: t.amountCents,
+          entryFee: NO_FEE,
+          interestRate: t.interestRate,
+          maturityDate: t.maturityDate,
+          atMaturity: c.outcome,
+          maturityValuationCents: c.valuationCents ?? undefined,
+        },
+      },
+      {
+        id: 'seed',
+        label: 'Seed',
+        date: t.roundDate,
+        valuationCents: t.preMoneyCents,
+        valuationBasis: 'pre',
+        raisedCents: t.raisedCents,
+        participation: { type: 'equity', amountCents: t.followOnCents, entryFee: NO_FEE },
+      },
+    ],
+    fees: { carry: { percent: t.carryPercent, basis: 'per_deal' } },
+    exit: { date: t.exitDate, valueCents: t.exitCents, totalRaisedCents: t.totalRaisedCents },
+  }
+}
+
+describe('note maturity agrees with the Python oracle', () => {
+  const { terms, cases } = fixture.maturity
+
+  it('covers every case the oracle emits', () => {
+    expect(Object.keys(cases).sort()).toEqual(['R1', 'R2', 'R3', 'R4'])
+  })
+
+  it.each(Object.entries(cases))('%s — settles the same way, to the same money', (_name, c) => {
+    const run = runScenario(maturityScenario(terms, c))
+    const seed = run.rounds[1]
+    if (c.outcome === 'extend') {
+      expect(run.maturity).toBeUndefined()
+      expect(seed?.conversion?.convertingCents).toBe(c.convertingCents)
+    } else {
+      expect(run.maturity?.outcome).toBe(c.outcome)
+      expect(run.maturity?.accruedCents).toBe(c.accruedCents)
+      expect(seed?.conversion).toBeUndefined()
+    }
+    if (run.maturity?.outcome === 'repay') expect(run.maturity.repaidCents).toBe(c.repaidCents)
+    if (run.maturity?.outcome === 'convert') expect(run.maturity.convertingCents).toBe(c.convertingCents)
+    expect(seed?.heldBefore).toBeCloseTo(c.stake, PLACES)
+    expect(run.finalOwnership).toBeCloseTo(c.ownership, PLACES)
+    expect(run.entry.kind).toBe(c.outcome === 'repay' ? 'repaid' : 'converted')
+    // Interest is profit, never money you paid.
+    expect(run.totalInvestedCents).toBe(terms.amountCents + terms.followOnCents)
+    expect(run.exit.lowCents).toBe(c.exitGrossCents)
+    expect(run.feesLow.carryCents).toBe(c.carryCents)
+    expect(run.feesLow.netCents).toBe(c.netCents)
+    expect(run.irrLow).toBeCloseTo(c.irr, 6)
   })
 })

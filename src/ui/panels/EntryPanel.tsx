@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { useMoney } from '../currency'
 import { isConvertible } from '../../engine/convert'
+import type { Maturity } from '../../engine/convert'
 import { stakeValue } from '../../engine/ownership'
 import type { EntryStatus, RoundState } from '../../engine/scenario'
-import type { Currency, Instrument, InstrumentType, InterestMode, Round } from '../../engine/types'
+import type { Currency, Instrument, InstrumentType, InterestMode, MaturityOutcome, Round } from '../../engine/types'
 import type { Action } from '../../state/reducer'
 import { ChoiceGroup, InfoTip, MoneyField, Panel, PercentField, Stat, SwitchField, TextField } from '../controls'
-import { conversionRoute, instrumentName, ownership, roundName } from '../format'
+import { conversionRoute, instrumentName, longDate, moneyInputText, ownership, roundName } from '../format'
 import { entryIsComplete } from '../facts'
 import { INVESTMENT_INPUT_ID } from '../../landing/scroll'
 
@@ -31,6 +32,12 @@ const INTEREST_MODES: readonly [readonly [InterestMode, string], readonly [Inter
   ['compound', 'Compounding'],
 ]
 
+const MATURITY_OUTCOMES: ReadonlyArray<readonly [MaturityOutcome, string]> = [
+  ['repay', 'Repaid'],
+  ['convert', 'Converts'],
+  ['extend', 'Extended'],
+]
+
 /** The rounds an angel usually enters at, and a way out for anything else. */
 const ENTRY_ROUNDS = ['Pre-seed', 'Seed', 'Series A'] as const
 const OTHER = 'other'
@@ -42,6 +49,7 @@ export function EntryPanel({
   state,
   status,
   converted,
+  maturity,
   dispatch,
 }: {
   round: Round
@@ -51,6 +59,8 @@ export function EntryPanel({
   status?: EntryStatus | undefined
   /** The round a SAFE or note entry converts in, once there is one. */
   converted?: RoundState | undefined
+  /** How a note settled at its maturity date, when it reached it first. */
+  maturity?: Maturity | undefined
   dispatch: (action: Action) => void
 }) {
   const { money } = useMoney()
@@ -174,6 +184,41 @@ export function EntryPanel({
                 options={INTEREST_MODES}
                 onChange={(interestMode) => participate({ interestMode })}
               />
+              <TextField
+                label="Maturity date"
+                type="date"
+                info="maturity"
+                value={entry?.maturityDate ?? ''}
+                onChange={(date) => participate({ maturityDate: date === '' ? undefined : date })}
+                hint="When the loan falls due. Leave empty if it has no date."
+              />
+              {entry?.maturityDate ? (
+                <div className="flex flex-col gap-1.5 sm:col-span-2">
+                  <div className="flex items-center gap-1.5">
+                    <p aria-hidden="true" className="text-[13px] font-medium text-ink-soft">
+                      At maturity, with no priced round yet
+                    </p>
+                    <InfoTip term="maturity" />
+                  </div>
+                  <ChoiceGroup
+                    label="At maturity"
+                    value={entry.atMaturity ?? 'repay'}
+                    options={MATURITY_OUTCOMES}
+                    onChange={(atMaturity) => participate({ atMaturity })}
+                  />
+                  <p className="text-xs text-ink-faint">{MATURITY_HINT[entry.atMaturity ?? 'repay']}</p>
+                </div>
+              ) : null}
+              {entry?.maturityDate && entry.atMaturity === 'convert' ? (
+                <MoneyField
+                  label="Maturity valuation"
+                  info="maturity"
+                  valueCents={entry.maturityValuationCents ?? 0}
+                  onChange={(cents) => participate({ maturityValuationCents: cents > 0 ? cents : undefined })}
+                  placeholder={round.valuationCents > 0 ? moneyInputText(round.valuationCents) : 'Same as the cap'}
+                  hint="Leave empty to convert at the cap. Read on the cap’s basis."
+                />
+              ) : null}
             </>
           ) : null}
         </div>
@@ -191,7 +236,9 @@ export function EntryPanel({
               <p className="mt-1 text-xs text-ink-faint">
                 {convertible ? 'of the company, if your ' + what + ' converts at the cap' : 'of the company, after this round'}
               </p>
-              {convertible ? <ConversionNote what={what} cheque={entry} status={status} converted={converted} /> : null}
+              {convertible ? (
+                <ConversionNote what={what} cheque={entry} status={status} converted={converted} maturity={maturity} />
+              ) : null}
               <div className="mt-4">
                 {convertible ? (
                   <Stat
@@ -223,6 +270,13 @@ export function EntryPanel({
   )
 }
 
+/** What each maturity outcome means, said under the choice. */
+const MATURITY_HINT: Record<MaturityOutcome, string> = {
+  repay: 'The company pays back the loan and its interest in cash. You keep no shares.',
+  convert: 'The loan and its interest buy shares at the cap, or at the valuation below.',
+  extend: 'The date passes and the note waits for the next priced round, still earning interest.',
+}
+
 /**
  * What happens to a SAFE or note: where it converted and at which price, or
  * that it has not converted yet. Every percentage sits beside its value.
@@ -232,17 +286,36 @@ function ConversionNote({
   cheque,
   status,
   converted,
+  maturity,
 }: {
   what: string
   cheque: Instrument | undefined
   status: EntryStatus | undefined
   converted: RoundState | undefined
+  maturity: Maturity | undefined
 }) {
   const { money } = useMoney()
   const conversion = converted?.conversion
   return (
     <div className="mt-3 flex flex-col gap-2 text-xs text-ink-soft">
-      {conversion && converted ? (
+      {maturity?.outcome === 'repay' ? (
+        <p>
+          <span className="font-medium text-ink">Repaid at maturity on {longDate(maturity.date)}:</span>{' '}
+          {money(maturity.repaidCents)} back, your {money(maturity.repaidCents - maturity.accruedCents)} and{' '}
+          {money(maturity.accruedCents)} of interest. You hold no shares after that; later rounds count only the cheques
+          you write into them.
+        </p>
+      ) : maturity?.outcome === 'convert' ? (
+        <p>
+          <span className="font-medium text-ink">
+            Converts at maturity on {longDate(maturity.date)} at {money(maturity.valuationPostCents)}:
+          </span>{' '}
+          {ownership(maturity.stake)}, before later rounds dilute it.
+          {maturity.accruedCents > 0
+            ? ` That includes ${money(maturity.accruedCents)} of interest, which converts but is not money you paid.`
+            : ''}
+        </p>
+      ) : conversion && converted ? (
         <p>
           <span className="font-medium text-ink">
             Converts in {roundName(converted.round)} at {conversionRoute(conversion.route, cheque?.discount)}:

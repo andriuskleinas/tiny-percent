@@ -100,3 +100,49 @@ describe('what the panel says about conversion', () => {
     expect(text).toContain('SAFE converts at the cap')
   })
 })
+
+describe('a note’s maturity', () => {
+  const due = (patch: Record<string, unknown>): Scenario => {
+    const [first, ...rest] = CONVERTIBLE_LOAN.rounds
+    if (!first?.participation) throw new Error('preset has no note')
+    // Due a year in, before the Seed on 2025-01-01.
+    return { ...CONVERTIBLE_LOAN, rounds: [{ ...first, participation: { ...first.participation, maturityDate: '2024-01-01', ...patch } }, ...rest] }
+  }
+
+  it('asks for a maturity date on a note, and what happens only once there is one', () => {
+    open(CONVERTIBLE_LOAN)
+    const inside = within(panel())
+    expect(inside.getByLabelText('Maturity date')).toBeTruthy()
+    expect(inside.queryByRole('radiogroup', { name: 'At maturity' })).toBeNull()
+    fireEvent.change(inside.getByLabelText('Maturity date'), { target: { value: '2024-01-01' } })
+    expect(inside.getByRole('radio', { name: 'Repaid', checked: true })).toBeTruthy()
+    expect(inside.queryByLabelText('Maturity valuation')).toBeNull()
+  })
+
+  it('says a repaid note came back with its interest, and holds nothing after', () => {
+    open(due({}))
+    const text = panel().textContent ?? ''
+    expect(text).toContain('Repaid at maturity on Jan 1, 2024:')
+    expect(text).toContain('€54,000 back, your €50,000 and €4,000 of interest')
+    expect(text).not.toContain('Converts in Seed')
+  })
+
+  it('asks for a maturity valuation when the note converts, and says where it converted', () => {
+    open(due({ atMaturity: 'convert' }))
+    const inside = within(panel())
+    expect(inside.getByLabelText('Maturity valuation')).toBeTruthy()
+    expect(panel().textContent).toContain('Converts at maturity on Jan 1, 2024 at €5,000,000:')
+    expect(panel().textContent).toContain('1.08%, before later rounds dilute it')
+    expect(table().textContent).toContain('Note converted at maturity')
+  })
+
+  it('waits for the Seed when extended', () => {
+    open(due({ atMaturity: 'extend' }))
+    expect(panel().textContent).toContain('Converts in Seed at the cap:')
+  })
+
+  it('offers no maturity on a SAFE', () => {
+    open(SAFE_AT_A_CAP)
+    expect(within(panel()).queryByLabelText('Maturity date')).toBeNull()
+  })
+})

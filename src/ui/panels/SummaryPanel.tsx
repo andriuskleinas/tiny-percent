@@ -60,8 +60,14 @@ export function SummaryPanel({ scenario, run }: { scenario: Scenario; run: Scena
               <dl className="mt-2 flex flex-col gap-2 text-sm">
                 <div className="flex items-baseline justify-between gap-3">
                   <dt className="min-w-0 truncate text-ink-faint">Gross proceeds</dt>
-                  <dd className="shrink-0 whitespace-nowrap text-right font-mono tabular-nums text-ink">{range(money(run.exit.lowCents), money(run.exit.highCents))}</dd>
+                  <dd className="shrink-0 whitespace-nowrap text-right font-mono tabular-nums text-ink">{range(money(run.feesLow.grossCents), money(run.feesHigh.grossCents))}</dd>
                 </div>
+                {run.maturity?.outcome === 'repay' ? (
+                  <div className="flex items-baseline justify-between gap-3">
+                    <dt className="min-w-0 truncate text-ink-faint">Of which repaid at maturity</dt>
+                    <dd className="shrink-0 whitespace-nowrap text-right font-mono tabular-nums text-ink">{money(run.maturity.repaidCents)}</dd>
+                  </div>
+                ) : null}
                 {charged ? (
                   <div className="flex items-baseline justify-between gap-3">
                     <dt className="min-w-0 truncate text-ink-faint">

@@ -83,6 +83,7 @@ export function Calculator({ state, dispatch }: { state: AppState; dispatch: (ac
                   state={entryState}
                   status={error ? undefined : run.entry}
                   converted={error ? undefined : run.rounds.find((r) => r.conversion)}
+                  maturity={error ? undefined : run.maturity}
                   dispatch={dispatch}
                 /> : null}
               <RoundsPanel
@@ -124,14 +125,15 @@ export function Calculator({ state, dispatch }: { state: AppState; dispatch: (ac
                 <div className="mt-4">
                   <DilutionTable
                     states={run.rounds}
+                    maturity={run.maturity}
                     exit={
                       workable.exit.valueCents > 0 && run.totalInvestedCents > 0
                         ? {
                             valueCents: workable.exit.valueCents,
                             date: workable.exit.date,
                             finalOwnership: run.finalOwnership,
-                            grossLowCents: run.exit.lowCents,
-                            grossHighCents: run.exit.highCents,
+                            grossLowCents: run.feesLow.grossCents,
+                            grossHighCents: run.feesHigh.grossCents,
                             netLowCents: run.feesLow.netCents,
                             netHighCents: run.feesHigh.netCents,
                             multipleLow: run.feesLow.netMultiple,

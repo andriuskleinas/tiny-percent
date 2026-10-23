@@ -38,6 +38,8 @@ export interface FeeTerms {
 }
 
 export interface FeeResult {
+  /** Everything that came back before carry: the shares, plus a repaid note. */
+  grossCents: number
   entryFeeCents: number
   managementFeeCents: number
   carryCents: number
@@ -89,6 +91,7 @@ export function applyFees(
   const net = grossProceedsCents - carry
 
   return {
+    grossCents: grossProceedsCents,
     entryFeeCents: entry,
     managementFeeCents: management,
     carryCents: carry,

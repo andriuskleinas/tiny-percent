@@ -545,3 +545,41 @@ the €32M it raised sits ahead of common shareholders.
 | Tests | 383 across 31 files |
 | Oracle assertions | 93 across 19 golden cases |
 | Lint warnings | 2, both pre-existing |
+
+---
+
+## Note maturity · 2026-10-23 · DONE
+
+A convertible note can carry a maturity date. If that date comes before the
+next priced round, and on or before the exit, the note settles there and its
+interest stops. Without a maturity date nothing changes, so every existing
+link keeps its numbers and the scenario stays at version 3.
+
+| | Done |
+|---|---|
+| Fields | `Instrument.maturityDate`, `atMaturity: 'repay' \| 'convert' \| 'extend'` (default repay), `maturityValuationCents` (default the cap, on the cap's basis). Validated in `state/url.ts`. |
+| Repay | Principal plus interest to maturity is paid in cash on that date. The stake becomes zero; later cheques still buy shares. The repaid principal leaves the preference stack, so a downside exit counts only cheques still held as shares. The repayment counts as gross proceeds, so carry applies to the interest. For IRR, carry comes out of the repayment first and the exit brings the rest. `entry.kind` is `repaid`. |
+| Convert | Buys `owed / valuation` (a pre-money valuation adds everything converting, and is an estimate), then is diluted by every later round as an ordinary holder. `entry.kind` is `converted`. |
+| Extend | The date is ignored and the note converts at the next round, interest included, as before. To model a new due date, move the date. |
+| Precedence | A round on or before the due date is the financing the note waited for: it converts there. An exit before the due date leaves it pending at the cap. A SAFE's maturity date is ignored. A due date on or before the lending date is refused. |
+| Engine | `maturityOf` in `engine/convert.ts`; `runScenario` returns `maturity`; `strategyPaths` quotes pro-rata on the settled stake. |
+| Oracle | Cases R1–R4: repay, convert at the cap, convert at a $4M maturity valuation, extend. Each is checked against the share ledger, along with exit, carry, net and IRR. R1 also checks the repayment-only IRR against its closed form. |
+
+**Not modelled:** a company that cannot repay; a note unconverted at a sale
+taking repayment, or a multiple of it, ahead of equity; qualified-financing
+thresholds; MFN clauses.
+
+**UI.** A note shows a maturity date field. Once a date is set, it also shows
+an "At maturity" choice (repaid, converts, extended), and "Converts" adds a
+maturity valuation that defaults to the cap. The result card says when the note
+was repaid and how much came back, or where it converted. The summary adds an
+"of which repaid at maturity" line. The stake table notes the round after a
+note that matured. Gross proceeds everywhere now come from
+`FeeResult.grossCents`, which includes the repayment, so net never shows above
+gross. There is one new glossary term, `maturity`.
+
+| | |
+|---|---|
+| Tests | 407 across 31 files |
+| Oracle assertions | 105 across 23 golden cases |
+| Lint warnings | 2, both pre-existing |

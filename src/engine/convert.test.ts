@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { accrue, convertAt, isConvertible, yearsBetween } from './convert'
+import { accrue, convertAt, isConvertible, maturityOf, yearsBetween } from './convert'
 import { toCents } from './money'
 import { roundTerms, runScenario } from './scenario'
 import type { Instrument, Round, Scenario } from './types'
@@ -187,5 +187,97 @@ describe('a SAFE entry in a whole scenario', () => {
     expect(isConvertible('equity')).toBe(false)
     expect(isConvertible('safe')).toBe(true)
     expect(isConvertible('cla')).toBe(true)
+  })
+})
+
+describe('a note that reaches its maturity date first', () => {
+  // $100k at 8% simple from 2023-01-01, due 2024-01-01: one year, $108,000 owed.
+  const note = (patch: Partial<Instrument> = {}): Partial<Instrument> => ({
+    type: 'cla',
+    interestRate: 0.08,
+    maturityDate: '2024-01-01',
+    ...patch,
+  })
+
+  it('is repaid by default, principal and interest, and holds nothing after', () => {
+    const run = runScenario(scenario([entry({}, note())]))
+    expect(run.maturity).toEqual({ outcome: 'repay', date: '2024-01-01', accruedCents: toCents(8_000), stake: 0, repaidCents: toCents(108_000) })
+    expect(run.entry).toEqual({ kind: 'repaid', estimate: false })
+    expect(run.finalOwnership).toBe(0)
+    expect(run.exit.lowCents).toBe(0)
+    // The repayment is the whole return: 1.08x, and 8% a year over the one year.
+    expect(run.feesLow.grossMultiple).toBeCloseTo(1.08, 12)
+    expect(run.irrLow).toBeCloseTo(0.08, 9)
+    expect(run.totalInvestedCents).toBe(toCents(100_000))
+  })
+
+  it('takes carry on the interest, out of the repayment', () => {
+    const run = runScenario({ ...scenario([entry({}, note())]), fees: { carry: { percent: 0.2, basis: 'per_deal' } } })
+    expect(run.feesLow.carryCents).toBe(toCents(1_600))
+    expect(run.feesLow.netCents).toBe(toCents(106_400))
+    expect(run.irrLow).toBeCloseTo(0.064, 9)
+  })
+
+  it('converts at the cap when told to, and later rounds dilute it', () => {
+    const run = runScenario(scenario([entry({}, note({ atMaturity: 'convert' })), seed()]))
+    expect(run.maturity?.outcome).toBe('convert')
+    expect(run.rounds[1]?.conversion).toBeUndefined()
+    expect(run.rounds[1]?.heldBefore).toBeCloseTo(108_000 / 5_000_000, 12)
+    expect(run.finalOwnership).toBeCloseTo((108_000 / 5_000_000) * 0.8, 12)
+    expect(run.entry).toEqual({ kind: 'converted', estimate: false })
+  })
+
+  it('converts at the maturity valuation when one is stated', () => {
+    const run = runScenario(scenario([entry({}, note({ atMaturity: 'convert', maturityValuationCents: toCents(4_000_000) }))]))
+    expect(run.finalOwnership).toBeCloseTo(108_000 / 4_000_000, 12)
+  })
+
+  it('adds everything converting to a pre-money valuation, and calls it an estimate', () => {
+    const e = entry({ valuationBasis: 'pre', raisedCents: toCents(400_000) }, note({ atMaturity: 'convert' }))
+    const m = maturityOf(e, e.participation as Instrument, undefined, '2030-01-01')
+    expect(m).toMatchObject({ outcome: 'convert', estimate: true, valuationPostCents: toCents(5_000_000 + 108_000 + 300_000) })
+    expect(runScenario(scenario([e])).entry).toEqual({ kind: 'converted', estimate: true })
+  })
+
+  it('stops interest at maturity: converting there buys less than waiting for the round', () => {
+    const due = runScenario(scenario([entry({}, note({ atMaturity: 'convert' })), seed()]))
+    const extended = runScenario(scenario([entry({}, note({ atMaturity: 'extend' })), seed()]))
+    expect(extended.maturity).toBeUndefined()
+    expect(extended.rounds[1]?.conversion?.convertingCents).toBe(accrue(toCents(100_000), 0.08, yearsBetween('2023-01-01', '2025-01-01')))
+    expect(due.finalOwnership).toBeLessThan(extended.finalOwnership)
+  })
+
+  it('converts at a round dated on the due date, which is the financing it waited for', () => {
+    const run = runScenario(scenario([entry({}, note()), seed({ date: '2024-01-01' })]))
+    expect(run.maturity).toBeUndefined()
+    expect(run.rounds[1]?.conversion?.route).toBe('cap')
+  })
+
+  it('is still waiting if the exit comes before the due date', () => {
+    const s = scenario([entry({}, note({ maturityDate: '2031-01-01' }))])
+    const run = runScenario(s)
+    expect(run.maturity).toBeUndefined()
+    expect(run.entry.kind).toBe('pending')
+    expect(run.finalOwnership).toBeCloseTo(0.02, 12)
+  })
+
+  it('leaves a repaid note out of the preference stack in a downside exit', () => {
+    const s = scenario([entry({}, note()), seed({ participation: { type: 'equity', amountCents: toCents(20_000), entryFee: NO_FEE } })])
+    const run = runScenario({ ...s, exit: { ...s.exit, valueCents: toCents(1_000_000), totalRaisedCents: toCents(2_000_000) } })
+    expect(run.exit.regime).toBe('downside')
+    // Only the $20k follow-on is in the stack: 20k / 2M × 1M.
+    expect(run.exit.lowCents).toBe(toCents(10_000))
+    expect(run.feesLow.grossMultiple).toBeCloseTo((108_000 + 10_000) / 120_000, 12)
+  })
+
+  it('means nothing on a SAFE, which has no maturity', () => {
+    const run = runScenario(scenario([entry({}, { maturityDate: '2024-01-01' }), seed()]))
+    expect(run.maturity).toBeUndefined()
+    expect(run.rounds[1]?.conversion?.route).toBe('cap')
+  })
+
+  it('refuses a maturity date on or before the date the money was lent', () => {
+    expect(() => runScenario(scenario([entry({}, note({ maturityDate: '2023-01-01' }))]))).toThrow(RangeError)
+    expect(() => runScenario(scenario([entry({}, note({ maturityDate: '2022-06-01' }))]))).toThrow(RangeError)
   })
 })

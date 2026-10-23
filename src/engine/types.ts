@@ -18,6 +18,13 @@ export type InstrumentType = 'equity' | 'safe' | 'cla'
 
 export type InterestMode = 'simple' | 'compound'
 
+/**
+ * What a note does if its maturity date arrives before any priced round. Repay
+ * pays principal and interest back in cash; convert buys shares at the cap or a
+ * stated maturity valuation; extend leaves it waiting for the next round.
+ */
+export type MaturityOutcome = 'repay' | 'convert' | 'extend'
+
 /** A cheque written into a round. Present on `Round.participation`. */
 export interface Instrument {
   type: InstrumentType
@@ -29,6 +36,19 @@ export interface Instrument {
   interestRate?: number | undefined
   /** Note only. Defaults to simple. */
   interestMode?: InterestMode | undefined
+  /**
+   * Note only: ISO 8601 date the loan falls due. Without one, a note waits for a
+   * priced round however long that takes, which is what it did before maturity
+   * was modelled, so older links keep their numbers.
+   */
+  maturityDate?: string | undefined
+  /** Note only: what happens at maturity. Defaults to repay, since it is a loan. */
+  atMaturity?: MaturityOutcome | undefined
+  /**
+   * Note only: the valuation it converts at on maturity, on the cap's basis.
+   * Defaults to the cap.
+   */
+  maturityValuationCents?: number | undefined
 }
 
 /** The names offered in the round picker. Any other non-empty name is a custom round. */

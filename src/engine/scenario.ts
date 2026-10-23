@@ -1,5 +1,5 @@
-import { convertAt, isConvertible } from './convert'
-import type { Conversion } from './convert'
+import { convertAt, isConvertible, maturityOf } from './convert'
+import type { Conversion, Maturity } from './convert'
 import { applyFees, entryFeeFor } from './fees'
 import type { ChequeCost, FeeResult } from './fees'
 import { exitProceeds } from './exit'
@@ -18,7 +18,9 @@ import type { Round, Scenario } from './types'
  * an angel's first cheque is just the first round they wrote one into. A priced
  * cheque buys `amount / post-money`. A SAFE or note entry shows its stake at the
  * cap until the next round, where it converts (see `convert.ts`); if no round
- * follows, the stake at the cap is the answer and the result says so.
+ * follows, the stake at the cap is the answer and the result says so. A note
+ * whose maturity date comes first settles there instead: repaid in cash, or
+ * converted and diluted by every round after.
  *
  * When the exit is inside the uncertain band, fees and returns are computed
  * twice, once against each bound, rather than against an invented midpoint.
@@ -51,7 +53,8 @@ export interface RoundState {
  * or one still waiting for a priced round.
  */
 export interface EntryStatus {
-  kind: 'priced' | 'converted' | 'pending'
+  /** `converted` covers a note converting at maturity as well as at a round. */
+  kind: 'priced' | 'converted' | 'pending' | 'repaid'
   /** A pre-money cap, whose answer depends on SAFEs the angel cannot see. */
   estimate: boolean
 }
@@ -59,9 +62,15 @@ export interface EntryStatus {
 export interface ScenarioResult {
   entry: EntryStatus
   rounds: RoundState[]
+  /** Present when a note reached its maturity date before any priced round. */
+  maturity?: Maturity | undefined
   finalOwnership: number
   totalInvestedCents: number
   chequesCents: number[]
+  /**
+   * What the shares bring at the exit. A repaid note's cash is not in here, as
+   * it arrived at maturity; it is in `maturity`, and in the fees and returns.
+   */
   exit: ExitProceeds
   feesLow: FeeResult
   feesHigh: FeeResult
@@ -110,12 +119,14 @@ export function runScenario(scenario: Scenario): ScenarioResult {
   const entryIndex = ordered.indexOf(entryRound)
   const entryCheque = entryRound.participation
   const convertible = entryCheque !== undefined && isConvertible(entryCheque.type) && entryCheque.amountCents > 0
+  const maturity = convertible ? maturityOf(entryRound, entryCheque, ordered[entryIndex + 1], scenario.exit.date) : undefined
 
   for (const [index, round] of ordered.entries()) {
     const terms = roundTerms(round)
     const before = ownership
-    const conversion = convertible && index === entryIndex + 1 ? convertAt(entryRound, entryCheque, round, terms) : undefined
-    const held = conversion?.stake ?? before
+    const next = index === entryIndex + 1
+    const conversion = convertible && next && !maturity ? convertAt(entryRound, entryCheque, round, terms) : undefined
+    const held = conversion?.stake ?? (maturity && next ? maturity.stake : before)
     const cheque = round.participation
     const invested = cheque?.amountCents ?? 0
     ownership = ownAfter(held, terms, invested)
@@ -140,29 +151,41 @@ export function runScenario(scenario: Scenario): ScenarioResult {
     })
   }
 
+  // Maturity with no round after it: the stake at the cap gives way to the settlement.
+  if (maturity && entryIndex === ordered.length - 1) ownership = maturity.stake
+
   const totalInvested = cheques.reduce((sum, c) => sum + c.chequeCents, 0)
+  const repaid = maturity?.outcome === 'repay' ? maturity : undefined
 
   const exit = exitProceeds({
     valueCents: scenario.exit.valueCents,
     totalRaisedCents: scenario.exit.totalRaisedCents,
     ownership,
-    investedCents: totalInvested,
+    // A repaid note has left the preference stack; only cheques held as shares sit in it.
+    investedCents: totalInvested - (repaid ? repaid.repaidCents - repaid.accruedCents : 0),
     currency: scenario.currency,
   })
 
-  const feesLow = applyFees(cheques, exit.lowCents, scenario.fees)
-  const feesHigh = applyFees(cheques, exit.highCents, scenario.fees)
+  const repaidCents = repaid?.repaidCents ?? 0
+  const feesLow = applyFees(cheques, exit.lowCents + repaidCents, scenario.fees)
+  const feesHigh = applyFees(cheques, exit.highCents + repaidCents, scenario.fees)
 
-  const returnAt = (net: number): number | undefined =>
-    irr([...flows, { date: scenario.exit.date, amountCents: net }])
+  // Carry comes out of the first money back: the repayment arrives net of as
+  // much of it as it can bear, and the exit brings the rest.
+  const returnAt = (net: number): number | undefined => {
+    const atMaturity = Math.min(repaidCents, net)
+    const back = repaid ? [{ date: repaid.date, amountCents: atMaturity }] : []
+    return irr([...flows, ...back, { date: scenario.exit.date, amountCents: net - atMaturity }])
+  }
 
   const entry: EntryStatus = {
-    kind: !convertible ? 'priced' : entryIndex + 1 < ordered.length ? 'converted' : 'pending',
-    estimate: convertible && entryRound.valuationBasis === 'pre',
+    kind: !convertible ? 'priced' : repaid ? 'repaid' : maturity || entryIndex + 1 < ordered.length ? 'converted' : 'pending',
+    estimate: convertible && !repaid && entryRound.valuationBasis === 'pre',
   }
 
   return {
     entry,
+    maturity,
     rounds: states,
     finalOwnership: ownership,
     totalInvestedCents: totalInvested,
