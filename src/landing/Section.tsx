@@ -53,8 +53,8 @@ export function Mark({ className = 'h-5 w-5' }: { className?: string }) {
           y={0.5 + Math.floor(i / 5) * 4}
           width="3"
           height="3"
-          className="fill-[var(--color-mark-cell,var(--color-ink-faint))]"
-          style={{ opacity: 'var(--mark-cell-opacity, 0.35)' }}
+          className="fill-ink-faint"
+          opacity={0.35}
         />
       ))}
       <rect x="16.5" y="16.5" width="3" height="3" className="tp-mark-dot fill-slice" />
