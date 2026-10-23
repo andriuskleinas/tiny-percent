@@ -316,7 +316,6 @@ function InstrumentsBody() {
       id="instruments"
       eyebrow="Three ways to invest"
       title="Shares, SAFE or convertible note?"
-      lede={`One ${cheque} cheque at a ${compactMoney(f.capCents)} valuation, invested three ways. The difference is when your price is set.`}
       tone="band"
     >
       <div className="grid gap-6 md:grid-cols-2">
