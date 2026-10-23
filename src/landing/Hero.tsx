@@ -49,11 +49,11 @@ export function Hero() {
       <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 pb-16 pt-14 sm:px-6 sm:pt-20 lg:grid-cols-[minmax(0,1fr)_26rem] lg:pb-24">
         <div>
           <h1 id="hero-title" className="max-w-2xl text-4xl font-semibold leading-[1.05] tracking-tight text-ink outline-none sm:text-6xl">
-            See what your startup investment could become
+            From first cheque to exit, in your own numbers
           </h1>
           <p className="mt-6 max-w-xl text-lg text-ink-soft sm:text-xl">
-            Every time a startup raises money, your share of it shrinks. See what following on would cost, and what
-            your stake could return when the company sells.
+            See how each new round dilutes you, what keeping your share would cost, and what your stake returns when the
+            company sells.
           </p>
           <div className="mt-8">
             <button

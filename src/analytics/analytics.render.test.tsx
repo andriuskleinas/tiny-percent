@@ -33,7 +33,7 @@ describe('the funnel, reported from the page', () => {
     render(<App />)
     expect(names()).toEqual(['page_viewed'])
 
-    fireEvent.click(within(screen.getByRole('region', { name: 'See what your startup investment could become' })).getByRole('button', { name: 'Use calculator' }))
+    fireEvent.click(within(screen.getByRole('region', { name: 'From first cheque to exit, in your own numbers' })).getByRole('button', { name: 'Use calculator' }))
     expect(events.at(-1)).toEqual({ name: 'hero_cta_clicked', placement: 'hero' })
 
     const investment = within(region('Your initial investment'))

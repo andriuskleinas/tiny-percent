@@ -35,7 +35,7 @@ describe('the page structure', () => {
     render(<App />)
     const h1 = screen.getAllByRole('heading', { level: 1 })
     expect(h1).toHaveLength(1)
-    expect(h1[0]?.textContent).toBe('See what your startup investment could become')
+    expect(h1[0]?.textContent).toBe('From first cheque to exit, in your own numbers')
   })
 
   it('puts the calculator straight after the hero', () => {
@@ -80,8 +80,8 @@ describe('navigation', () => {
 describe('the hero', () => {
   it('previews real numbers from a €5,000 Pre-seed example, and has one call to action', () => {
     render(<App />)
-    const hero = within(region('See what your startup investment could become'))
-    expect(hero.getByText(/Every time a startup raises money, your share of it shrinks/)).toBeTruthy()
+    const hero = within(region('From first cheque to exit, in your own numbers'))
+    expect(hero.getByText(/See how each new round dilutes you/)).toBeTruthy()
     expect(hero.queryByRole('button', { name: 'See an example' })).toBeNull()
     expect(hero.queryByText('Free. No account required.')).toBeNull()
     const preview = within(hero.getByRole('figure'))
@@ -128,7 +128,7 @@ describe('the hero', () => {
 
   it('the hero’s "Use calculator" goes to the calculator and puts the cursor in the amount', () => {
     render(<App />)
-    fireEvent.click(within(screen.getByRole('region', { name: 'See what your startup investment could become' })).getByRole('button', { name: 'Use calculator' }))
+    fireEvent.click(within(screen.getByRole('region', { name: 'From first cheque to exit, in your own numbers' })).getByRole('button', { name: 'Use calculator' }))
     expect(scrolled.map((el) => el.id)).toContain('calculator')
     expect(document.activeElement).toBe(within(calculator()).getByLabelText('Investment amount'))
   })

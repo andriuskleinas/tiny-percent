@@ -13,7 +13,7 @@ describe('the prerendered home page', () => {
   const html = renderPage('home')
 
   it('contains the headline and the calculator as HTML', () => {
-    expect(html).toContain('See what your startup investment could become')
+    expect(html).toContain('From first cheque to exit, in your own numbers')
     expect(html).toContain('Run your own numbers')
     expect(html).toContain('Investment amount')
     expect(html).not.toContain('Frequently asked questions')
