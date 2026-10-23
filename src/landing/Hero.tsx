@@ -8,10 +8,11 @@ import { SITE } from '../site'
 import { HERO_FACTS } from './example'
 import { INVESTMENT_INPUT_ID, scrollToSection } from './scroll'
 
-/** The hero's promises, each with a 16px line icon. */
+/** The hero's promises: a title, the plain fact behind it, and a 16px line icon. */
 const PROMISES = [
   {
     text: 'Runs in your browser',
+    detail: 'Your numbers never leave it',
     icon: (
       <>
         <rect x="3" y="7" width="10" height="7" rx="1.5" />
@@ -21,6 +22,7 @@ const PROMISES = [
   },
   {
     text: 'No data, no tracking',
+    detail: 'No account, no cookies',
     icon: (
       <>
         <path d="M2 8s2.2-4.5 6-4.5S14 8 14 8s-2.2 4.5-6 4.5S2 8 2 8Z" />
@@ -31,6 +33,7 @@ const PROMISES = [
   },
   {
     text: 'Free and educational',
+    detail: 'No ads, no paywall',
     icon: (
       <>
         <path d="M1.5 6 8 3l6.5 3L8 9 1.5 6Z" />
@@ -68,16 +71,19 @@ export function Hero() {
               and the Privacy page both have to change first. */}
           <ul
             aria-label="What tinypercent does with your data"
-            className="mt-10 flex max-w-xl flex-col gap-3 border-t border-rule pt-6 text-sm font-medium text-ink sm:flex-row sm:flex-wrap sm:gap-x-7"
+            className="mt-10 grid max-w-2xl divide-y divide-rule rounded-2xl border border-rule bg-surface shadow-card sm:grid-cols-3 sm:divide-x sm:divide-y-0"
           >
-            {PROMISES.map(({ text, icon }) => (
-              <li key={text} className="flex items-center gap-2.5">
-                <span aria-hidden="true" className="grid size-7 shrink-0 place-items-center rounded-lg bg-accent-wash text-accent">
-                  <svg viewBox="0 0 16 16" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            {PROMISES.map(({ text, detail, icon }) => (
+              <li key={text} className="flex items-center gap-3 px-4 py-3.5 sm:flex-col sm:items-start sm:gap-2.5 sm:p-4">
+                <span aria-hidden="true" className="grid size-9 shrink-0 place-items-center rounded-xl bg-accent text-on-accent shadow-sm">
+                  <svg viewBox="0 0 16 16" className="size-[18px]" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
                     {icon}
                   </svg>
                 </span>
-                {text}
+                <span className="flex flex-col">
+                  <span className="text-sm font-semibold text-ink">{text}</span>
+                  <span className="text-xs text-ink-faint">{detail}</span>
+                </span>
               </li>
             ))}
           </ul>
