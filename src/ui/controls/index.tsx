@@ -418,7 +418,7 @@ export function SwitchField<T extends string>({
                   onChange(options[i === 0 ? 1 : 0][0])
                   refs.current[1 - i]?.focus()
                 }}
-                className={`relative z-10 rounded-full px-3 py-2 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent/40 ${
+                className={`relative z-10 flex items-center justify-center rounded-full px-3 py-2 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent/40 ${
                   checked ? 'text-accent' : 'text-ink-faint hover:text-ink'
                 }`}
                 title={icons ? text : undefined}
