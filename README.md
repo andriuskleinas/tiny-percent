@@ -31,7 +31,7 @@ A free angel investment calculator that shows what your startup stake becomes as
   <img alt="Cloudflare Workers" src="https://img.shields.io/badge/Cloudflare-Workers-f38020?logo=cloudflare&logoColor=white">
 </p>
 
-![The tinypercent landing page: "From first cheque to exit, in your own numbers", a €5,000 pre-seed cheque diluted to 0.051% and worth €51,200 at a €100M exit, three promises under the Use calculator button (runs in your browser; no data, no tracking; free and educational) and a Buy me a coffee button](docs/screenshots/hero.png)
+![The tinypercent landing page: "From first cheque to exit, in your own numbers", a €5,000 pre-seed cheque diluted to 0.051% and worth €51,200 at a €100M exit, three promises under the Use calculator button (runs in your browser; no data, no tracking; free and educational) and a Buy me a coffee button](docs/screenshots/landing.png)
 
 ## Why it exists
 
