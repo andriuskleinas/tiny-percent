@@ -10,7 +10,7 @@ export const EXIT_PRESETS_CENTS: readonly number[] = [
 ].map(toCents)
 
 /**
- * What a fresh visit sees: a single €5,000 cheque into a Seed round, so the
+ * What a fresh visit sees: a single €5,000 cheque into a Pre-seed round, so the
  * first result on screen is "what do I own". Follow-on rounds are for the user
  * to add. No fees — a direct investment is the simplest honest default.
  */
@@ -20,7 +20,7 @@ export const STARTING_POINT: Scenario = {
   rounds: [
     {
       id: 'seed',
-      label: 'Seed',
+      label: 'Pre-seed',
       date: '2026-01-15',
       valuationCents: toCents(4_000_000),
       valuationBasis: 'pre',
@@ -104,7 +104,7 @@ export function blankScenario(currency: Currency, today: Date = new Date()): Sce
     rounds: [
       {
         id: 'entry',
-        label: 'Seed',
+        label: 'Pre-seed',
         date,
         valuationCents: 0,
         valuationBasis: 'pre',

@@ -81,10 +81,10 @@ describe('the calculator’s controls', () => {
   it('lets you pick the round you invest in, or name another', () => {
     open()
     const rounds = within(investment()).getByRole('radiogroup', { name: 'Funding round' })
-    expect(within(rounds).getByRole('radio', { name: 'Seed' }).getAttribute('aria-checked')).toBe('true')
-    fireEvent.click(within(rounds).getByRole('radio', { name: 'Pre-seed' }))
     expect(within(rounds).getByRole('radio', { name: 'Pre-seed' }).getAttribute('aria-checked')).toBe('true')
-    expect(within(summary()).getByText('Initial investment (Pre-seed)')).toBeTruthy()
+    fireEvent.click(within(rounds).getByRole('radio', { name: 'Seed' }))
+    expect(within(rounds).getByRole('radio', { name: 'Seed' }).getAttribute('aria-checked')).toBe('true')
+    expect(within(summary()).getByText('Initial investment (Seed)')).toBeTruthy()
     fireEvent.click(within(rounds).getByRole('radio', { name: 'Other' }))
     fireEvent.change(within(investment()).getByLabelText('Round name'), { target: { value: 'Angel round' } })
     expect(within(summary()).getByText('Initial investment (Angel round)')).toBeTruthy()
@@ -230,7 +230,8 @@ describe('future rounds and the follow-on choice', () => {
   it('adds a round and lets it take a custom name', () => {
     open()
     fireEvent.click(within(rounds()).getByRole('button', { name: '+ Add funding round' }))
-    const added = within(rounds()).getByRole('article', { name: 'Series A' })
+    // After a Pre-seed cheque, the next round suggested is the Seed.
+    const added = within(rounds()).getByRole('article', { name: 'Seed' })
     const other = within(added).getByRole('option', { name: 'Other…' }) as HTMLOptionElement
     fireEvent.change(within(added).getByLabelText('Round'), { target: { value: other.value } })
     const name = within(rounds()).getByLabelText('Round name') as HTMLInputElement
