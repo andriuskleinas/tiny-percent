@@ -259,15 +259,29 @@ function InstrumentsBody() {
     },
   ]
 
-  const rows: Array<readonly [string, string, string, string]> = [
+  const facts: Array<readonly [string, string, string, string]> = [
     ['Your price is set', 'Today', 'At the next priced round', 'At the next priced round'],
     ['Until then you hold', 'Shares', 'A right to future shares', 'A loan'],
     ['Interest', 'None', 'None', 'Yes, and it converts too'],
     ['If no round ever comes', 'You keep your shares', 'It waits, with no end date', 'Repaid, converted or extended at maturity'],
-    [`After the ${f.seed.label} at ${compactMoney(f.seed.postMoneyCents)}`, pct(f.shares.ownership), pct(f.safe.ownership), pct(f.note.ownership)],
-    [`After a ${f.seed.label} at ${compactMoney(f.cheapSeed.postMoneyCents)}`, pct(f.shares.cheapOwnership), pct(f.cheapSafe.ownership), pct(f.cheapNote.ownership)],
   ]
-  const columns = ['Shares', 'SAFE', 'Convertible note'] as const
+  // The stakes are drawn as bars, each row scaled to its own largest stake.
+  const stakes: Array<{ question: string; values: readonly [number, number, number] }> = [
+    {
+      question: `After the ${f.seed.label} at ${compactMoney(f.seed.postMoneyCents)}`,
+      values: [f.shares.ownership, f.safe.ownership, f.note.ownership],
+    },
+    {
+      question: `After a ${f.seed.label} at ${compactMoney(f.cheapSeed.postMoneyCents)}`,
+      values: [f.shares.cheapOwnership, f.cheapSafe.ownership, f.cheapNote.ownership],
+    },
+  ]
+  const columns = [
+    { name: 'Shares', blurb: 'Priced today' },
+    { name: 'SAFE', blurb: 'Priced at the next round' },
+    { name: 'Convertible note', blurb: 'A loan, priced later' },
+  ] as const
+  const groupHeading = 'bg-sunk/60 px-5 py-2 text-left font-mono text-[11px] font-medium uppercase tracking-wider text-ink-faint'
 
   return (
     <Section
@@ -284,46 +298,96 @@ function InstrumentsBody() {
       </div>
 
       <h3 className="mt-12 text-lg font-semibold tracking-tight text-ink">Side by side</h3>
-      <table className="mt-4 hidden w-full table-fixed border-collapse text-sm sm:table">
-        <caption className="sr-only">Shares, SAFE and convertible note compared</caption>
-        <thead>
-          <tr className="border-b border-rule-strong text-left font-mono text-[10px] uppercase tracking-wider text-ink-faint">
-            <th scope="col" className="w-1/4 py-2 pr-3 font-normal">
-              <span className="sr-only">Question</span>
-            </th>
-            {columns.map((c) => (
-              <th key={c} scope="col" className="py-2 pr-3 font-normal">
-                {c}
+      <div className="mt-4 hidden overflow-hidden rounded-2xl border border-rule bg-surface shadow-card sm:block">
+        <table className="w-full table-fixed border-collapse text-sm">
+          <caption className="sr-only">Shares, SAFE and convertible note compared</caption>
+          <thead>
+            <tr className="border-b border-rule text-left align-top">
+              <th scope="col" className="w-1/4 px-5 pt-5 pb-4 font-normal">
+                <span className="sr-only">Question</span>
               </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map(([question, ...answers]) => (
-            <tr key={question} className="border-b border-rule align-top">
-              <th scope="row" className="py-3 pr-3 text-left font-medium text-ink-soft">
-                {question}
-              </th>
-              {answers.map((a, i) => (
-                <td key={columns[i]} className={`py-3 pr-3 text-ink ${/%$/.test(a) ? 'font-mono tabular-nums' : ''}`}>
-                  {a}
-                </td>
+              {columns.map((c) => (
+                <th key={c.name} scope="col" className="px-5 pt-5 pb-4 font-normal">
+                  <span className="block text-base font-semibold tracking-tight text-ink">{c.name}</span>
+                  <span className="mt-0.5 block text-xs text-ink-faint">{c.blurb}</span>
+                </th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="colgroup" colSpan={4} className={groupHeading}>
+                How it works
+              </th>
+            </tr>
+            {facts.map(([question, ...answers]) => (
+              <tr key={question} className="border-b border-rule align-top transition-colors last:border-0 hover:bg-sunk/30">
+                <th scope="row" className="px-5 py-3.5 text-left font-medium text-ink-soft">
+                  {question}
+                </th>
+                {answers.map((a, i) => (
+                  <td key={columns[i]?.name} className={`px-5 py-3.5 ${a === 'None' ? 'text-ink-faint' : 'text-ink'}`}>
+                    {a}
+                  </td>
+                ))}
+              </tr>
+            ))}
+            <tr>
+              <th scope="colgroup" colSpan={4} className={groupHeading}>
+                What you end up owning
+              </th>
+            </tr>
+            {stakes.map(({ question, values }) => {
+              const most = Math.max(...values)
+              return (
+                <tr key={question} className="border-b border-rule align-top transition-colors last:border-0 hover:bg-sunk/30">
+                  <th scope="row" className="px-5 py-4 text-left font-medium text-ink-soft">
+                    {question}
+                  </th>
+                  {values.map((v, i) => (
+                    <td key={columns[i]?.name} className="px-5 py-4">
+                      <span className={`font-mono text-base font-semibold tabular-nums ${v === most ? 'text-accent-label' : 'text-ink'}`}>
+                        {pct(v)}
+                      </span>
+                      <span aria-hidden="true" className="mt-2 block h-1.5 max-w-40 overflow-hidden rounded-full bg-sunk">
+                        <span
+                          className={`block h-full rounded-full ${v === most ? 'bg-accent' : 'bg-rule-strong'}`}
+                          style={{ width: `${(v / most) * 100}%` }}
+                        />
+                      </span>
+                    </td>
+                  ))}
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
       <div className="mt-4 flex flex-col gap-4 sm:hidden">
         {columns.map((c, i) => (
-          <div key={c} className="rounded-2xl border border-rule bg-surface p-4">
-            <p className="font-semibold text-ink">{c}</p>
+          <div key={c.name} className="rounded-2xl border border-rule bg-surface p-4 shadow-card">
+            <p className="font-semibold text-ink">{c.name}</p>
+            <p className="text-xs text-ink-faint">{c.blurb}</p>
             <dl className="mt-2 flex flex-col divide-y divide-rule text-sm">
-              {rows.map(([question, ...answers]) => (
+              {facts.map(([question, ...answers]) => (
                 <div key={question} className="flex items-baseline justify-between gap-4 py-2">
                   <dt className="text-ink-faint">{question}</dt>
-                  <dd className={`text-right text-ink ${/%$/.test(answers[i] ?? '') ? 'font-mono tabular-nums' : ''}`}>{answers[i]}</dd>
+                  <dd className="text-right text-ink">{answers[i]}</dd>
                 </div>
               ))}
+              {stakes.map(({ question, values }) => {
+                const v = values[i] ?? 0
+                return (
+                  <div key={question} className="flex items-baseline justify-between gap-4 py-2">
+                    <dt className="text-ink-faint">{question}</dt>
+                    <dd
+                      className={`text-right font-mono font-semibold tabular-nums ${v === Math.max(...values) ? 'text-accent-label' : 'text-ink'}`}
+                    >
+                      {pct(v)}
+                    </dd>
+                  </div>
+                )
+              })}
             </dl>
           </div>
         ))}
