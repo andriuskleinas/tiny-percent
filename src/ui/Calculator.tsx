@@ -62,7 +62,7 @@ export function Calculator({ state, dispatch }: { state: AppState; dispatch: (ac
 
   return (
     <CurrencyContext.Provider value={scenario.currency}>
-      <section id="calculator" aria-labelledby="calculator-title" className="scroll-mt-14 border-t border-rule bg-sunk/40">
+      <section id="calculator" aria-labelledby="calculator-title" className="scroll-mt-14 border-t border-rule">
         <div className="mx-auto max-w-6xl px-4 pb-20 pt-14 sm:px-6">
           <header className="mb-8 max-w-3xl">
             <h2 id="calculator-title" className="text-3xl font-semibold tracking-tight text-ink outline-none sm:text-4xl">

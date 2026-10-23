@@ -7,7 +7,6 @@ export function Section({
   title,
   lede,
   children,
-  tone = 'plain',
   align = 'start',
 }: {
   id: string
@@ -15,7 +14,6 @@ export function Section({
   title: string
   lede?: ReactNode | undefined
   children: ReactNode
-  tone?: 'plain' | 'band'
   align?: 'start' | 'center'
 }) {
   const centred = align === 'center'
@@ -23,7 +21,7 @@ export function Section({
     <section
       id={id}
       aria-labelledby={`${id}-title`}
-      className={`scroll-mt-20 border-t border-rule ${tone === 'band' ? 'bg-surface' : ''}`}
+      className="scroll-mt-20 border-t border-rule"
     >
       <div className={`mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20 ${centred ? 'text-center' : ''}`}>
         {eyebrow ? <p className="font-mono text-xs font-bold uppercase tracking-[0.14em] text-accent">{eyebrow}</p> : null}
