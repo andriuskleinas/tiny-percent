@@ -101,7 +101,7 @@ Below the calculator, four cards work through the ideas that decide what a chequ
 
 ![The maths, briefly: four cards on equity, dilution, pro-rata and exit, each with a highlighted key idea and its arithmetic](docs/screenshots/learn.png)
 
-A second section puts **shares, a SAFE and a convertible note** side by side: one €25,000 cheque at a €5M valuation, invested three ways into the same Seed. Each card says why the instrument exists, highlights the result you actually get, and keeps when it works best one click away. A fourth card shows the case a SAFE protects you from, a next round priced below the cap, and a table compares all three.
+A second section puts **shares, a SAFE and a convertible note** side by side: one €5,000 cheque at a €5M valuation, invested three ways into the same Seed. Each card says why the instrument exists, highlights the result you actually get, and keeps when it works best one click away. A fourth card shows the case a SAFE protects you from, a next round priced below the cap, and a table compares all three.
 
 ![Shares, SAFE or convertible note: the same €25,000 three ways, with the winning conversion route highlighted and a cheaper next round](docs/screenshots/instruments.png)
 

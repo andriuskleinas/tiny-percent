@@ -4,7 +4,7 @@ import { validateSignup } from '../server/waitlist'
 import type { SignupField } from '../server/waitlist'
 import { CoffeeButton } from '../ui/Coffee'
 import { CurrencyContext, useMoney } from '../ui/currency'
-import { multiple, percent } from '../ui/format'
+import { multiple, ownership, percent } from '../ui/format'
 import { EXAMPLE_FACTS } from './example'
 import { INSTRUMENT_FACTS } from './instruments'
 import { Section, Wordmark } from './Section'
@@ -192,7 +192,8 @@ export function Instruments() {
 function InstrumentsBody() {
   const { money, compactMoney } = useMoney()
   const f = INSTRUMENT_FACTS
-  const pct = (fraction: number, places = 2) => percent(fraction, places)
+  // Stakes this small need a third decimal below 0.1%, as the calculator shows them.
+  const pct = (fraction: number, places?: number) => (places === undefined ? ownership(fraction) : percent(fraction, places))
   const cheque = money(f.chequeCents)
   const cap = money(f.capCents)
   const seedPost = money(f.seed.postMoneyCents)
@@ -316,7 +317,6 @@ function InstrumentsBody() {
       id="instruments"
       eyebrow="Three ways to invest"
       title="Shares, SAFE or convertible note?"
-      tone="band"
     >
       <div className="grid gap-6 md:grid-cols-2">
         {cards.map((card) => (

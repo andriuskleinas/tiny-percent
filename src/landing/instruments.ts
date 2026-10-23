@@ -14,7 +14,7 @@ import type { InstrumentType, Round, Scenario } from '../engine/types'
  * the round 8% × 2 the explanation shows.
  */
 
-const CHEQUE = toCents(25_000)
+const CHEQUE = toCents(5_000)
 const CAP = toCents(5_000_000)
 const DISCOUNT = 0.2
 const INTEREST = 0.08

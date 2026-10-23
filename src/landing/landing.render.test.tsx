@@ -158,34 +158,34 @@ describe('the explanations', () => {
 })
 
 describe('shares, SAFE or convertible note', () => {
-  // €25,000 at a €5M cap, then a Seed of €8M pre raising €2M (or €3M raising
+  // €5,000 at a €5M cap, then a Seed of €8M pre raising €2M (or €3M raising
   // €1M). The same cap and discount routes as golden cases E, F and G.
   const text = () => region('Shares, SAFE or convertible note?').textContent ?? ''
 
   it('works shares through to the Seed', () => {
     render(<App />)
-    expect(text()).toContain('€25,000 ÷ €5,000,000 =0.50%')
-    expect(text()).toContain('0.50% × 80% =0.40%')
+    expect(text()).toContain('€5,000 ÷ €5,000,000 =0.10%')
+    expect(text()).toContain('0.10% × 80% =0.080%')
   })
 
   it('shows a SAFE taking the better of the cap and the discount', () => {
     render(<App />)
-    expect(text()).toContain('At the capYou get this€25,000 ÷ €5,000,000 × 80% =0.40%')
-    expect(text()).toContain('At the discount€25,000 ÷ (80% × €10,000,000) =0.31%')
+    expect(text()).toContain('At the capYou get this€5,000 ÷ €5,000,000 × 80% =0.080%')
+    expect(text()).toContain('At the discount€5,000 ÷ (80% × €10,000,000) =0.063%')
   })
 
   it('shows a note’s interest converting', () => {
     render(<App />)
-    expect(text()).toContain('€25,000 × (1 + 8% × 2) =€29,000')
-    expect(text()).toContain('€29,000 ÷ €5,000,000 × 80% =0.46%')
-    expect(text()).toContain('The €4,000 of interest converts, but it isn’t money you paid.')
+    expect(text()).toContain('€5,000 × (1 + 8% × 2) =€5,800')
+    expect(text()).toContain('€5,800 ÷ €5,000,000 × 80% =0.093%')
+    expect(text()).toContain('The €800 of interest converts, but it isn’t money you paid.')
   })
 
   it('shows the discount protecting a SAFE when the next round is cheaper', () => {
     render(<App />)
-    expect(text()).toContain('0.50% × 75% =0.38%')
-    expect(text()).toContain('SAFE at the discountYou get this€25,000 ÷ (80% × €4,000,000) =0.78%')
-    expect(text()).toContain('Note at the discountYou get this€29,000 ÷ (80% × €4,000,000) =0.91%')
+    expect(text()).toContain('0.10% × 75% =0.075%')
+    expect(text()).toContain('SAFE at the discountYou get this€5,000 ÷ (80% × €4,000,000) =0.16%')
+    expect(text()).toContain('Note at the discountYou get this€5,800 ÷ (80% × €4,000,000) =0.18%')
   })
 
   it('says why each one exists, with when it fits one click away', () => {
@@ -210,9 +210,9 @@ describe('shares, SAFE or convertible note', () => {
     render(<App />)
     const table = within(region('Shares, SAFE or convertible note?')).getByRole('table')
     const rows = within(table).getAllByRole('row').map((r) => r.textContent)
-    expect(rows).toContain('What your €25,000 is worth after the Seed')
-    expect(rows).toContain('Seed at €10M€40,0000.40% owned · 1.6×€40,0000.40% owned · 1.6×€46,4000.46% owned · 1.86×')
-    expect(rows).toContain('Seed at €4M, below the cap€15,0000.38% owned · 0.6×€31,2500.78% owned · 1.25×€36,2500.91% owned · 1.45×')
+    expect(rows).toContain('What your €5,000 is worth after the Seed')
+    expect(rows).toContain('Seed at €10M€8,0000.080% owned · 1.6×€8,0000.080% owned · 1.6×€9,2800.093% owned · 1.86×')
+    expect(rows).toContain('Seed at €4M, below the cap€3,0000.075% owned · 0.6×€6,2500.16% owned · 1.25×€7,2500.18% owned · 1.45×')
   })
 })
 
