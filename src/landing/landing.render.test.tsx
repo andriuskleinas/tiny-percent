@@ -185,6 +185,7 @@ describe('shares, SAFE or convertible note', () => {
     render(<App />)
     expect(text()).toContain('0.50% × 75% =0.38%')
     expect(text()).toContain('SAFE at the discountYou get this€25,000 ÷ (80% × €4,000,000) =0.78%')
+    expect(text()).toContain('Note at the discountYou get this€29,000 ÷ (80% × €4,000,000) =0.91%')
   })
 
   it('says why each one exists, with when it fits one click away', () => {

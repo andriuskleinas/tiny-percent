@@ -254,8 +254,20 @@ function InstrumentsBody() {
           result: pct(f.cheapSafe.routes.discount),
           ...higher(f.cheapSafe.winner === 'discount'),
         },
+        {
+          label: 'Note at the cap',
+          sum: `${money(f.cheapNote.convertingCents)} ÷ ${cap} × ${pct(f.cheapSeed.kept, 0)}`,
+          result: pct(f.cheapNote.routes.cap),
+          ...higher(f.cheapNote.winner === 'cap'),
+        },
+        {
+          label: 'Note at the discount',
+          sum: `${money(f.cheapNote.convertingCents)} ÷ (${offPrice} × ${money(f.cheapSeed.postMoneyCents)})`,
+          result: pct(f.cheapNote.routes.discount),
+          ...higher(f.cheapNote.winner === 'discount'),
+        },
       ],
-      note: 'The discount more than doubles the SAFE’s stake. Shares can’t be repriced.',
+      note: 'The discount more than doubles the SAFE’s stake, and the note’s interest converts on top. Shares can’t be repriced.',
     },
   ]
 
