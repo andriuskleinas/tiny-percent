@@ -26,12 +26,12 @@ A free angel investment calculator that shows what your startup stake becomes as
   <img alt="TypeScript strict" src="https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white">
   <img alt="Vite 8" src="https://img.shields.io/badge/Vite-8-646cff?logo=vite&logoColor=white">
   <img alt="Tailwind CSS 4" src="https://img.shields.io/badge/Tailwind-4-38bdf8?logo=tailwindcss&logoColor=white">
-  <img alt="Vitest: 438 tests" src="https://img.shields.io/badge/Vitest-438%20tests-6e9f18?logo=vitest&logoColor=white">
+  <img alt="Vitest: 437 tests" src="https://img.shields.io/badge/Vitest-437%20tests-6e9f18?logo=vitest&logoColor=white">
   <img alt="Python oracle: 105 checks" src="https://img.shields.io/badge/Python%20oracle-105%20checks-3776ab?logo=python&logoColor=white">
   <img alt="Cloudflare Workers" src="https://img.shields.io/badge/Cloudflare-Workers-f38020?logo=cloudflare&logoColor=white">
 </p>
 
-![The tinypercent landing page: a €5,000 pre-seed cheque diluted to 0.051% and worth €51,200 at a €100M exit, with "Collects no data, No tracking, Educational, always free" under the Use calculator button and a Buy me a coffee button](docs/screenshots/hero.png)
+![The tinypercent landing page: "From first cheque to exit, in your own numbers", a €5,000 pre-seed cheque diluted to 0.051% and worth €51,200 at a €100M exit, three promises under the Use calculator button (runs in your browser; no data, no tracking; free and educational) and a Buy me a coffee button](docs/screenshots/hero.png)
 
 ## Why it exists
 
@@ -59,7 +59,7 @@ Spreadsheets answer that badly, and full cap-table tools ask for numbers an ange
 
 Enter your cheque and the rounds that follow. At each round, choose to sit out, pay your pro-rata to hold your share, or invest a different amount. Every choice updates your ownership, the paper value of your stake, and the return at exit, as you type.
 
-![The calculator: a €5,000 seed cheque, a Series A, the exit slider, the investment summary, the Copy link and Download PDF bar, and a Buy me a coffee line](docs/screenshots/calculator.png)
+![The calculator as a first visit sees it: a €5,000 pre-seed cheque, the euro and dollar flags, an empty future-rounds area, the exit slider, the investment summary, the Copy link and Download PDF bar, and a Buy me a coffee line](docs/screenshots/calculator.png)
 
 ### Follow on or sit out?
 
@@ -69,13 +69,13 @@ The same company, three ways: keeping your first cheque alone, paying your pro-r
 
 ### Every round in one table
 
-![Round-by-round table: valuation, cheque, ownership, dilution and paper value from Seed to a €250M exit](docs/screenshots/stake-table.png)
+![Round-by-round table: valuation, cheque, ownership, dilution and paper value from Pre-seed to a €250M exit](docs/screenshots/stake-table.png)
 
 ### One cheque, every possible exit
 
 Before any later rounds are added, a return curve shows what your cheque pays at every exit price, and flags the low exits where liquidation preferences could leave you with less.
 
-![Return curve for a €5,000 seed cheque across exits from €1M to €1B](docs/screenshots/exit-curve.png)
+![Return curve for a €5,000 pre-seed cheque across exits from €1M to €1B](docs/screenshots/exit-curve.png)
 
 ### SAFEs and convertible notes
 
@@ -101,9 +101,9 @@ Below the calculator, four cards work through the ideas that decide what a chequ
 
 ![The maths, briefly: four cards on equity, dilution, pro-rata and exit, each with a highlighted key idea and its arithmetic](docs/screenshots/learn.png)
 
-A second section puts **shares, a SAFE and a convertible note** side by side: one €5,000 cheque at a €5M valuation, invested three ways into the same Seed. Each card says why the instrument exists, highlights the result you actually get, and keeps when it works best one click away. A fourth card shows the case a SAFE protects you from, a next round priced below the cap, and a table compares all three.
+A second section puts **shares, a SAFE and a convertible note** side by side: one €5,000 cheque at a €5M valuation, invested three ways into the same Seed. Each card says why the instrument exists, highlights the result you actually get, and keeps when it works best one click away. A fourth card shows the case a SAFE and a note protect you from, a next round priced below the cap, and a table compares all three: what you put in, how each works, and what your €5,000 is worth after the Seed.
 
-![Shares, SAFE or convertible note: the same €25,000 three ways, with the winning conversion route highlighted and a cheaper next round](docs/screenshots/instruments.png)
+![Shares, SAFE or convertible note: the same €5,000 three ways, with the winning conversion route highlighted, a cheaper next round, and a table of what each is worth after the Seed](docs/screenshots/instruments.png)
 
 ### Free, and supported by the people who use it
 
@@ -112,7 +112,7 @@ tinypercent is built purely as an educational calculator: it collects no data, t
 ### Also
 
 - **Real round mechanics.** Pre-money or post-money valuations, new option pools created in a round, and pro-rata worked out for you.
-- **Euros or dollars**, and short shared links such as `tinypercent.com/shared#…`.
+- **Euros or dollars**, picked by flag, and short shared links such as `tinypercent.com/shared#…`.
 - **Works on a phone**, with a summary bar that stays in view as you scroll.
 
 <p align="center"><img src="docs/screenshots/phone.png" alt="tinypercent on a phone: the investment summary, the Copy link and Download PDF bar, a Buy me a coffee line, and the summary strip pinned to the bottom" width="320"></p>
@@ -142,7 +142,7 @@ $50,000 at a $10M post-money Series A, diluted to 0.32% by two later rounds. A $
 flowchart TB
   subgraph Build["Build and deploy: GitHub Actions on every push"]
     direction LR
-    O[Python oracle<br/>two independent models] -->|golden-cases.json| G[typecheck · lint<br/>438 tests · build]
+    O[Python oracle<br/>two independent models] -->|golden-cases.json| G[typecheck · lint<br/>437 tests · build]
     G -->|green on main:<br/>wrangler deploy| CF[Cloudflare Workers<br/>static assets]
   end
   subgraph Browser["In your browser: nothing leaves it"]
@@ -162,7 +162,7 @@ flowchart TB
 | **PDF** | jsPDF, loaded only when someone downloads a report. Built-in Helvetica, so no font is embedded and a report is about 6 KB |
 | **State and sharing** | One reducer for the whole scenario. Links compress it with the browser's `CompressionStream` into the URL fragment, so it never reaches a server |
 | **Rendering** | Every page prerendered to static HTML at build time, with sitemap and robots.txt, so content loads before any JavaScript runs |
-| **Testing** | 438 Vitest tests across 35 files (unit, property-based and render tests), plus an independent Python oracle: 105 assertions across 23 golden cases |
+| **Testing** | 437 Vitest tests across 35 files (unit, property-based and render tests), plus an independent Python oracle: 105 assertions across 23 golden cases |
 | **CI/CD** | GitHub Actions: typecheck, lint, tests, oracle drift check and build on every push; a green push to `main` deploys with Wrangler |
 | **Hosting** | Cloudflare Workers static assets at tinypercent.com, with a strict Content Security Policy and security headers on every response |
 
