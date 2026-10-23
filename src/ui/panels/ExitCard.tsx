@@ -68,7 +68,10 @@ export function ExitCard({ scenario, dispatch }: { scenario: Scenario; dispatch:
             </span>
           ))}
         </div>
-        <p className="mt-2 text-xs text-ink-faint">Drag to set the price the whole company sells for. Arrow keys fine-tune it.</p>
+        <p className="mt-2 text-xs text-ink-faint">
+          Drag to set the price the whole company sells for, or fine-tune it with <Key glyph="←" name="Left arrow" />{' '}
+          <Key glyph="→" name="Right arrow" />.
+        </p>
 
         <div className="mt-4 border-t border-rule pt-4">
           <PercentField
@@ -82,5 +85,15 @@ export function ExitCard({ scenario, dispatch }: { scenario: Scenario; dispatch:
         </div>
       </div>
     </section>
+  )
+}
+
+/** A keyboard key drawn as a keycap, with its name for screen readers. */
+function Key({ glyph, name }: { glyph: string; name: string }) {
+  return (
+    <kbd className="inline-grid min-w-5 place-items-center rounded border border-rule-strong bg-surface px-1 font-mono text-[11px] leading-4 text-ink-soft shadow-[0_1px_0_var(--color-rule-strong)]">
+      <span aria-hidden="true">{glyph}</span>
+      <span className="sr-only">{name}</span>
+    </kbd>
   )
 }
