@@ -15,8 +15,7 @@
   --color-rule-strong: #c3bbaa;
   --color-accent: #7f93ff;
   --color-accent-wash: #e6e9ff;
-  /* Dark text on the light blue: white on it would be too faint to read. */
-  --color-on-accent: #15161a;
+  --color-on-accent: #ffffff;
   --color-gain: #1a6e49;
   --color-dilute: #a83e25;
   --color-slice: var(--color-accent);
@@ -50,7 +49,7 @@
     --color-rule-strong: #3b3e47;
     --color-accent: #7f93ff;
     --color-accent-wash: #1b2145;
-    --color-on-accent: #101114;
+    --color-on-accent: #ffffff;
     --color-gain: #5cc592;
     --color-dilute: #f08a66;
     --color-grid: #25272e;
@@ -68,7 +67,7 @@
   --color-rule-strong: #3b3e47;
   --color-accent: #7f93ff;
   --color-accent-wash: #1b2145;
-  --color-on-accent: #101114;
+  --color-on-accent: #ffffff;
   --color-gain: #5cc592;
   --color-dilute: #f08a66;
   --color-grid: #25272e;
