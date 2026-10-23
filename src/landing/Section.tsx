@@ -64,13 +64,16 @@ export function Mark({ className = 'h-5 w-5' }: { className?: string }) {
   )
 }
 
-/** The name as it is drawn: lowercase, with "percent" in the slice colour. */
+/**
+ * The name as it is drawn: lowercase, with "percent" in the slice colour and
+ * slanted 20°, the angle of the y's long stroke, so the two run parallel.
+ */
 export function Wordmark({ className = '' }: { className?: string }) {
   return (
     <span className={`inline-flex items-center gap-2 font-semibold tracking-[-0.03em] ${className}`}>
       <Mark />
       <span>
-        tiny<span className="text-accent">percent</span>
+        tiny<span className="-ml-[0.06em] inline-block origin-[0_60%] -skew-x-20 pr-[0.2em] text-accent">percent</span>
       </span>
     </span>
   )
