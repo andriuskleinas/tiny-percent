@@ -26,8 +26,8 @@ A free angel investment calculator that shows what your startup stake becomes as
   <img alt="TypeScript strict" src="https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white">
   <img alt="Vite 8" src="https://img.shields.io/badge/Vite-8-646cff?logo=vite&logoColor=white">
   <img alt="Tailwind CSS 4" src="https://img.shields.io/badge/Tailwind-4-38bdf8?logo=tailwindcss&logoColor=white">
-  <img alt="Vitest: 383 tests" src="https://img.shields.io/badge/Vitest-383%20tests-6e9f18?logo=vitest&logoColor=white">
-  <img alt="Python oracle: 93 checks" src="https://img.shields.io/badge/Python%20oracle-93%20checks-3776ab?logo=python&logoColor=white">
+  <img alt="Vitest: 432 tests" src="https://img.shields.io/badge/Vitest-432%20tests-6e9f18?logo=vitest&logoColor=white">
+  <img alt="Python oracle: 105 checks" src="https://img.shields.io/badge/Python%20oracle-105%20checks-3776ab?logo=python&logoColor=white">
   <img alt="Cloudflare Workers" src="https://img.shields.io/badge/Cloudflare-Workers-f38020?logo=cloudflare&logoColor=white">
 </p>
 
@@ -46,17 +46,20 @@ Spreadsheets answer that badly, and full cap-table tools ask for numbers an ange
 | 📉 | **Dilution, round by round** | Enter your cheque and every later round. Your ownership, paper value and exit return update as you type. |
 | ➕ | **Follow on or sit out** | At each round, sit out, pay your pro-rata or pick an amount, and see all three paths drawn side by side. |
 | 📝 | **SAFEs and convertible notes** | Cap, discount and interest. The stake converts at the next priced round on whichever term gives you the most. |
+| ⏳ | **Note maturity** | A note that reaches its maturity date before the next round is repaid with interest, converts at the cap, or is extended. |
 | 🎲 | **How it could end** | The same deal if the company fails, returns its capital, or grows 10× or 100×, with the power-law arithmetic on your own numbers. |
 | 📈 | **Every possible exit** | A return curve from €1M to €1B that flags where liquidation preferences bite. |
 | 🤝 | **Syndicate costs** | Carry, management fees and entry fees come out, so the multiple shown is what reaches you. |
+| 📄 | **Deal PDF** | "Download PDF" saves the deal as a one-page A4 report, made in your browser. |
 | 🔗 | **Shareable links** | "Copy link" reopens exactly what you were looking at. The calculation lives after the `#` and never reaches a server. |
+| 🎓 | **The maths, explained** | Worked examples of equity, dilution, pro-rata and exits, and of shares against a SAFE and a note, every figure computed by the same engine. |
 | 🔒 | **Private by design** | No account, no tracking, no backend for the calculator. Nothing you type leaves your browser. |
 
 ### Follow your stake through every round
 
 Enter your cheque and the rounds that follow. At each round, choose to sit out, pay your pro-rata to hold your share, or invest a different amount. Every choice updates your ownership, the paper value of your stake, and the return at exit, as you type.
 
-![The calculator: a €5,000 seed cheque, a Series A with the follow-on choice, the exit slider and the investment summary](docs/screenshots/calculator.png)
+![The calculator: a €5,000 seed cheque, a Series A, the exit slider, the investment summary, and the Copy link and Download PDF bar](docs/screenshots/calculator.png)
 
 ### Follow on or sit out?
 
@@ -80,11 +83,33 @@ Many angel cheques buy no shares yet. Pick a SAFE or a convertible note and ente
 
 ![A €5,000 SAFE with a €5M post-money cap and a 20% discount, converting in the Series A](docs/screenshots/safe.png)
 
+### When a note reaches maturity
+
+A convertible note is a loan, so it has a date it falls due. Add a maturity date and choose what happens if no priced round has come by then: the company **repays** the loan with its interest, the note **converts** at the cap or a stated maturity valuation, or the lenders **extend** it to wait for the next round. Interest stops at maturity. A repaid note holds no shares afterwards and leaves the preference stack, the repayment counts towards your return on the day it arrives, and a round on or before the due date converts the note as usual.
+
+![A €50,000 convertible note due before its Seed round: Repaid is selected, and the panel shows €54,000 back, the €50,000 lent plus €4,000 of interest](docs/screenshots/maturity.png)
+
 ### How it could end
 
 A single exit on a slider hides the most important fact about angel investing: most companies fail and a few pay for the rest. The same deal is shown four ways: the company fails, sells for what it raised, or grows 10× or 100× from the valuation you invested at. Each row is a full run with dilution, preferences and carry, and one line of arithmetic on your own numbers says how many failed cheques like this one a single win pays back.
 
 ![Four endings for a €5,000 seed cheque: fails, returns its capital, grows 10×, grows 100× for a 51.2× multiple](docs/screenshots/endings.png)
+
+### Save the deal as a PDF
+
+"Download PDF" turns the calculation on screen into a one-page A4 report: the deal in one line, the headline figures, your terms and the summary, where a SAFE or note stands, every round and the four endings, with the disclaimer on each page. The PDF is drawn in your browser, so the numbers never leave it, and the PDF library loads only when you click.
+
+<p align="center"><img src="docs/screenshots/pdf.png" alt="A deal PDF for a $100,000 SAFE: headline tiles, terms and summary, the conversion at the cap, the round-by-round table and four endings" width="620"></p>
+
+### The maths, in plain words
+
+Below the calculator, four cards work through the ideas that decide what a cheque returns (equity, dilution, pro-rata and the exit), each with one highlighted key idea and the arithmetic step by step. Every number is computed by the same engine as the calculator, never typed into the copy.
+
+![The maths, briefly: four cards on equity, dilution, pro-rata and exit, each with a highlighted key idea and its arithmetic](docs/screenshots/learn.png)
+
+A second section puts **shares, a SAFE and a convertible note** side by side: one €25,000 cheque at a €5M valuation, invested three ways into the same Seed. Each card says why the instrument exists, highlights the result you actually get, and keeps when it works best one click away. A fourth card shows the case a SAFE protects you from, a next round priced below the cap, and a table compares all three.
+
+![Shares, SAFE or convertible note: the same €25,000 three ways, with the winning conversion route highlighted and a cheaper next round](docs/screenshots/instruments.png)
 
 ### Also
 
@@ -92,7 +117,7 @@ A single exit on a slider hides the most important fact about angel investing: m
 - **Euros or dollars**, and short shared links such as `tinypercent.com/shared#…`.
 - **Works on a phone**, with a summary bar that stays in view as you scroll.
 
-<p align="center"><img src="docs/screenshots/phone.png" alt="tinypercent on a phone: the investment summary and the Copy link button" width="320"></p>
+<p align="center"><img src="docs/screenshots/phone.png" alt="tinypercent on a phone: the investment summary, the Copy link and Download PDF bar, and the summary strip pinned to the bottom" width="320"></p>
 
 ## Examples
 
@@ -119,13 +144,14 @@ $50,000 at a $10M post-money Series A, diluted to 0.32% by two later rounds. A $
 flowchart TB
   subgraph Build["Build and deploy: GitHub Actions on every push"]
     direction LR
-    O[Python oracle<br/>two independent models] -->|golden-cases.json| G[typecheck · lint<br/>383 tests · build]
+    O[Python oracle<br/>two independent models] -->|golden-cases.json| G[typecheck · lint<br/>432 tests · build]
     G -->|green on main:<br/>wrangler deploy| CF[Cloudflare Workers<br/>static assets]
   end
   subgraph Browser["In your browser: nothing leaves it"]
     direction LR
     L[Share link] <-->|state in the<br/>URL fragment| UI[React UI]
     UI <-->|scenario in,<br/>results out| E[Pure TS engine<br/>integer cents]
+    UI -->|on click,<br/>loaded on demand| P[Deal PDF<br/>jsPDF]
   end
   Build -->|prerendered HTML + CSP headers| Browser
 ```
@@ -133,11 +159,12 @@ flowchart TB
 | Layer | Choices |
 |---|---|
 | **Frontend** | React 19, TypeScript 6 (strict), Tailwind CSS 4, built with Vite 8; self-hosted Inter Tight and JetBrains Mono |
-| **Calculation engine** | Plain TypeScript in [`src/engine`](src/engine): no React, no browser APIs, money in integer cents. Rounds, pro-rata, option pools, SAFE and note conversion, liquidation preferences, syndicate fees and IRR |
+| **Calculation engine** | Plain TypeScript in [`src/engine`](src/engine): no React, no browser APIs, money in integer cents. Rounds, pro-rata, option pools, SAFE and note conversion, note maturity, liquidation preferences, syndicate fees and IRR |
 | **Charts** | Hand-written SVG, no chart library |
+| **PDF** | jsPDF, loaded only when someone downloads a report. Built-in Helvetica, so no font is embedded and a report is about 6 KB |
 | **State and sharing** | One reducer for the whole scenario. Links compress it with the browser's `CompressionStream` into the URL fragment, so it never reaches a server |
 | **Rendering** | Every page prerendered to static HTML at build time, with sitemap and robots.txt, so content loads before any JavaScript runs |
-| **Testing** | 383 Vitest tests across 31 files (unit, property-based and render tests), plus an independent Python oracle: 93 assertions across 19 golden cases |
+| **Testing** | 432 Vitest tests across 34 files (unit, property-based and render tests), plus an independent Python oracle: 105 assertions across 23 golden cases |
 | **CI/CD** | GitHub Actions: typecheck, lint, tests, oracle drift check and build on every push; a green push to `main` deploys with Wrangler |
 | **Hosting** | Cloudflare Workers static assets at tinypercent.com, with a strict Content Security Policy and security headers on every response |
 
@@ -151,7 +178,7 @@ own_after = own_before × (P / V − t) + I / V    if you invest I
 pro_rata  = own_before × (R + t × V)            to hold your position
 ```
 
-For a single holder, that is algebraically the same as running a full cap table. To prove it, [`tools/oracle.py`](tools/oracle.py) implements the maths twice: once with this formula, and once as an independent share-count cap table that knows nothing about it. The two must agree on **93 assertions across 19 golden cases**, including every SAFE and note conversion route checked against a share ledger. The oracle writes the expected figures to a fixture that the TypeScript tests check against, and CI fails if the Python and TypeScript models ever drift apart.
+For a single holder, that is algebraically the same as running a full cap table. To prove it, [`tools/oracle.py`](tools/oracle.py) implements the maths twice: once with this formula, and once as an independent share-count cap table that knows nothing about it. The two must agree on **105 assertions across 23 golden cases**, including every SAFE and note conversion route and each note maturity outcome (repaid, converted, extended) checked against a share ledger, with its fees and rate of return. The oracle writes the expected figures to a fixture that the TypeScript tests check against, and CI fails if the Python and TypeScript models ever drift apart.
 
 ### Engineering choices worth a look
 
@@ -161,6 +188,7 @@ For a single holder, that is algebraically the same as running a full cap table.
 - **Old links keep their numbers.** Shared links are versioned: a link made before SAFEs existed opens as priced shares, which is what it computed at the time.
 - **Errors never blank the page.** Some inputs have no answer, such as an option pool larger than the round allows. [`safeRun`](src/ui/safeRun.ts) keeps the last workable result on screen and explains what is wrong instead of crashing.
 - **Shared links are untrusted input.** A link is checked field by field before use, refused if it unpacks to anything oversized, and only opened if the scenario actually runs. The link format is compressed with the browser's built-in `CompressionStream`, which makes links about half the length.
+- **The PDF is a view, not a second model.** [`report.ts`](src/ui/report/report.ts) turns the same engine run into text with the page's own formatters, and [`pdf.ts`](src/ui/report/pdf.ts) only lays it out, so the report can never disagree with the screen.
 - **Locked-down delivery.** A strict Content Security Policy and security headers on every response.
 
 ## Run it yourself
