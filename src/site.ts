@@ -23,4 +23,9 @@ export const SITE = {
    * endpoint: switching this back on needs that endpoint deployed first.
    */
   waitlist: false as boolean,
+  /**
+   * Where "Buy me a coffee" goes. Every support link on the site is hidden while
+   * this is unset, so removing it removes them all.
+   */
+  supportUrl: 'https://buymeacoffee.com/tinypercent' as string | undefined,
 }

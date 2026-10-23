@@ -65,15 +65,6 @@ export function Mark({ className = 'h-5 w-5' }: { className?: string }) {
 }
 
 /** The name as it is drawn: lowercase, with "percent" in the slice colour. */
-/** Says the site is still being shaped, beside the name in the header. */
-export function BetaBadge() {
-  return (
-    <span className="rounded-full border border-accent/30 bg-accent-wash px-2 py-0.5 text-[11px] font-semibold uppercase leading-none tracking-wider text-accent">
-      Beta
-    </span>
-  )
-}
-
 export function Wordmark({ className = '' }: { className?: string }) {
   return (
     <span className={`inline-flex items-center gap-2 font-semibold tracking-[-0.03em] ${className}`}>

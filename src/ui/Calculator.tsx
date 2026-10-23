@@ -13,6 +13,7 @@ import { EntryPanel } from './panels/EntryPanel'
 import { ExitCard } from './panels/ExitCard'
 import { RoundsPanel } from './panels/RoundsPanel'
 import { SummaryBar, SummaryPanel } from './panels/SummaryPanel'
+import { CoffeeNudge } from './Coffee'
 import { ShareBar } from './ShareBar'
 
 /**
@@ -105,6 +106,7 @@ export function Calculator({ state, dispatch }: { state: AppState; dispatch: (ac
                   scenario={scenario}
                   printable={!error && run.totalInvestedCents > 0 && (entryState?.postMoneyCents ?? 0) > 0 ? { scenario: workable, run } : undefined}
                 />
+                <CoffeeNudge />
               </div>
             </aside>
           </div>

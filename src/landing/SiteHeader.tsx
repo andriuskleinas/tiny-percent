@@ -1,4 +1,4 @@
-import { BetaBadge, Wordmark } from './Section'
+import { Wordmark } from './Section'
 import { track } from '../analytics/track'
 import { INVESTMENT_INPUT_ID, scrollToSection } from './scroll'
 
@@ -26,7 +26,6 @@ export function SiteHeader() {
         >
           <Wordmark />
         </a>
-        <BetaBadge />
         <span className="grow" />
         <button
           type="button"

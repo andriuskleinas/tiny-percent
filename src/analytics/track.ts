@@ -10,6 +10,9 @@
  * the whole vocabulary, and the only numbers they allow are small counts.
  */
 
+/** Where a "Buy me a coffee" link sits on the page. */
+export type SupportPlacement = 'hero' | 'calculator' | 'closing' | 'footer'
+
 export type CtaPlacement = 'hero' | 'nav' | 'features' | 'worked_example' | 'toolbar'
 
 export type AnalyticsEvent =
@@ -34,6 +37,7 @@ export type AnalyticsEvent =
   | { name: 'share_clicked' }
   | { name: 'calculation_link_copied'; method: 'share_sheet' | 'clipboard' | 'manual' }
   | { name: 'pdf_downloaded' }
+  | { name: 'support_clicked'; placement: SupportPlacement }
   | { name: 'email_submitted' }
   // Activation (§31)
   | { name: 'activated' }

@@ -21,6 +21,11 @@
   --color-slice: var(--color-accent);
   --color-grid: #e3ddd0;
   --color-marker: #ffe57a;
+  /* Buy Me a Coffee's yellow, with dark text in both themes so it reads the same everywhere. */
+  --color-coffee: #ffdd00;
+  --color-on-coffee: #15161a;
+  /* The same yellow, deepened enough to read as an icon on paper or on dark. */
+  --color-coffee-ink: #9a7a00;
 
   --shadow-card: 0 1px 2px rgb(21 22 26 / 0.04), 0 12px 32px -18px rgb(21 22 26 / 0.14);
   --shadow-pop: 0 2px 6px rgb(21 22 26 / 0.06), 0 18px 40px -12px rgb(21 22 26 / 0.22);

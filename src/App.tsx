@@ -3,7 +3,7 @@ import { calculatorEvents, createJourney } from './analytics/calculatorEvents'
 import { track, trackOnce } from './analytics/track'
 import type { Scenario } from './engine/types'
 import { Hero } from './landing/Hero'
-import { Instruments, Learn, SiteFooter, UpdatesSignup } from './landing/Sections'
+import { Instruments, Learn, SiteFooter, Support, UpdatesSignup } from './landing/Sections'
 import { SiteHeader } from './landing/SiteHeader'
 import { scrollToSection } from './landing/scroll'
 import { appReducer, initialAppState } from './state/app'
@@ -70,6 +70,7 @@ export default function App({ shared }: { shared?: Scenario | undefined } = {}) 
         <Calculator state={state} dispatch={dispatch} />
         <Learn />
         <Instruments />
+        {SITE.supportUrl ? <Support /> : null}
         {SITE.waitlist ? <UpdatesSignup /> : null}
       </main>
       <SiteFooter />

@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { track } from '../analytics/track'
+import { CoffeeButton } from '../ui/Coffee'
 import { CurrencyContext, useMoney } from '../ui/currency'
 import { ownership } from '../ui/format'
 import { usePrefersReducedMotion, useTween } from '../ui/motion'
+import { SITE } from '../site'
 import { HERO_FACTS } from './example'
 import { INVESTMENT_INPUT_ID, scrollToSection } from './scroll'
 
@@ -30,11 +32,34 @@ export function Hero() {
               Use calculator
             </button>
           </div>
+          {/* Keep this true. If analytics are ever connected (analytics/track.ts), this line
+              and the Privacy page both have to change first. */}
+          <ul aria-label="What tinypercent does with your data" className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-ink-soft">
+            {['Collects no data', 'No tracking', 'Educational, always free'].map((item) => (
+              <li key={item} className="flex items-center gap-1.5">
+                <svg aria-hidden="true" viewBox="0 0 16 16" className="size-4 text-gain" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m3.5 8.5 3 3 6-7" />
+                </svg>
+                {item}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-3 max-w-xl text-sm text-ink-faint">
+            tinypercent is built purely as an educational calculator. Nothing you type leaves your browser.
+          </p>
         </div>
 
-        <CurrencyContext.Provider value={HERO_FACTS.currency}>
-          <HeroPreview />
-        </CurrencyContext.Provider>
+        <div className="flex flex-col gap-5">
+          <CurrencyContext.Provider value={HERO_FACTS.currency}>
+            <HeroPreview />
+          </CurrencyContext.Provider>
+          {SITE.supportUrl ? (
+            <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-sm text-ink-faint">
+              <CoffeeButton placement="hero" size="sm" />
+              <span>Free to use. Support it if it helps you.</span>
+            </div>
+          ) : null}
+        </div>
       </div>
     </section>
   )

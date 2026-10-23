@@ -2,6 +2,7 @@ import { useId, useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
 import { validateSignup } from '../server/waitlist'
 import type { SignupField } from '../server/waitlist'
+import { CoffeeButton, CupIcon } from '../ui/Coffee'
 import { CurrencyContext, useMoney } from '../ui/currency'
 import { multiple, percent } from '../ui/format'
 import { EXAMPLE_FACTS } from './example'
@@ -9,6 +10,7 @@ import { INSTRUMENT_FACTS } from './instruments'
 import { Section, Wordmark } from './Section'
 import { track } from '../analytics/track'
 import { scrollToSection } from './scroll'
+import { SITE } from '../site'
 
 
 const primary =
@@ -474,6 +476,36 @@ export function UpdatesSignup() {
   )
 }
 
+/**
+ * A closing word from the person who built it, and one way to help. It asks
+ * once, plainly, at the end of the page, after the calculator has had its say.
+ */
+export function Support() {
+  return (
+    <section id="support" aria-labelledby="support-title" className="scroll-mt-20 border-t border-rule">
+      <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
+        <div className="mx-auto flex max-w-2xl flex-col items-center rounded-3xl border border-rule bg-surface px-6 py-10 text-center shadow-card sm:px-12">
+          <span aria-hidden="true" className="flex size-12 items-center justify-center rounded-2xl bg-coffee text-on-coffee shadow-sm">
+            <CupIcon className="size-6" />
+          </span>
+          <p className="mt-5 font-mono text-[11px] uppercase tracking-[0.14em] text-accent">Support the project</p>
+          <h2 id="support-title" className="mt-2 text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
+            Keep tinypercent free
+          </h2>
+          <p className="mt-4 text-ink-soft">
+            Hi, I’m Andrius. I believe investing shouldn’t feel like a closed club, so tinypercent is free, with no
+            ads and no accounts. If it helped you understand a deal, a coffee helps me keep it that way and keep
+            building tools that open investing to more people.
+          </p>
+          <div className="mt-7">
+            <CoffeeButton placement="closing" />
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 export function SiteFooter() {
   const links: Array<[string, string, string | undefined]> = [
     ['Calculator', '#calculator', 'calculator'],
@@ -488,6 +520,12 @@ export function SiteFooter() {
             <Wordmark />
           </p>
           <p className="mt-2 text-sm text-ink-soft">Your tiny percent, from first cheque to exit. A free angel investment calculator.</p>
+          {SITE.supportUrl ? (
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              <CoffeeButton placement="footer" size="sm" />
+              <span className="text-xs text-ink-faint">Free, no ads. Supported by people who use it.</span>
+            </div>
+          ) : null}
           <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm">
             {links.map(([text, href, section]) => (
               <li key={text}>

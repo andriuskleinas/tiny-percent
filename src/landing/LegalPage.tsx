@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { SITE } from '../site'
-import { BetaBadge, Wordmark } from './Section'
+import { Wordmark } from './Section'
 
 /**
  * Privacy and Terms. Plain statements of what the site actually does today —
@@ -50,6 +50,19 @@ function Privacy() {
         </a>
         .
       </p>
+      {SITE.supportUrl ? (
+        <>
+          <H2>Supporting the project</H2>
+          <p>
+            The “Buy me a coffee” links open Buy Me a Coffee, a separate service, in a new tab. Nothing is sent to it
+            until you click, and anything you do there is handled under{' '}
+            <a className="text-accent underline" href="https://buymeacoffee.com/privacy-policy">
+              Buy Me a Coffee’s privacy policy
+            </a>
+            .
+          </p>
+        </>
+      ) : null}
       <H2>Cookies, storage and analytics</H2>
       <p>
         The site sets no cookies, stores nothing on your device, and uses no analytics or advertising tools. If
@@ -130,7 +143,6 @@ export function LegalPage({ page }: { page: 'privacy' | 'terms' }) {
           <a href="/" className="text-lg text-ink">
             <Wordmark />
           </a>
-          <BetaBadge />
           <span className="grow" />
           <a
             href="/#calculator"
