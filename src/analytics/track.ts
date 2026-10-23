@@ -33,6 +33,7 @@ export type AnalyticsEvent =
   | { name: 'example_loaded'; placement: CtaPlacement }
   | { name: 'share_clicked' }
   | { name: 'calculation_link_copied'; method: 'share_sheet' | 'clipboard' | 'manual' }
+  | { name: 'pdf_downloaded' }
   | { name: 'email_submitted' }
   // Activation (§31)
   | { name: 'activated' }

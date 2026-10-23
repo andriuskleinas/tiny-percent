@@ -13,7 +13,7 @@ import { EntryPanel } from './panels/EntryPanel'
 import { ExitCard } from './panels/ExitCard'
 import { RoundsPanel } from './panels/RoundsPanel'
 import { SummaryBar, SummaryPanel } from './panels/SummaryPanel'
-import { ShareButton } from './ShareButton'
+import { ShareBar } from './ShareBar'
 
 /**
  * The calculator section: your cheque and the rounds after it on the left, the
@@ -100,7 +100,11 @@ export function Calculator({ state, dispatch }: { state: AppState; dispatch: (ac
               <div className="flex flex-col gap-4 lg:sticky lg:top-20">
                 <ExitCard scenario={scenario} dispatch={dispatch} />
                 <SummaryPanel scenario={scenario} run={run} />
-                <ShareButton scenario={scenario} />
+                {/* A PDF only once there is a deal to print, and never while a field is mid-edit and wrong. */}
+                <ShareBar
+                  scenario={scenario}
+                  printable={!error && run.totalInvestedCents > 0 && (entryState?.postMoneyCents ?? 0) > 0 ? { scenario: workable, run } : undefined}
+                />
               </div>
             </aside>
           </div>

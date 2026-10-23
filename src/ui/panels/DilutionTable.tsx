@@ -2,8 +2,8 @@ import { useMoney } from '../currency'
 import type { RoundState } from '../../engine/scenario'
 import type { Maturity } from '../../engine/convert'
 import { InfoTip } from '../controls'
-import { isConvertible } from '../../engine/convert'
-import { conversionRoute, instrumentName, multiple, ownership, percent, roundName } from '../format'
+import { convertibleEntryOf, stakeNotes, stakeRows } from '../facts'
+import { instrumentName, multiple, ownership, percent, roundName } from '../format'
 
 /** The hypothetical sale at the end of the table, at the exit valuation on the slider. */
 export interface ExitRow {
@@ -41,20 +41,9 @@ export function DilutionTable({
   const range = (low: string, high: string) => (low === high ? high : `${low} – ${high}`)
   const net = exit && exit.netHighCents !== exit.grossHighCents ? range(money(exit.netLowCents), money(exit.netHighCents)) : undefined
   const exitName = exit ? `Exit at ${compactMoney(exit.valueCents)}` : ''
-  const rows = states.filter((s) => s.ownershipAfter > 0 || s.investedCents > 0)
-
-  // The SAFE or note behind the entry, if it is one. Its first row is a stake at
-  // the cap, and the round after it is where the stake is actually fixed.
-  const entryCheque = rows.find((s) => s.ownershipBefore === 0 && s.investedCents > 0)?.round.participation
-  const convertibleEntry = entryCheque && isConvertible(entryCheque.type) ? entryCheque : undefined
-  const afterEntry = states[states.findIndex((s) => s.round.participation === entryCheque) + 1]
-  const note = (s: RoundState): string | undefined => {
-    if (!convertibleEntry) return undefined
-    if (s.conversion) return `${instrumentName(convertibleEntry.type)} converts at ${conversionRoute(s.conversion.route, convertibleEntry.discount)}`
-    if (maturity && s === afterEntry) return maturity.outcome === 'repay' ? 'Note repaid at maturity' : 'Note converted at maturity'
-    if (s.ownershipBefore === 0 && s.round.participation === convertibleEntry) return `${instrumentName(convertibleEntry.type)}, at the cap`
-    return undefined
-  }
+  const rows = stakeRows(states)
+  const note = stakeNotes(states, maturity)
+  const convertibleEntry = convertibleEntryOf(states)
 
   const change = (s: RoundState) => {
     if (s.ownershipBefore === 0) return 'entry'

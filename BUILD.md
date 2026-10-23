@@ -583,3 +583,22 @@ gross. There is one new glossary term, `maturity`.
 | Tests | 407 across 31 files |
 | Oracle assertions | 105 across 23 golden cases |
 | Lint warnings | 2, both pre-existing |
+
+---
+
+## Deal PDF · 2026-10-23 · DONE
+
+"Copy link" and "Download PDF" share one quiet bar under the summary
+(`ui/ShareBar.tsx`); each says what happened in its own label. The PDF is an A4
+report of the deal on screen, and a typical deal fits on one page.
+
+| | Done |
+|---|---|
+| Content | Title and a one-line deal summary; four headline tiles (invested, final ownership, net at the exit, multiple); the terms and the summary side by side; where a SAFE or note stands, highlighted; the preference caution when it applies; the round-by-round table ending in the exit; the four endings; the disclaimer on every page. |
+| Model | `ui/report/report.ts` turns the scenario and its run into plain text, using the same formatters and stake notes as the page. It has no PDF code, so it is tested on its own. |
+| Layout | `ui/report/pdf.ts` draws it with jsPDF in the PDF's built-in Helvetica, so no font is embedded and a report is about 6 KB. `pdfSafe` swaps the few characters the built-in fonts lack, such as the true minus sign. Short tables move to the next page whole. |
+| Loading | The PDF code and jsPDF load on the first click (131 KB gzipped). The page itself does not grow. jsPDF's optional html2canvas, DOMPurify and canvg chunks are emitted but never loaded. |
+| Privacy | Made in the browser. Nothing is sent anywhere, and the analytics event `pdf_downloaded` carries no figures. |
+
+The button is hidden while a field is invalid or before there is a cheque and a
+valuation, so a PDF never shows numbers that differ from the inputs on screen.
