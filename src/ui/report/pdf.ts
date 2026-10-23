@@ -56,7 +56,7 @@ export function reportPdf(report: Report): jsPDF {
   const ink = (c: Rgb) => doc.setTextColor(c[0], c[1], c[2])
   const paint = (c: Rgb) => doc.setFillColor(c[0], c[1], c[2])
   const stroke = (c: Rgb) => doc.setDrawColor(c[0], c[1], c[2])
-  const font = (size: number, weight: 'normal' | 'bold' | 'bolditalic' = 'normal') => {
+  const font = (size: number, weight: 'normal' | 'bold' = 'normal') => {
     doc.setFont('helvetica', weight)
     doc.setFontSize(size)
   }
@@ -85,8 +85,6 @@ export function reportPdf(report: Report): jsPDF {
   write('tiny', MARGIN, y + 10)
   const tiny = doc.getTextWidth('tiny')
   ink(ACCENT)
-  // Helvetica's oblique stands in for the slanted "percent" of the web wordmark.
-  font(13, 'bolditalic')
   write('percent', MARGIN + tiny, y + 10)
   font(9)
   ink(FAINT)
