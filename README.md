@@ -217,6 +217,6 @@ npm run oracle     # the independent Python cross-check
 
 ## License
 
-The source is shared publicly as a portfolio piece. All rights reserved: please don't reuse the code or run a copy of the site without permission. If you'd like to use it for something, get in touch through [GitHub](https://github.com/andriuskleinas).
+The source is shared publicly as a portfolio piece. **All rights reserved**: you're welcome to read it, but please don't reuse the code or run a copy of the site without permission. The name and logo aren't licensed either. See [`LICENSE`](LICENSE) for the full terms, and get in touch through [GitHub](https://github.com/andriuskleinas) if you'd like to use something.
 
 tinypercent is an educational tool. The figures are hypothetical, not a forecast, and nothing here is investment advice.
