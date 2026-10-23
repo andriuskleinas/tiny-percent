@@ -26,12 +26,12 @@ A free angel investment calculator that shows what your startup stake becomes as
   <img alt="TypeScript strict" src="https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white">
   <img alt="Vite 8" src="https://img.shields.io/badge/Vite-8-646cff?logo=vite&logoColor=white">
   <img alt="Tailwind CSS 4" src="https://img.shields.io/badge/Tailwind-4-38bdf8?logo=tailwindcss&logoColor=white">
-  <img alt="Vitest: 432 tests" src="https://img.shields.io/badge/Vitest-432%20tests-6e9f18?logo=vitest&logoColor=white">
+  <img alt="Vitest: 438 tests" src="https://img.shields.io/badge/Vitest-438%20tests-6e9f18?logo=vitest&logoColor=white">
   <img alt="Python oracle: 105 checks" src="https://img.shields.io/badge/Python%20oracle-105%20checks-3776ab?logo=python&logoColor=white">
   <img alt="Cloudflare Workers" src="https://img.shields.io/badge/Cloudflare-Workers-f38020?logo=cloudflare&logoColor=white">
 </p>
 
-![The tinypercent landing page: a €5,000 pre-seed cheque diluted to 0.051% and worth €51,200 at a €100M exit](docs/screenshots/hero.png)
+![The tinypercent landing page: a €5,000 pre-seed cheque diluted to 0.051% and worth €51,200 at a €100M exit, with "Collects no data, No tracking, Educational, always free" under the Use calculator button and a Buy me a coffee button](docs/screenshots/hero.png)
 
 ## Why it exists
 
@@ -53,13 +53,14 @@ Spreadsheets answer that badly, and full cap-table tools ask for numbers an ange
 | 📄 | **Deal PDF** | "Download PDF" saves the deal as a one-page A4 report, made in your browser. |
 | 🔗 | **Shareable links** | "Copy link" reopens exactly what you were looking at. The calculation lives after the `#` and never reaches a server. |
 | 🎓 | **The maths, explained** | Worked examples of equity, dilution, pro-rata and exits, and of shares against a SAFE and a note, every figure computed by the same engine. |
-| 🔒 | **Private by design** | No account, no tracking, no backend for the calculator. Nothing you type leaves your browser. |
+| 🔒 | **Private by design** | Collects no data and does no tracking: no account, no cookies, no analytics, no backend for the calculator. Nothing you type leaves your browser. |
+| ☕ | **Free, always** | An educational tool with no ads and no paywall, supported by the people who use it through Buy Me a Coffee. |
 
 ### Follow your stake through every round
 
 Enter your cheque and the rounds that follow. At each round, choose to sit out, pay your pro-rata to hold your share, or invest a different amount. Every choice updates your ownership, the paper value of your stake, and the return at exit, as you type.
 
-![The calculator: a €5,000 seed cheque, a Series A, the exit slider, the investment summary, and the Copy link and Download PDF bar](docs/screenshots/calculator.png)
+![The calculator: a €5,000 seed cheque, a Series A, the exit slider, the investment summary, the Copy link and Download PDF bar, and a Buy me a coffee line](docs/screenshots/calculator.png)
 
 ### Follow on or sit out?
 
@@ -111,13 +112,19 @@ A second section puts **shares, a SAFE and a convertible note** side by side: on
 
 ![Shares, SAFE or convertible note: the same €25,000 three ways, with the winning conversion route highlighted and a cheaper next round](docs/screenshots/instruments.png)
 
+### Free, and supported by the people who use it
+
+tinypercent is built purely as an educational calculator: it collects no data, tracks nothing, and is always free. The page says so in plain words under its first button. Anyone who finds it useful can support it through [Buy Me a Coffee](https://buymeacoffee.com/tinypercent): a yellow button under the opening example, a quiet line under the results, a short note from the maker at the end of the page, and a button in the footer. The links open Buy Me a Coffee in a new tab, nothing is sent to it before a click, and the privacy page says so.
+
+<p align="center"><img src="docs/screenshots/support.png" alt="Keep tinypercent free: a short note from Andrius and a yellow Buy me a coffee button" width="600"></p>
+
 ### Also
 
 - **Real round mechanics.** Pre-money or post-money valuations, new option pools created in a round, and pro-rata worked out for you.
 - **Euros or dollars**, and short shared links such as `tinypercent.com/shared#…`.
 - **Works on a phone**, with a summary bar that stays in view as you scroll.
 
-<p align="center"><img src="docs/screenshots/phone.png" alt="tinypercent on a phone: the investment summary, the Copy link and Download PDF bar, and the summary strip pinned to the bottom" width="320"></p>
+<p align="center"><img src="docs/screenshots/phone.png" alt="tinypercent on a phone: the investment summary, the Copy link and Download PDF bar, a Buy me a coffee line, and the summary strip pinned to the bottom" width="320"></p>
 
 ## Examples
 
@@ -144,7 +151,7 @@ $50,000 at a $10M post-money Series A, diluted to 0.32% by two later rounds. A $
 flowchart TB
   subgraph Build["Build and deploy: GitHub Actions on every push"]
     direction LR
-    O[Python oracle<br/>two independent models] -->|golden-cases.json| G[typecheck · lint<br/>432 tests · build]
+    O[Python oracle<br/>two independent models] -->|golden-cases.json| G[typecheck · lint<br/>438 tests · build]
     G -->|green on main:<br/>wrangler deploy| CF[Cloudflare Workers<br/>static assets]
   end
   subgraph Browser["In your browser: nothing leaves it"]
@@ -164,7 +171,7 @@ flowchart TB
 | **PDF** | jsPDF, loaded only when someone downloads a report. Built-in Helvetica, so no font is embedded and a report is about 6 KB |
 | **State and sharing** | One reducer for the whole scenario. Links compress it with the browser's `CompressionStream` into the URL fragment, so it never reaches a server |
 | **Rendering** | Every page prerendered to static HTML at build time, with sitemap and robots.txt, so content loads before any JavaScript runs |
-| **Testing** | 432 Vitest tests across 34 files (unit, property-based and render tests), plus an independent Python oracle: 105 assertions across 23 golden cases |
+| **Testing** | 438 Vitest tests across 35 files (unit, property-based and render tests), plus an independent Python oracle: 105 assertions across 23 golden cases |
 | **CI/CD** | GitHub Actions: typecheck, lint, tests, oracle drift check and build on every push; a green push to `main` deploys with Wrangler |
 | **Hosting** | Cloudflare Workers static assets at tinypercent.com, with a strict Content Security Policy and security headers on every response |
 
