@@ -71,17 +71,24 @@ export function Hero() {
               and the Privacy page both have to change first. */}
           <ul
             aria-label="What tinypercent does with your data"
-            className="mt-10 grid max-w-2xl divide-y divide-rule rounded-2xl border border-rule bg-surface shadow-card sm:grid-cols-3 sm:divide-x sm:divide-y-0"
+            className="mt-10 grid max-w-2xl gap-4 border-t border-rule pt-6 sm:grid-cols-3 sm:gap-6"
           >
             {PROMISES.map(({ text, detail, icon }) => (
-              <li key={text} className="flex items-center gap-3 px-4 py-3.5 sm:flex-col sm:items-start sm:gap-2.5 sm:p-4">
-                <span aria-hidden="true" className="grid size-9 shrink-0 place-items-center rounded-xl bg-accent text-on-accent shadow-sm">
-                  <svg viewBox="0 0 16 16" className="size-[18px]" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                    {icon}
-                  </svg>
-                </span>
-                <span className="flex flex-col">
-                  <span className="text-sm font-semibold text-ink">{text}</span>
+              <li key={text} className="flex items-start gap-2.5">
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 16 16"
+                  className="mt-0.5 size-4 shrink-0 text-accent"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  {icon}
+                </svg>
+                <span className="flex flex-col gap-0.5">
+                  <span className="text-sm font-medium text-ink">{text}</span>
                   <span className="text-xs text-ink-faint">{detail}</span>
                 </span>
               </li>
