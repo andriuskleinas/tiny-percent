@@ -45,3 +45,13 @@ describe('the terms page', () => {
     expect(screen.getByRole('link', { name: 'Use calculator' }).getAttribute('href')).toBe('/#calculator')
   })
 })
+
+describe('the date on each legal page', () => {
+  it('is the day its own wording last changed', () => {
+    render(<LegalPage page="privacy" />)
+    expect(screen.getByText(/^Last updated/).textContent).toBe('Last updated 23 October 2026.')
+    cleanup()
+    render(<LegalPage page="terms" />)
+    expect(screen.getByText(/^Last updated/).textContent).toBe('Last updated 4 October 2026.')
+  })
+})

@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react'
 import { SITE } from '../site'
+import { LEGAL_VERSIONS, legalDate } from './legalVersions'
+import type { LegalPageName } from './legalVersions'
 import { Wordmark } from './Section'
 
 /**
@@ -135,7 +137,12 @@ function Terms() {
   )
 }
 
-export function LegalPage({ page }: { page: 'privacy' | 'terms' }) {
+/** A page's wording alone, without the header or its date: what the date in `legalVersions.ts` vouches for. */
+export function LegalBody({ page }: { page: LegalPageName }) {
+  return page === 'privacy' ? <Privacy /> : <Terms />
+}
+
+export function LegalPage({ page }: { page: LegalPageName }) {
   return (
     <>
       <header className="border-b border-rule bg-ground">
@@ -154,8 +161,8 @@ export function LegalPage({ page }: { page: 'privacy' | 'terms' }) {
       </header>
       <main className="mx-auto max-w-3xl px-4 py-14 sm:px-6">
         <h1 className="text-4xl font-semibold tracking-tight text-ink">{page === 'privacy' ? 'Privacy' : 'Terms of use'}</h1>
-        <div className="mt-6 flex flex-col gap-4 leading-relaxed text-ink-soft">{page === 'privacy' ? <Privacy /> : <Terms />}</div>
-        <p className="mt-12 text-sm text-ink-faint">Last updated {SITE.legalUpdated}.</p>
+        <div className="mt-6 flex flex-col gap-4 leading-relaxed text-ink-soft"><LegalBody page={page} /></div>
+        <p className="mt-12 text-sm text-ink-faint">Last updated {legalDate(LEGAL_VERSIONS[page].updated)}.</p>
       </main>
     </>
   )

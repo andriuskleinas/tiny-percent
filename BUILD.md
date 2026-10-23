@@ -618,3 +618,18 @@ valuation, so a PDF never shows numbers that differ from the inputs on screen.
 | | |
 |---|---|
 | Tests | 438 across 35 files |
+
+---
+
+## Legal pages dated by their wording · 2026-10-23 · DONE
+
+Each legal page now carries its own "Last updated" date, kept with a
+fingerprint of its wording in `landing/legalVersions.ts`. Privacy reads 23
+October 2026 (the Buy Me a Coffee paragraph and the dash clean-up); Terms
+stays 4 October 2026, because its wording has not changed since.
+
+`legal.updated.test.tsx` fails whenever a page's wording no longer matches its
+recorded fingerprint, so CI stops the deploy until the date is moved to the
+day of the change. The failure message gives the new fingerprint. Header
+changes, such as removing the Beta badge, do not count: only the page text is
+fingerprinted.

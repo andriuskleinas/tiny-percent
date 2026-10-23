@@ -15,7 +15,6 @@ export const SITE = {
   /** Legal name of the person or company operating the site. */
   operator: undefined as string | undefined,
   contactEmail: undefined as string | undefined,
-  legalUpdated: '4 October 2026',
   /**
    * The waiting-list form. Hidden while the site is purely educational. The form,
    * its handler in src/server/waitlist.ts and the Google Sheet stay in place, but
