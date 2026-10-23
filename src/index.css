@@ -81,6 +81,9 @@
   --color-ink-soft: #b9b8b2;
   --color-ink-faint: #94938e;
   --color-rule: #2a2c33;
+  /* The brand mark's grid is white here, so it reads on black. */
+  --color-mark-cell: #ffffff;
+  --mark-cell-opacity: 1;
 }
 
 /* A highlighter stroke behind text. It sits a little inside the line height,
