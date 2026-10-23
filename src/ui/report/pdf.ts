@@ -20,7 +20,8 @@ const WASH: Rgb = [230, 233, 255]
 const SUNK: Rgb = [236, 231, 220]
 const GAIN: Rgb = [26, 110, 73]
 const DILUTE: Rgb = [168, 62, 37]
-const MARKER: Rgb = [255, 229, 122]
+// Buy Me a Coffee's yellow, #FFDD00, as on the site.
+const MARKER: Rgb = [255, 221, 0]
 
 const PAGE_W = 595.28
 const PAGE_H = 841.89
