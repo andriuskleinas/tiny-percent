@@ -8,7 +8,6 @@ import { FollowOnChart } from './charts/FollowOnChart'
 import { ReturnCurveChart } from './charts/ReturnCurveChart'
 import { CurrencyContext } from './currency'
 import { DilutionTable } from './panels/DilutionTable'
-import { EndingsPanel } from './panels/EndingsPanel'
 import { EntryPanel } from './panels/EntryPanel'
 import { ExitCard } from './panels/ExitCard'
 import { RoundsPanel } from './panels/RoundsPanel'
@@ -109,11 +108,6 @@ export function Calculator({ state, dispatch }: { state: AppState; dispatch: (ac
                 <CoffeeNudge />
               </div>
             </aside>
-          </div>
-
-          {/* From the last workable scenario, like everything below, so a half-typed field never blanks it. */}
-          <div className="mt-12 empty:hidden">
-            <EndingsPanel scenario={workable} run={run} dispatch={dispatch} />
           </div>
 
           {workable.rounds.length > 1 ? (

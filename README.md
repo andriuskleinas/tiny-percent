@@ -47,7 +47,6 @@ Spreadsheets answer that badly, and full cap-table tools ask for numbers an ange
 | ➕ | **Follow on or sit out** | At each round, sit out, pay your pro-rata or pick an amount, and see all three paths drawn side by side. |
 | 📝 | **SAFEs and convertible notes** | Cap, discount and interest. The stake converts at the next priced round on whichever term gives you the most. |
 | ⏳ | **Note maturity** | A note that reaches its maturity date before the next round is repaid with interest, converts at the cap, or is extended. |
-| 🎲 | **How it could end** | The same deal if the company fails, returns its capital, or grows 10× or 100×, with the power-law arithmetic on your own numbers. |
 | 📈 | **Every possible exit** | A return curve from €1M to €1B that flags where liquidation preferences bite. |
 | 🤝 | **Syndicate costs** | Carry, management fees and entry fees come out, so the multiple shown is what reaches you. |
 | 📄 | **Deal PDF** | "Download PDF" saves the deal as a one-page A4 report, made in your browser. |
@@ -89,12 +88,6 @@ Many angel cheques buy no shares yet. Pick a SAFE or a convertible note and ente
 A convertible note is a loan, so it has a date it falls due. Add a maturity date and choose what happens if no priced round has come by then: the company **repays** the loan with its interest, the note **converts** at the cap or a stated maturity valuation, or the lenders **extend** it to wait for the next round. Interest stops at maturity. A repaid note holds no shares afterwards and leaves the preference stack, the repayment counts towards your return on the day it arrives, and a round on or before the due date converts the note as usual.
 
 ![A €50,000 convertible note due before its Seed round: Repaid is selected, and the panel shows €54,000 back, the €50,000 lent plus €4,000 of interest](docs/screenshots/maturity.png)
-
-### How it could end
-
-A single exit on a slider hides the most important fact about angel investing: most companies fail and a few pay for the rest. The same deal is shown four ways: the company fails, sells for what it raised, or grows 10× or 100× from the valuation you invested at. Each row is a full run with dilution, preferences and carry, and one line of arithmetic on your own numbers says how many failed cheques like this one a single win pays back.
-
-![Four endings for a €5,000 seed cheque: fails, returns its capital, grows 10×, grows 100× for a 51.2× multiple](docs/screenshots/endings.png)
 
 ### Save the deal as a PDF
 
